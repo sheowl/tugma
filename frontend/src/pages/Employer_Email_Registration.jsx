@@ -1,0 +1,80 @@
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import EmpHeader from "../components/EmpHeader";
+
+const Employer_Email_Registration = () => {
+  const [email, setEmail] = useState("");
+  const navigate = useNavigate(); 
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#FEFEFF] font-montserrat pt-[180px] pb-[120px] px-[240px]">
+      <EmpHeader />
+
+      <div className="w-full flex flex-col items-center mt-10 px-4">
+        <h1 className="text-6xl font-bold text-[#E66F24] mb-12 text-center">
+            Looking for the perfect hire? Sign up and start matching
+        </h1>
+        <div className="h-14" />
+        <form className="flex flex-col gap-8 items-center">
+          <div>
+            <label
+              htmlFor="email"
+              className="block text-[#3C3B3B] font-bold mb-3 text-3xl"
+            >
+              Email Address
+            </label>
+            <input
+              type="email"
+              id="email"
+              className="w-[850px] h-[80px] px-6 border-2 border-[#3C3B3B] hover:border-4 bg-[#F9F9F9] rounded-2xl text-2xl focus:outline-none focus:ring-2 focus:ring-blue-200"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder=""
+              required
+            />
+          </div>
+          <div className="h-6" />
+          <div className="flex items-center w-[850px] gap-6 text-[#6B7280] text-2xl">
+            <hr className="flex-grow border-[#6B7280]" />
+              <span className="italic">or</span>
+            <hr className="flex-grow border-[#6B7280]" />
+          </div>
+
+          <div className="h-6" />
+
+          <button
+            type="button"
+            className="flex items-center justify-center gap-3 border-2 border-[#6B7280] rounded-full hover:bg-gray-50 transition w-[520px] h-[56px]"
+          >
+            <img
+              src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg"
+              alt="Google"
+              className="w-7 h-7"
+            />
+            <span className="text-2xl font-bold text-[#E66F24]">
+              Continue with Google
+            </span>
+          </button>
+
+          <div className="h-6" />
+
+          <button
+            type="button"
+            onClick={() => navigate("/empverification")}
+            className="bg-[#FF8032] text-white text-2xl rounded-2xl font-bold hover:bg-[#E66F24] transition w-[320px] h-[56px]"
+          >
+            Verify Email
+          </button>
+        </form>
+
+        <p className="text-center text-xl text-[#6B7280] mt-4">
+          Already have an account?{" "}
+          <a href="/employer-sign-in" className="text-[#FF8032] hover:underline">
+            Sign in
+          </a>
+        </p>
+      </div>
+    </div>
+  );
+};
+
+export default Employer_Email_Registration;
