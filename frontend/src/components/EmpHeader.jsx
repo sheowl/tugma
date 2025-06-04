@@ -3,12 +3,12 @@ import TugmaLogo from "../assets/TugmaLogo.svg";
 
 const EmpHeader = () => (
   <>
-    <div className="absolute top-20 left-40 pl-24">
-      <img src={TugmaLogo} alt="Logo" className="w-[520px] h-[126px]" />
+    <div className="absolute top-8 left-4 pl-4 sm:top-12 sm:left-16 sm:pl-12 md:top-20 md:left-40 md:pl-24">
+      <img src={TugmaLogo} alt="Logo" className="w-40 h-16 sm:w-60 sm:h-20 md:w-[192px] md:h-[60px]" />
     </div>
-    <div className="absolute top-[130px] right-60 text-2xl text-[#3C3B3B] font-semibold">
+    <div className="absolute top-16 right-4 text-sm sm:top-20 sm:right-16 sm:text-base md:top-24 md:right-60 md:text-lg text-[#3C3B3B]">
       Looking for work?{" "}
-      <a href="/applicant-email-registration" className="text-[#E66F24] hover:underline font-semibold">
+      <a href="/applicant-email-registration" className="text-[#E66F24] hover:underline">
         Apply as talent
       </a>
     </div>

@@ -12,59 +12,59 @@ const EmpComReg = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#FEFEFF] font-montserrat pt-[180px] pb-[120px] px-[240px]">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#FEFEFF] font-montserrat pt-32 pb-20 px-4 sm:pt-44 sm:pb-32 sm:px-12 md:pt-[180px] md:pb-[120px] md:px-[240px]">
       <AppHeader />
-      <div className="w-full flex flex-col items-center mt-10 px-4">
-        <h1 className="text-6xl font-bold text-[#2A4D9B] mb-12 text-center">
+      <div className="w-full flex flex-col items-center mt-10 px-2 sm:px-4">
+        <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold text-[#2A4D9B] mb-8 md:mb-12 text-center">
           Complete the following steps to finish your registration
         </h1>
-        <div className="h-4" />
-        <form className="flex flex-col gap-8 items-center">
-          <div className="flex gap-8">
-            <div>
+        <div className="h-2 sm:h-4 md:h-8" />
+        <form className="flex flex-col gap-6 sm:gap-8 items-center">
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 w-full">
+            <div className="w-full sm:w-1/2 max-w-xs sm:max-w-[410px]">
               <label
                 htmlFor="firstName"
-                className="block text-[#3C3B3B] font-semibold mb-3 text-3xl"
+                className="block text-[#3C3B3B] font-semibold mb-2 sm:mb-3 text-xl sm:text-2xl md:text-3xl"
               >
                 First Name
               </label>
               <input
                 type="text"
                 id="firstName"
-                className="w-[410px] h-[80px] px-6 border-2 border-[#3C3B3B] hover:border-4 bg-[#F9F9F9] rounded-2xl text-2xl focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="w-full h-12 sm:h-16 md:h-[80px] px-4 sm:px-6 border-2 border-[#3C3B3B] hover:border-4 bg-[#F9F9F9] rounded-xl md:rounded-2xl text-lg sm:text-xl md:text-2xl focus:outline-none focus:ring-2 focus:ring-blue-200"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 required
               />
             </div>
-            <div>
+            <div className="w-full sm:w-1/2 max-w-xs sm:max-w-[410px]">
               <label
                 htmlFor="lastName"
-                className="block text-[#3C3B3B] font-semibold mb-3 text-3xl"
+                className="block text-[#3C3B3B] font-semibold mb-2 sm:mb-3 text-xl sm:text-2xl md:text-3xl"
               >
                 Last Name
               </label>
               <input
                 type="text"
                 id="lastName"
-                className="w-[410px] h-[80px] px-6 border-2 border-[#3C3B3B] hover:border-4 bg-[#F9F9F9] rounded-2xl text-2xl focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="w-full h-12 sm:h-16 md:h-[80px] px-4 sm:px-6 border-2 border-[#3C3B3B] hover:border-4 bg-[#F9F9F9] rounded-xl md:rounded-2xl text-lg sm:text-xl md:text-2xl focus:outline-none focus:ring-2 focus:ring-blue-200"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 required
               />
             </div>
           </div>
-          <div className="relative flex flex-col">
+          <div className="relative flex flex-col w-full max-w-xs sm:max-w-md md:max-w-[850px]">
             <label
               htmlFor="password"
-              className="block text-[#3C3B3B] font-semibold mb-3 text-3xl"
+              className="block text-[#3C3B3B] font-bold mb-2 sm:mb-3 text-xl sm:text-2xl md:text-3xl"
             >
               Password
             </label>
             <input
               type={showPassword ? "text" : "password"}
               id="password"
-              className="w-[850px] h-[80px] px-6 pr-16 border-2 border-[#3C3B3B] hover:border-4 bg-[#F9F9F9] rounded-2xl text-2xl focus:outline-none focus:ring-2 focus:ring-blue-200"
+              className="w-full h-12 sm:h-16 md:h-[80px] px-4 sm:px-6 pr-10 sm:pr-16 border-2 border-[#3C3B3B] hover:border-4 bg-[#F9F9F9] rounded-xl md:rounded-2xl text-lg sm:text-xl md:text-2xl focus:outline-none focus:ring-2 focus:ring-blue-200"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password (8 or more characters)"
@@ -73,7 +73,7 @@ const EmpComReg = () => {
             <button
               type="button"
               tabIndex={-1}
-              className="absolute top-[70%] right-6 transform -translate-y-1/2 focus:outline-none"
+              className="absolute top-3/4 right-4 -translate-y-1/2 focus:outline-none"
               onClick={() => setShowPassword((prev) => !prev)}
               aria-label={showPassword ? "Hide password" : "Show password"}
             >
@@ -84,17 +84,17 @@ const EmpComReg = () => {
               )}
             </button>
           </div>
-          <div className="relative flex flex-col mt-4">
+          <div className="relative flex flex-col mt-4 w-full max-w-xs sm:max-w-md md:max-w-[850px]">
             <label
               htmlFor="ConfirmPassword"
-              className="block text-[#3C3B3B] font-semibold mb-3 text-3xl"
+              className="block text-[#3C3B3B] font-semibold mb-2 sm:mb-3 text-xl sm:text-2xl md:text-3xl"
             >
               Confirm Password
             </label>
             <input
               type={showConfirmPassword ? "text" : "password"}
               id="ConfirmPassword"
-              className="w-[850px] h-[80px] px-6 pr-16 border-2 border-[#3C3B3B] hover:border-4 bg-[#F9F9F9] rounded-2xl text-2xl focus:outline-none focus:ring-2 focus:ring-blue-200"
+              className="w-full h-12 sm:h-16 md:h-[80px] px-4 sm:px-6 pr-10 sm:pr-16 border-2 border-[#3C3B3B] hover:border-4 bg-[#F9F9F9] rounded-xl md:rounded-2xl text-lg sm:text-xl md:text-2xl focus:outline-none focus:ring-2 focus:ring-blue-200"
               value={ConfirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Confirm Password"
@@ -103,7 +103,7 @@ const EmpComReg = () => {
             <button
               type="button"
               tabIndex={-1}
-              className="absolute top-[70%] right-6 transform -translate-y-1/2 focus:outline-none"
+              className="absolute top-3/4 right-4 -translate-y-1/2 focus:outline-none"
               onClick={() => setShowConfirmPassword((prev) => !prev)}
               aria-label={showConfirmPassword ? "Hide password" : "Show password"}
             >

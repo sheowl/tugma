@@ -2,37 +2,37 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppHeader from "../components/AppHeader";
 
-const EmpComReg = () => {
+const AppVerification = () => {
   const [code, setCode] = useState(["", "", "", ""]);
   const navigate = useNavigate(); 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#FEFEFF] font-montserrat pt-[180px] pb-[120px] px-[240px]">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#FEFEFF] font-montserrat pt-32 pb-20 px-4 sm:pt-44 sm:pb-32 sm:px-12 md:pt-[180px] md:pb-[120px] md:px-[240px]">
       <AppHeader />
-      <div className="w-full flex flex-col items-center mt-10 px-4">
-        <h1 className="text-6xl font-bold text-[#2A4D9B] mb-4 text-center">
+      <div className="w-full flex flex-col items-center mt-10 px-2 sm:px-4">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#2A4D9B] mb-1 md:mb-2 text-center">
           Enter Confirmation Code
         </h1>
-        <p className="text-2xl text-[#6B7280] font-semibold mb-8 text-center">
+        <p className="text-xs sm:text-sm md:text-sm text-[#6B7280] font-semibold mb-1 text-center">
           A 4-digit confirmation code was sent to your email
         </p>
-        <div className="h-32"/>
+        <div className="h-16 sm:h-24 md:h-32"/>
         <form className="flex flex-col gap-8 items-center">
-          <div className="flex gap-4 justify-center">
+          <div className="flex gap-2 sm:gap-3 justify-center">
             {[0, 1, 2, 3].map((idx) => (
               <input
                 key={idx}
                 type="text"
                 inputMode="numeric"
                 maxLength={1}
-                className="w-[106px] h-[140px] text-5xl text-center border-4 border-[#6B7280] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2A4D9B] bg-[#F9F9F9] mx-1"
+                className="w-12 h-16 sm:w-16 sm:h-20 md:w-20 md:h-24 text-2xl sm:text-3xl md:text-4xl text-center border-2 border-[#6B7280] font-bold rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2A4D9B] bg-[#F9F9F9] mx-1"
                 value={code[idx]}
                 onChange={(e) => {
                   const val = e.target.value.replace(/[^0-9]/g, "");
-                  if (val.length <= 1) { // para ilimit sa one input lng
+                  if (val.length <= 1) {
                     const newCode = [...code];
                     newCode[idx] = val;
                     setCode(newCode);
-                    if (val && idx < 3) { // para ilipat ung focus kapag may input na ung current
+                    if (val && idx < 3) {
                       document.getElementById(`code-input-${idx + 1}`)?.focus();
                     }
                   }
@@ -43,21 +43,21 @@ const EmpComReg = () => {
             ))}
           </div>
 
-          <p className="text-center text-xl text-[#6B7280] mt-2">
+          <p className="text-center text-xs sm:text-sm md:text-base text-[#6B7280] mt-[-10px]">
             Didn't Receive a code?{" "}
             <a
-              href="/employer-sign-in"
+              href="/application-sign-in"
               className="text-[#16367D] font-semibold hover:underline"
             >
               Resend
             </a>
           </p>
 
-          <div className="h-32" />
+          <div className="h-28" />
           <button
             type="button"
             onClick={() => navigate("/appcomreg")}
-            className="bg-[#2A4D9B] text-white text-2xl rounded-lg font-bold hover:bg-[#16367D] transition w-[320px] h-[56px]"
+            className="bg-[#2A4D9B] text-white text-lg rounded-lg font-semibold hover:bg-[#16367D] transition w-[225px] h-[44px]"
           >
             Confirm Email
           </button>
@@ -67,4 +67,4 @@ const EmpComReg = () => {
   );
 };
 
-export default EmpComReg;
+export default AppVerification;
