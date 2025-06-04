@@ -9,7 +9,6 @@ import EmpComReg from "./pages/EmpComReg.jsx";
 import AppComReg from "./pages/AppComReg.jsx";
 import AppVerification from "./pages/AppVerification.jsx";
 import EmpVerification from "./pages/EmpVerification.jsx";
-import AppBrowseJobs from "./pages/AppBrowesJobs.jsx";
 
 function App() {
   return (
@@ -24,7 +23,6 @@ function App() {
         <Route path="/appcomreg" element={<AppComReg />} />
         <Route path="/appverification" element={<AppVerification />} />
         <Route path="/empverification" element={<EmpVerification />} />
-        <Route path="/appbrowsejobs" element={<AppBrowseJobs />} />
       </Routes>
     </Router>
   );
