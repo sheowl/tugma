@@ -10,12 +10,13 @@ import AppComReg from "./pages/AppComReg.jsx";
 import AppVerification from "./pages/AppVerification.jsx";
 import EmpVerification from "./pages/EmpVerification.jsx";
 import LandingPage from "./pages/LandingPage.jsx";
+import ApplicantBrowseJobs from "./pages/ApplicantBrowseJobs.jsx";
 
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<ApplicantEmailRegistration />} />
+        <Route path="/" element={<ApplicantBrowseJobs />} />
         <Route path="/applicant-sign-in" element={<ApplicantSignIn />} />
         <Route path="/employer-sign-in" element={<EmployerSignIn />} />
         <Route path="/applicant-email-registration" element={<ApplicantEmailRegistration />} />
