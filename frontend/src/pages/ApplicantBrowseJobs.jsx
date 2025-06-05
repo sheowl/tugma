@@ -3,7 +3,7 @@ import ApplicantSideBar from '../components/ApplicantSideBar';
 
 function ApplicantBrowseJobs() {
     return (
-        <div className="min-h-screen bg-[#2A4D9B] flex items-start">
+        <div className="min-h-screen bg-[#2A4D9B] flex items-start overflow-hidden">
             <ApplicantSideBar />
 
             {/* Main Content Area */}
