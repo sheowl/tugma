@@ -9,12 +9,13 @@ import EmpComReg from "./pages/EmpComReg.jsx";
 import AppComReg from "./pages/AppComReg.jsx";
 import AppVerification from "./pages/AppVerification.jsx";
 import EmpVerification from "./pages/EmpVerification.jsx";
+import LandingPage from "./pages/LandingPage.jsx";
 
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<ApplicantEmailRegistration />} />
+        <Route path="/" element={<LandingPage />} />
         <Route path="/applicant-sign-in" element={<ApplicantSignIn />} />
         <Route path="/employer-sign-in" element={<EmployerSignIn />} />
         <Route path="/applicant-email-registration" element={<ApplicantEmailRegistration />} />
