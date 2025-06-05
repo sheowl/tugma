@@ -24,7 +24,7 @@ const AppVerification = () => {
                 type="text"
                 inputMode="numeric"
                 maxLength={1}
-                className="w-12 h-16 sm:w-16 sm:h-20 md:w-20 md:h-24 text-2xl sm:text-3xl md:text-4xl text-center border-2 border-[#6B7280] font-bold rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2A4D9B] bg-[#F9F9F9] mx-1"
+                className="w-12 h-16 sm:w-16 sm:h-20 md:w-20 md:h-24 text-2xl sm:text-3xl md:text-4xl text-center border border-[#6B7280] hover:border-2 font-bold rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-200 bg-[#F9F9F9] mx-1"
                 value={code[idx]}
                 onChange={(e) => {
                   const val = e.target.value.replace(/[^0-9]/g, "");
@@ -43,7 +43,7 @@ const AppVerification = () => {
             ))}
           </div>
 
-          <p className="text-center text-xs sm:text-sm md:text-base text-[#6B7280] mt-[-10px]">
+          <p className="text-center text-[10px] sm:text-xs md:text-xs text-[#6B7280] font-semibold mt-[-10px]">
             Didn't Receive a code?{" "}
             <a
               href="/application-sign-in"
@@ -53,11 +53,11 @@ const AppVerification = () => {
             </a>
           </p>
 
-          <div className="h-28" />
+          <div className="h-24" />
           <button
             type="button"
             onClick={() => navigate("/appcomreg")}
-            className="bg-[#2A4D9B] text-white text-lg rounded-lg font-semibold hover:bg-[#16367D] transition w-[225px] h-[44px]"
+            className="max-w-md bg-[#2A4D9B] text-white rounded-2xl hover:bg-[#16367D] transition mt-4 h-[44px] w-[225px] font-semibold text-sm"
           >
             Confirm Email
           </button>

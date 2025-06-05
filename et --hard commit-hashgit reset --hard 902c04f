@@ -1,0 +1,20 @@
+[33ma95e9f4[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfrontend[m[33m, [m[1;31morigin/frontend[m[33m)[m HEAD@{0}: pull --ff --recurse-submodules --progress origin: Fast-forward
+[33m902c04f[m HEAD@{1}: reset: moving to HEAD
+[33m902c04f[m HEAD@{2}: commit: style: fixed layouts and add some responsiveness.
+[33m97b0628[m HEAD@{3}: commit: Refactor: Icons
+[33m4bd63ac[m HEAD@{4}: commit: Deleted unnecessary files and updated tailwind.config
+[33m7b1f09f[m HEAD@{5}: commit (merge): Merge branch 'frontend' of https://github.com/sheowl/tugma into frontend
+[33mf37f9c8[m HEAD@{6}: commit: feat: Added applicant and employer registration and sign in pages
+[33mc90cdca[m HEAD@{7}: commit: Fixed front-end stuffs and update email registration layout.
+[33m8765e59[m HEAD@{8}: commit: Removed components and pages directories
+[33mca9cf68[m HEAD@{9}: rebase (finish): returning to refs/heads/frontend
+[33mca9cf68[m HEAD@{10}: rebase (pick): updated components for testing
+[33m094cc1e[m HEAD@{11}: rebase (pick): added initial files for future implementation
+[33me6b293a[m[33m ([m[1;31morigin/dev[m[33m, [m[1;32mdev[m[33m)[m HEAD@{12}: rebase (start): checkout dev
+[33mbe03108[m HEAD@{13}: checkout: moving from dev to frontend
+[33me6b293a[m[33m ([m[1;31morigin/dev[m[33m, [m[1;32mdev[m[33m)[m HEAD@{14}: pull origin dev: Fast-forward
+[33m63164b7[m HEAD@{15}: checkout: moving from frontend to dev
+[33mbe03108[m HEAD@{16}: reset: moving to HEAD
+[33mbe03108[m HEAD@{17}: checkout: moving from dev to frontend
+[33m63164b7[m HEAD@{18}: checkout: moving from main to dev
+[33m6f38129[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m HEAD@{19}: clone: from https://github.com/sheowl/tugma.git

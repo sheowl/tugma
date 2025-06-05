@@ -18,25 +18,24 @@ const EmpComReg = () => {
             Complete the following steps to finish your registration
         </h1>
         <div className="h-2 sm:h-4 md:h-8" />
-        <form className="flex flex-col gap-6 sm:gap-8 items-center">
-          <div className="w-full max-w-xl">
+        <form className="flex flex-col gap-6 sm:gap-8 items-center w-full max-w-2xl mx-auto">
+          <div className="w-full">
             <label
               htmlFor="companyName"
-              className="block text-[#3C3B3B] font-semibold mb-2 sm:mb-3 text-sm sm:text-base md:text-lg"
+              className="block text-[#3C3B3B] font-semibold mb-1 sm:mb-2 text-xs sm:text-sm md:text-base"
             >
               Company Name
             </label>
             <input
               type="companyName"
               id="companyName"
-              className="w-full h-12 sm:h-16 md:h-[45px] px-4 sm:px-6 border-2 border-[#3C3B3B] hover:border-4 bg-[#F9F9F9] rounded-xl md:rounded-2xl text-sm sm:text-xl md:text-2xl focus:outline-none focus:ring-2 focus:ring-blue-200"
+              className="w-full h-12 sm:h-16 md:h-[45px] px-4 sm:px-6 border border-[#6B7280] hover:border-2 bg-[#F9F9F9] rounded-xl md:rounded-2xl text-sm sm:text-base md:text-lg focus:outline-none focus:ring-2 md:focus:ring-4 focus:ring-orange-200"
               value={companyName}
               onChange={(e) => setcompanyName(e.target.value)}
-              placeholder=""
               required
             />
           </div>
-            <div className="w-full max-w-xl relative">
+          <div className="w-full relative">
             <label
               htmlFor="password"
               className="block text-[#3C3B3B] font-semibold mb-1 sm:mb-2 text-xs sm:text-sm md:text-base"
@@ -46,7 +45,7 @@ const EmpComReg = () => {
             <input
               type={showPassword ? "text" : "password"}
               id="password"
-              className="w-full h-10 sm:h-12 md:h-[40px] px-3 sm:px-4 border-2 border-[#3C3B3B] hover:border-4 bg-[#F9F9F9] rounded-lg md:rounded-xl text-base sm:text-lg md:text-xl focus:outline-none focus:ring-2 focus:ring-blue-200 placeholder:text-xs sm:placeholder:text-sm md:placeholder:text-base"
+              className="w-full h-12 sm:h-16 md:h-[45px] px-4 sm:px-6 border border-[#6B7280] hover:border-2 bg-[#F9F9F9] rounded-xl md:rounded-2xl text-sm sm:text-base md:text-lg focus:outline-none focus:ring-2 md:focus:ring-4 focus:ring-orange-200 placeholder:text-sm"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password (8 or more characters)"
@@ -66,7 +65,7 @@ const EmpComReg = () => {
               )}
             </button>
           </div>
-          <div className="w-full max-w-xl relative">
+          <div className="w-full max-w-5xl relative mb-0 pb-0">
             <label
               htmlFor="ConfirmPassword"
               className="block text-[#3C3B3B] font-semibold mb-1 sm:mb-2 text-xs sm:text-sm md:text-base"
@@ -76,7 +75,7 @@ const EmpComReg = () => {
             <input
               type={showConfirmPassword ? "text" : "password"}
               id="ConfirmPassword"
-              className="w-full h-10 sm:h-12 md:h-[40px] px-3 sm:px-4 border-2 border-[#3C3B3B] hover:border-4 bg-[#F9F9F9] rounded-lg md:rounded-xl text-base sm:text-lg md:text-xl focus:outline-none focus:ring-2 focus:ring-blue-200 placeholder:text-xs sm:placeholder:text-sm md:placeholder:text-base"
+              className="w-full h-12 sm:h-16 md:h-[45px] px-4 sm:px-6 border border-[#6B7280] hover:border-2 bg-[#F9F9F9] rounded-xl md:rounded-2xl text-sm sm:text-base md:text-lg focus:outline-none focus:ring-2 md:focus:ring-4 focus:ring-orange-200 placeholder:text-sm"
               value={ConfirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Confirm Password"
@@ -96,37 +95,20 @@ const EmpComReg = () => {
               )}
             </button>
           </div>
-          <div className="w-full max-w-2xl -mt-2">
+          <div className="w-full mt-[-16px]">
             <label
               htmlFor="terms"
-              className="flex items-start cursor-pointer select-none text-xs sm:text-sm md:text-sm text-[#6B7280]"
+              className="flex items-center cursor-pointer select-none font-semibold text-[10px] sm:text-xs md:text-xs text-[#6B7280]"
             >
               <input
                 id="terms"
                 type="checkbox"
                 checked={agreed}
                 onChange={() => setAgreed(!agreed)}
-                className="sr-only peer"
+                className="appearance-none w-4 h-4 rounded-md border-2 border-[#6B7280] checked:bg-[#FF8032] checked:border-[#FF8032] focus:outline-none transition-colors duration-200 mr-2"
                 required
               />
-              <span className="w-5 h-5 mr-3 mt-1 rounded-full border-2 border-[#6B7280] flex items-center justify-center transition-colors duration-200 peer-checked:bg-[#FF8032] peer-checked:border-[#FF8032]">
-                {agreed && (
-                  <svg
-                    className="w-2 h-2 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                )}
-              </span>
-              <span className="leading-tight">
+              <span className="leading-tight text-[10px] sm:text-xs md:text-sm">
                 I have read and agree to the{" "}
                 <a
                   href="/termslink"
@@ -152,13 +134,13 @@ const EmpComReg = () => {
           <button
             type="button"
             onClick={() => navigate("/employer-sign-in")}
-            className="bg-[#FF8032] text-white text-base rounded-2xl font-bold hover:bg-[#E66F24] transition w-[225px] h-[44px]"
+            className="max-w-md bg-[#FF8032] text-white rounded-2xl hover:bg-[#E66F24] transition mt-4 h-[44px] w-[225px] font-semibold text-sm"
           >
             Register
           </button>
         </form>
 
-        <p className="text-center text-sm text-[#6B7280] mt-2">
+        <p className="text-center text-sm text-[#6B7280] font-semibold mt-2">
           Already have an account?{" "}
           <a href="/employer-sign-in" className="text-[#FF8032] hover:underline">
             Sign in

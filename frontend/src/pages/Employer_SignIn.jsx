@@ -28,7 +28,7 @@ const Employer_SignIn = () => {
             <input
               id="username"
               type="text"
-              className="w-full px-1 sm:px-2 md:px-3 py-1 sm:py-1.5 md:py-2 rounded-lg md:rounded-xl bg-[#F9F9F9] border border-[#6B7280] hover:border-2 text-black focus:outline-none focus:ring-2 md:focus:ring-4 focus:ring-white/30 text-sm sm:text-base md:text-lg placeholder:font-montserrat placeholder:text-xs sm:placeholder:text-sm md:placeholder:text-base"
+              className="w-full px-1 sm:px-2 md:px-3 py-1 sm:py-1.5 md:py-2 rounded-lg md:rounded-xl bg-[#F9F9F9] border border-[#6B7280] hover:border-2 text-black focus:outline-none focus:ring-2 md:focus:ring-4 focus:ring-orange-200 text-xs sm:text-sm md:text-base placeholder:font-montserrat placeholder:text-xs sm:placeholder:text-sm md:placeholder:text-base"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Email"
@@ -38,7 +38,7 @@ const Employer_SignIn = () => {
             <input
               id="password"
               type={showPassword ? "text" : "password"}
-              className="w-full px-1 sm:px-2 md:px-3 py-1 sm:py-1.5 md:py-2 rounded-lg md:rounded-xl bg-[#F9F9F9] border border-[#6B7280] hover:border-2 text-black focus:outline-none focus:ring-2 md:focus:ring-4 focus:ring-white/30 text-sm sm:text-base md:text-lg placeholder:font-montserrat placeholder:text-xs sm:placeholder:text-sm md:placeholder:text-base"
+              className="w-full px-1 sm:px-2 md:px-3 py-1 sm:py-1.5 md:py-2 rounded-lg md:rounded-xl bg-[#F9F9F9] border border-[#6B7280] hover:border-2 text-black focus:outline-none focus:ring-2 md:focus:ring-4 focus:ring-orange-200 text-xs sm:text-sm md:text-base placeholder:font-montserrat placeholder:text-xs sm:placeholder:text-sm md:placeholder:text-base"
               placeholder="Password"
               style={{ paddingRight: "3.5rem" }}
             />
@@ -74,7 +74,7 @@ const Employer_SignIn = () => {
                 alt="Google"
                 className="w-4 h-4"
               />
-              <span className="text-base font-bold text-[#E66F24]">
+              <span className="text-base font-semibold text-[#E66F24]">
                 Continue with Google
               </span>
             </button>
@@ -87,7 +87,7 @@ const Employer_SignIn = () => {
             Sign In
           </button>
         </form>
-        <p className="text-center text-sm text-[#6B7280] mt-2">
+        <p className="text-center text-sm text-[#6B7280] font-semibold mt-2">
           Doesn’t have an Account?
           <a href="/employer-email-registration" className="text-[#FF8032] hover:underline ml-2">
             Register

@@ -17,14 +17,14 @@ const Applicant_Email_Registration = () => {
           <div className="w-full max-w-xl">
             <label
               htmlFor="email"
-              className="block text-[#3C3B3B] font-bold mb-2 sm:mb-3 text-base sm:text-lg md:text-xl"
+              className="block text-[#3C3B3B] font-semibold mb-2 sm:mb-3 text-base sm:text-lg md:text-xl"
             >
               Email Address
             </label>
             <input
               type="email"
               id="email"
-              className="w-full h-12 sm:h-16 md:h-[45px] px-4 sm:px-6 border-2 border-[#3C3B3B] hover:border-4 bg-[#F9F9F9] rounded-xl md:rounded-2xl text-lg sm:text-xl md:text-2xl focus:outline-none focus:ring-2 focus:ring-blue-200"
+              className="w-full h-12 sm:h-16 md:h-[45px] px-4 sm:px-6 border border-[#6B7280] hover:border-2 bg-[#F9F9F9] rounded-xl md:rounded-2xl text-xs sm:text-sm md:text-base focus:outline-none focus:ring-4 focus:ring-blue-200"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder=""
@@ -40,14 +40,14 @@ const Applicant_Email_Registration = () => {
           <div className="h-4 sm:h-6" />
           <button
             type="button"
-            className="flex items-center justify-center gap-2 sm:gap-3 border-2 border-[#6B7280] rounded-full hover:bg-gray-50 transition w-[405px] h-[44px]"
+            className="flex items-center justify-center gap-2 sm:gap-3border border-[#6B7280] hover:border-2 rounded-full hover:bg-gray-50 transition w-[405px] h-[44px]"
           >
             <img
               src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg"
               alt="Google"
               className="w-4 h-4 sm:w-6 sm:h-6"
             />
-            <span className="text-base font-bold text-[#2A4D9B]">
+            <span className="text-base font-semibold text-[#2A4D9B]">
               Continue with Google
             </span>
           </button>
@@ -57,13 +57,13 @@ const Applicant_Email_Registration = () => {
           <button
             type="button"
             onClick={() => navigate("/appverification")}
-            className="bg-[#2A4D9B] text-white text-base rounded-2xl font-bold hover:bg-[#16367D] transition w-[225px] h-[44px]"
+            className="max-w-md bg-[#2A4D9B] text-white rounded-2xl hover:bg-[#16367D] transition mt-4 h-[44px] w-[225px] font-semibold text-sm"
           >
             Verify Email
           </button>
         </form>
 
-        <p className="text-center text-sm text-[#6B7280] mt-2">
+        <p className="text-center text-sm text-[#6B7280] font-semibold mt-2">
           Already have an account?{" "}
           <a href="/applicant-sign-in" className="text-[#16367D] hover:underline">
             Sign in
