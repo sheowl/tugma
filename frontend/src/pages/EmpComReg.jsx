@@ -54,7 +54,7 @@ const EmpComReg = () => {
             <button
               type="button"
               tabIndex={-1}
-              className="absolute top-3/4 right-3 -translate-y-1/2 focus:outline-none"
+              className="absolute top-[85%] right-3 -translate-y-1/2 focus:outline-none"
               onClick={() => setShowPassword((prev) => !prev)}
               aria-label={showPassword ? "Hide password" : "Show password"}
             >
@@ -84,7 +84,7 @@ const EmpComReg = () => {
             <button
               type="button"
               tabIndex={-1}
-              className="absolute top-3/4 right-3 -translate-y-1/2 focus:outline-none"
+              className="absolute top-[85%] right-3 -translate-y-1/2 focus:outline-none"
               onClick={() => setShowConfirmPassword((prev) => !prev)}
               aria-label={showConfirmPassword ? "Hide password" : "Show password"}
             >
@@ -108,7 +108,7 @@ const EmpComReg = () => {
                 className="appearance-none w-4 h-4 rounded-md border-2 border-[#6B7280] checked:bg-[#FF8032] checked:border-[#FF8032] focus:outline-none transition-colors duration-200 mr-2"
                 required
               />
-              <span className="leading-tight text-[10px] sm:text-xs md:text-sm">
+              <span className="leading-tight text-xs sm:text-xs md:text-sm">
                 I have read and agree to the{" "}
                 <a
                   href="/termslink"

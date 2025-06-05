@@ -45,7 +45,7 @@ const Applicant_SignIn = () => {
             <button
               type="button"
               tabIndex={-1}
-              className="absolute top-2 right-3 sm:top-[14%] sm:right-4 transform -translate-y-1/2 focus:outline-none"
+              className="absolute top-2 right-3 sm:top-[12%] sm:right-4 transform -translate-y-1/2 focus:outline-none"
               onClick={() => setShowPassword((prev) => !prev)}
               aria-label={showPassword ? "Hide password" : "Show password"}
             >
@@ -67,7 +67,7 @@ const Applicant_SignIn = () => {
             <div className="h-[24px]" />
             <button
               type="button"
-              className="flex items-center justify-center gap-2 border border-[#6B7280] rounded-full bg-[#FEFEFF] hover:bg-gray-50 transition w-full max-w-md h-[44px] mx-auto"
+              className="flex items-center justify-center gap-2 border border-[#6B7280] hover:border-2 rounded-full bg-[#FEFEFF] hover:bg-gray-50 transition w-full max-w-md h-[44px] mx-auto"
             >
               <img
                 src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg"

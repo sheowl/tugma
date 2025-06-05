@@ -43,7 +43,7 @@ const EmpVerification = () => {
             ))}
           </div>
 
-          <p className="text-center text-[10px] sm:text-xs md:text-xs text-[#6B7280] font-semibold mt-[-10px]">
+          <p className="text-center text-xs sm:text-xs md:text-sm text-[#6B7280] font-semibold mt-[-10px]">
             Didn't Receive a code?{" "}
             <a
               href="/application-sign-in"

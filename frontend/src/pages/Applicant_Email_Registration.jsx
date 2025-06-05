@@ -40,7 +40,7 @@ const Applicant_Email_Registration = () => {
           <div className="h-4 sm:h-6" />
           <button
             type="button"
-            className="flex items-center justify-center gap-2 sm:gap-3border border-[#6B7280] hover:border-2 rounded-full hover:bg-gray-50 transition w-[405px] h-[44px]"
+            className="flex items-center justify-center gap-2 sm:gap-3 border border-[#6B7280] hover:border-2 rounded-full hover:bg-gray-50 transition w-[405px] h-[44px]"
           >
             <img
               src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg"

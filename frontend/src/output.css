@@ -592,6 +592,10 @@ video {
   top: 2rem;
 }
 
+.top-\[85\%\]{
+  top: 85%;
+}
+
 .mx-1{
   margin-left: 0.25rem;
   margin-right: 0.25rem;
@@ -1328,6 +1332,10 @@ body {
 
   .sm\:top-20{
     top: 5rem;
+  }
+
+  .sm\:top-\[12\%\]{
+    top: 12%;
   }
 
   .sm\:top-\[14\%\]{
