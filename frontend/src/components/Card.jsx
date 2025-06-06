@@ -11,8 +11,30 @@ function Card({
   description,
   salaryRangeLow,
   salaryRangeHigh,
-  salaryFrequency = "Monthly", // optional default
+  salaryFrequency = "Monthly",
+  onViewDetails,
 }) {
+
+  const jobData = {
+  jobTitle,
+  companyName,
+  location,
+  matchScore,
+  employmentType,
+  workSetup,
+  description,
+  salaryRangeLow,
+  salaryRangeHigh,
+  salaryFrequency,
+};
+
+  let matchScoreColor = "text-[#27AE60]"; 
+  if (matchScore < 50) {
+    matchScoreColor = "text-[#E74C3C]";
+  } else if (matchScore < 75) {
+    matchScoreColor = "text-[#F5B041]";
+  }
+
   return (
     <div className="bg-white shadow-all-around rounded-[20px] p-6 max-w-[304px] h-[330px] flex flex-col justify-between relative">
       
@@ -20,7 +42,7 @@ function Card({
       <div className="flex justify-between items-center">
         <SaveButton/>
 
-        <div className="text-end text-xl text-[#27AE60] font-bold leading-tight">
+        <div className={`text-end text-xl font-bold leading-tight ${matchScoreColor}`}>
           <div>{matchScore}%</div>
           <div className="text-xs font-bold">Matched</div>
         </div>
@@ -64,7 +86,9 @@ function Card({
           <p className="text-[10px] font-semibold text-gray-500 -mt-1">{salaryFrequency}</p>
         </div>
 
-        <button className="h-8 px-6 py-2 bg-white rounded-[10px] outline outline-1 outline-[#2A4D9B] inline-flex justify-center items-center gap-2.5 text-[#2A4D9B] text-xs font-bold hover:bg-[#2A4D9B] hover:text-white transition-colors">
+        <button 
+        onClick={() => onViewDetails(jobData)} 
+        className="h-8 px-6 py-2 bg-white rounded-[10px] outline outline-1 outline-[#2A4D9B] inline-flex justify-center items-center gap-2.5 text-[#2A4D9B] text-xs font-bold hover:bg-[#2A4D9B] hover:text-white transition-colors">
           View Details
         </button>
       </div>

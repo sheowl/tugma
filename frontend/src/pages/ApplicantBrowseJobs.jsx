@@ -1,9 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
 import ApplicantSideBar from '../components/ApplicantSideBar';
 import Card from '../components/Card'; 
 import ApplicantDashLogo from '../assets/ApplicantDashLogo.svg';
+import JobDetailsDrawer from '../components/JobDetailsDrawer';
 
 function ApplicantBrowseJobs() {
+    const [drawerOpen, setDrawerOpen] = useState(false);
+    const [selectedJob, setSelectedJob] = useState(null);
+
+    const handleViewDetails = (job) => {
+        setSelectedJob(job);
+        setDrawerOpen(true);
+    };
+
+    const handleCloseDrawer = () => {
+        setDrawerOpen(false);
+        setSelectedJob(null);
+    };
+
+    const handleApply = () => {
+        // handle apply logic here
+        alert("Applied!");
+    };
+
     return (
         <div className="min-h-screen bg-[#2A4D9B] flex items-start overflow-hidden">
             <ApplicantSideBar />
@@ -63,77 +82,25 @@ function ApplicantBrowseJobs() {
                     jobTitle="UI/UX Designer"
                     companyName="Creative Minds Inc."
                     location="Sta Mesa, Manila"
-                    matchScore={92}
+                    matchScore={67}
                     workSetup="Hybrid"
-                    employmentType="Part-Time"
+                    employmentType="Contractual"
                     description="Design and optimize user interfaces for client projects using Figma and other tools."
                     salaryRangeLow={35}
-                    salaryRangeHigh={45}                
+                    salaryRangeHigh={45} 
+                    onViewDetails={handleViewDetails}
                 />
 
-                <Card 
-                    jobTitle="UI/UX Designer"
-                    companyName="Creative Minds Inc."
-                    location="Sta Mesa, Manila"
-                    matchScore={92}
-                    workSetup="Hybrid"
-                    employmentType="Part-Time"
-                    description="Design and optimize user interfaces for client projects using Figma and other tools."
-                    salaryRangeLow={35}
-                    salaryRangeHigh={45}                
-                />
-
-                <Card 
-                    jobTitle="UI/UX Designer"
-                    companyName="Creative Minds Inc."
-                    location="Sta Mesa, Manila"
-                    matchScore={92}
-                    workSetup="Hybrid"
-                    employmentType="Part-Time"
-                    description="Design and optimize user interfaces for client projects using Figma and other tools."
-                    salaryRangeLow={35}
-                    salaryRangeHigh={45}                
-                />
-
-                <Card 
-                    jobTitle="UI/UX Designer"
-                    companyName="Creative Minds Inc."
-                    location="Sta Mesa, Manila"
-                    matchScore={92}
-                    workSetup="Hybrid"
-                    employmentType="Part-Time"
-                    description="Design and optimize user interfaces for client projects using Figma and other tools."
-                    salaryRangeLow={35}
-                    salaryRangeHigh={45}                
-                />
-
-                <Card 
-                    jobTitle="UI/UX Designer"
-                    companyName="Creative Minds Inc."
-                    location="Sta Mesa, Manila"
-                    matchScore={92}
-                    workSetup="Hybrid"
-                    employmentType="Part-Time"
-                    description="Design and optimize user interfaces for client projects using Figma and other tools."
-                    salaryRangeLow={35}
-                    salaryRangeHigh={45}                
-                />
-
-                <Card 
-                    jobTitle="UI/UX Designer"
-                    companyName="Creative Minds Inc."
-                    location="Sta Mesa, Manila"
-                    matchScore={92}
-                    workSetup="Hybrid"
-                    employmentType="Part-Time"
-                    description="Design and optimize user interfaces for client projects using Figma and other tools."
-                    salaryRangeLow={35}
-                    salaryRangeHigh={45}                
-                />
                 </div>   
 
 
             </div>
+            <JobDetailsDrawer
+                open={drawerOpen}
+                onClose={handleCloseDrawer}
+                job={selectedJob}
+                onApply={handleApply}
+            />
         </div>
     );
 }
