@@ -6,6 +6,10 @@ module.exports = {
       fontFamily: {
         montserrat: ["Montserrat", "sans-serif"],
       },
+      boxShadow: {
+        'all-around': '0 4px 15px rgba(0, 0, 0, 0.2)',
+      },
+
     },
   },
   plugins: [],

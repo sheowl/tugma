@@ -14,7 +14,7 @@ function Card({
   salaryFrequency = "Monthly", // optional default
 }) {
   return (
-    <div className="bg-white shadow-md rounded-[20px] p-6 max-w-[304px] h-[330px] flex flex-col justify-between relative">
+    <div className="bg-white shadow-all-around rounded-[20px] p-6 max-w-[304px] h-[330px] flex flex-col justify-between relative">
       
       {/* Save Button + Match Score */}
       <div className="flex justify-between items-center">
