@@ -24,7 +24,7 @@ function ApplicantBrowseJobs() {
     };
 
     return (
-        <div className="min-h-screen bg-[#2A4D9B] flex items-start overflow-hidden">
+        <div className="min-h-screen bg-[#2A4D9B] flex items-start">
             <ApplicantSideBar />
 
             {/* White Panel */}
@@ -78,14 +78,80 @@ function ApplicantBrowseJobs() {
                 <div className ="flex items-center mx-[32px] font-semibold text-sm text-gray-500">9 matches displayed</div>
 
                 <div className ="grid grid-cols-3 gap-[32px] m-8 mt-3"> 
-                    <Card 
+                
+                <Card 
                     jobTitle="UI/UX Designer"
                     companyName="Creative Minds Inc."
                     location="Sta Mesa, Manila"
                     matchScore={67}
                     workSetup="Hybrid"
                     employmentType="Contractual"
-                    description="Design and optimize user interfaces for client projects using Figma and other tools."
+                    description="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+                    salaryRangeLow={35}
+                    salaryRangeHigh={45} 
+                    onViewDetails={handleViewDetails}
+                />
+                
+                <Card 
+                    jobTitle="UI/UX Designer"
+                    companyName="Creative Minds Inc."
+                    location="Sta Mesa, Manila"
+                    matchScore={67}
+                    workSetup="Hybrid"
+                    employmentType="Contractual"
+                    description="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+                    salaryRangeLow={35}
+                    salaryRangeHigh={45} 
+                    onViewDetails={handleViewDetails}
+                />
+
+                <Card 
+                    jobTitle="UI/UX Designer"
+                    companyName="Creative Tite Inc."
+                    location="Sta Mesa, Manila"
+                    matchScore={67}
+                    workSetup="Hybrid"
+                    employmentType="Contractual"
+                    description="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+                    salaryRangeLow={35}
+                    salaryRangeHigh={45} 
+                    onViewDetails={handleViewDetails}
+                />
+
+                <Card 
+                    jobTitle="UI/UX Designer"
+                    companyName="Creative Tite Inc."
+                    location="Sta Mesa, Manila"
+                    matchScore={67}
+                    workSetup="Hybrid"
+                    employmentType="Contractual"
+                    description="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+                    salaryRangeLow={35}
+                    salaryRangeHigh={45} 
+                    onViewDetails={handleViewDetails}
+                />
+
+                <Card 
+                    jobTitle="UI/UX Designer"
+                    companyName="Creative Tite Inc."
+                    location="Sta Mesa, Manila"
+                    matchScore={67}
+                    workSetup="Hybrid"
+                    employmentType="Contractual"
+                    description="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+                    salaryRangeLow={35}
+                    salaryRangeHigh={45} 
+                    onViewDetails={handleViewDetails}
+                />
+
+                <Card 
+                    jobTitle="UI/UX Designer"
+                    companyName="Creative Tite Inc."
+                    location="Sta Mesa, Manila"
+                    matchScore={67}
+                    workSetup="Hybrid"
+                    employmentType="Contractual"
+                    description="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
                     salaryRangeLow={35}
                     salaryRangeHigh={45} 
                     onViewDetails={handleViewDetails}

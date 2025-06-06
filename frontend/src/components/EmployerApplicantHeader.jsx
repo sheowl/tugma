@@ -65,7 +65,7 @@ const EmployerApplicantHeader = () => {
         </div>
 
         {/* Right Section */}
-        <div className="flex flex-col items-end text-right gap-4 justify-center h-full text-right mt-8">
+        <div className="flex flex-col items-end gap-4 justify-center h-full text-right mt-8">
           <div className="flex items-center justify-end space-x-2 mt-0 text-right">
             <div className="w-8 h-8 rounded-full bg-[#FFE3D2]" />
             <div className="text-right text-[#FF8032]">
