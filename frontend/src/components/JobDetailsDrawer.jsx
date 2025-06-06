@@ -49,7 +49,12 @@ export default function JobDetailsDrawer({ open, onClose, job, onApply }) {
                     <div className="mb-4">
                       <span className={`text-2xl font-bold ${matchScoreColor}`}>{job.matchScore}% Matched</span>
                       <h2 className="text-4xl font-bold mt-1 ">{job.jobTitle}</h2>
+
+                    <div className="flex items-center">
                       <h3 className="text-xl font-semibold text-[#676767]">{job.companyName}</h3>
+                      <i className="bi bi-info-circle text-[19px] ml-2 cursor-pointer text-gray-500" title="Company Information" />
+                    </div>
+
                       <p className="text-base text-[#676767]">{job.location}</p>
                     </div>
                     {/* Salary */}
