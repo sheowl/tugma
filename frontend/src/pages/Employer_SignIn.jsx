@@ -21,7 +21,7 @@ const Employer_SignIn = () => {
           className="space-y-3 sm:space-y-4 w-full flex flex-col items-center justify-center"
           onSubmit={(e) => {
             e.preventDefault();
-            navigate("/appbrowesjobs");
+            navigate("/EmployerHomePage");
           }}
         >
           <div className="w-full max-w-xs sm:max-w-xs md:max-w-md">

@@ -14,12 +14,14 @@ import ApplicantBrowseJobs from "./pages/ApplicantBrowseJobs.jsx";
 import ApplicantApplications from "./pages/ApplicantApplications.jsx";
 import ApplicantInbox from "./pages/ApplicantInbox.jsx";
 import ApplicantProfile from "./pages/ApplicantProfile.jsx";
+import EmployerApplicants from "./pages/EmployerApplicants.jsx";
+import EmployerHomePage from "./pages/EmployerHomePage.jsx";
 
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<ApplicantBrowseJobs />} />
+        <Route path="/" element={<ApplicantSignIn />} />
         <Route path="/applicant-sign-in" element={<ApplicantSignIn />} />
         <Route path="/employer-sign-in" element={<EmployerSignIn />} />
         <Route path="/applicant-email-registration" element={<ApplicantEmailRegistration />} />
@@ -32,6 +34,8 @@ function App() {
         <Route path="/applicantinbox" element={<ApplicantInbox />} />
         <Route path="/applicantapplications" element={<ApplicantApplications />} />
         <Route path="/applicantprofile" element={<ApplicantProfile />} />
+        <Route path="/employerhomepage" element={<EmployerHomePage />} />
+        <Route path="/employerapplicants" element={<EmployerApplicants />} />
       </Routes>
     </Router>
   );
