@@ -1,35 +1,44 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+// import { useState } from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import "./output.css";
+import ApplicantEmailRegistration from "./pages/Applicant_Email_Registration.jsx";
+import EmployerEmailRegistration from "./pages/Employer_Email_Registration.jsx";
+import ApplicantSignIn from "./pages/Applicant_SignIn.jsx";
+import EmployerSignIn from "./pages/Employer_SignIn.jsx";    
+import EmpComReg from "./pages/EmpComReg.jsx";
+import AppComReg from "./pages/AppComReg.jsx";
+import AppVerification from "./pages/AppVerification.jsx";
+import EmpVerification from "./pages/EmpVerification.jsx";
+import LandingPage from "./pages/LandingPage.jsx";
+import ApplicantBrowseJobs from "./pages/ApplicantBrowseJobs.jsx";
+import ApplicantApplications from "./pages/ApplicantApplications.jsx";
+import ApplicantInbox from "./pages/ApplicantInbox.jsx";
+import ApplicantProfile from "./pages/ApplicantProfile.jsx";
+import EmployerApplicants from "./pages/EmployerApplicants.jsx";
+import EmployerHomePage from "./pages/EmployerHomePage.jsx";
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <Router>
+      <Routes>
+        <Route path="/" element={<ApplicantSignIn />} />
+        <Route path="/applicant-sign-in" element={<ApplicantSignIn />} />
+        <Route path="/employer-sign-in" element={<EmployerSignIn />} />
+        <Route path="/applicant-email-registration" element={<ApplicantEmailRegistration />} />
+        <Route path="/employer-email-registration" element={<EmployerEmailRegistration />} />
+        <Route path="/empcomreg" element={<EmpComReg />} />
+        <Route path="/appcomreg" element={<AppComReg />} />
+        <Route path="/appverification" element={<AppVerification />} />
+        <Route path="/empverification" element={<EmpVerification />} />
+        <Route path="/applicantbrowsejobs" element={<ApplicantBrowseJobs />} />
+        <Route path="/applicantinbox" element={<ApplicantInbox />} />
+        <Route path="/applicantapplications" element={<ApplicantApplications />} />
+        <Route path="/applicantprofile" element={<ApplicantProfile />} />
+        <Route path="/employerhomepage" element={<EmployerHomePage />} />
+        <Route path="/employerapplicants" element={<EmployerApplicants />} />
+      </Routes>
+    </Router>
+  );
 }
 
-export default App
+export default App;
