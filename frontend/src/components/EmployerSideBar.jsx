@@ -4,7 +4,7 @@ import TugmaLogoApplicant from '../assets/TugmaLogoEmployer.svg';
 
 const navItems = [
     { icon: 'bi-house', label: 'Home Page', path: '/EmployerHomePage' },
-    { icon: 'bi-clipboard2', label: 'Job Posts' },
+    { icon: 'bi-clipboard2', label: 'Job Posts', path: '/EmployerJobPosts' },
     { icon: 'bi-person-rolodex', label: 'Applicants', path: '/EmployerApplicants' },
     { icon: 'bi-building-gear', label: 'Company' },
 ];
@@ -63,10 +63,10 @@ const EmployerSideBar = () => {
             </div>
 
             {/* Bottom Section */}
-            <div className="flex items-center gap-3 text-white text-base pl-[72px] pb-[44px] self-start hover:text-[#E66F24]">
+            <a href="/employer-sign-in" className="flex items-center gap-3 text-white text-base pl-[72px] pb-[44px] self-start hover:text-[#E66F24]">
                 <i className="bi bi-box-arrow-right text-xl"></i>
                 <span>Logout</span>
-            </div>
+            </a>
         </div>
     );
 };

@@ -1,6 +1,12 @@
 import React from "react";
 import SaveButton from "./SaveButton";
 
+function truncate(text, maxLength = 80) {
+  if (!text) return "";
+  return text.length > maxLength ? text.slice(0, maxLength) + "..." : text;
+}
+
+
 function Card({
   jobTitle,
   companyName,
@@ -40,16 +46,15 @@ function Card({
       
       {/* Save Button + Match Score */}
       <div className="flex justify-between items-center">
-        <SaveButton/>
-
+        <SaveButton size={45} />
         <div className={`text-end text-xl font-bold leading-tight ${matchScoreColor}`}>
           <div>{matchScore}%</div>
-          <div className="text-xs font-bold">Matched</div>
+          <div className="text-xs font-bold -mt-[10%]">Matched</div>
         </div>
       </div>
 
       {/* Title, Company, Location */}
-      <div className="space-y-0">
+      <div className="space-y-0 -mt-[5%]">
         <h2 className="text-2xl font-bold text-black leading-tight">{jobTitle}</h2>
         <h3 className="text-sm font-bold text-[#676767]">{companyName}</h3>
         <p className="text-[10px] text-[#676767]">{location}</p>
@@ -76,7 +81,7 @@ function Card({
 
       {/* Description */}
       <div className="text-xs font-medium text-[#676767]">
-        {description}
+         {truncate(description, 80)}
       </div>
 
       {/* Salary + Button */}
