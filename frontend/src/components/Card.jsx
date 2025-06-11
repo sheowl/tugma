@@ -44,7 +44,7 @@ function Card({
 
         <div className={`text-end text-xl font-bold leading-tight ${matchScoreColor}`}>
           <div>{matchScore}%</div>
-          <div className="text-xs font-bold">Matched</div>
+          <div className="text-xs -mt-[10%] font-bold">Matched</div>
         </div>
       </div>
 

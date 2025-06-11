@@ -16,6 +16,7 @@ import ApplicantInbox from "./pages/ApplicantInbox.jsx";
 import ApplicantProfile from "./pages/ApplicantProfile.jsx";
 import EmployerApplicants from "./pages/EmployerApplicants.jsx";
 import EmployerHomePage from "./pages/EmployerHomePage.jsx";
+import EmployerJobPosts from "./pages/EmployerJobPosts.jsx";
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
         <Route path="/applicantprofile" element={<ApplicantProfile />} />
         <Route path="/employerhomepage" element={<EmployerHomePage />} />
         <Route path="/employerapplicants" element={<EmployerApplicants />} />
+        <Route path="/employerjobposts" element={<EmployerJobPosts />} />
       </Routes>
     </Router>
   );

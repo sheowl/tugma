@@ -11,8 +11,10 @@ const Dropdown = ({
   optionClass = "",
   zIndex = "z-30",
   customContent = null, // filter by
+  color,
 }) => {
   const [open, setOpen] = useState(false);
+  const [selected, setSelected] = useState(null);
   const ref = useRef(null);
 
   useEffect(() => {
@@ -35,7 +37,7 @@ const Dropdown = ({
     <div className={`relative flex flex-col items-end ${zIndex}`} ref={ref}>
       <button
         onClick={() => setOpen((prev) => !prev)}
-        className={`flex items-center gap-1 focus:outline-none rounded px-5 py-1 transition-colors duration-150 text-[16px] ${open ? 'bg-[#FF8032] text-white min-w-[96px]' : 'bg-white text-[#000000]/20'} ${buttonClass}`}
+        className={`flex items-center gap-1 focus:outline-none rounded px-5 py-1 transition-colors duration-150 text-[16px] ${open ? `bg-[${color}] text-white min-w-[96px]` : 'bg-white text-[#000000]/20'} ${buttonClass}`}
         style={{ boxShadow: 'none', padding: 0 }}
       >
         <span className="w-full text-center">{label}</span>
@@ -45,34 +47,12 @@ const Dropdown = ({
         ></i>
       </button>
       {open && (
-        // filter by
-        customContent ? (
-          <div
-            className={`mt-2 ${width} border rounded shadow ${zIndex} bg-white text-[#6B7280] font-opensans text-[14px] font-semibold ${dropdownClass}`}
-            style={{ position: 'absolute', top: '100%', right: 0 }}
-          >
-            {customContent}
-          </div>
-        ) : (
-          // sort by
-          <div
-            className={`mt-2 ${width} border rounded shadow ${zIndex} bg-white text-[#6B7280] font-opensans text-[14px] font-semibold ${dropdownClass}`}
-            style={{ position: 'absolute', top: '100%', right: 0 }}
-          >
-            {options.map((option, idx) => (
-              <div
-                key={option.value || option}
-                className={`p-2 cursor-pointer transition-colors hover:bg-[#FF8032]/10 hover:text-[#FF8032] font-opensans text-[14px] ${optionClass}`}
-                onClick={() => {
-                  onSelect && onSelect(option.value || option);
-                  setOpen(false);
-                }}
-              >
-                {option.label || option}
-              </div>
-            ))}
-          </div>
-        )
+        <div
+          className={`mt-2 ${width} border rounded shadow ${zIndex} bg-white text-[#6B7280] font-opensans text-[14px] font-semibold ${dropdownClass}`}
+          style={{ position: 'absolute', top: '100%', right: 0 }}
+        >
+          {customContent}
+        </div>
       )}
     </div>
   );
