@@ -16,11 +16,8 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 # Copy the rest of the application code.
 COPY . .
 
-# Change to the directory where manage.py is located
-WORKDIR /app/tugma_backend
-
 # Expose port 8000 (default for Django development server)
 EXPOSE 8000
 
 # Command to run the Django development server on all interfaces.
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
