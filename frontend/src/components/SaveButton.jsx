@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import ActiveSaveIcon from "../assets/ActiveSaveIcon.svg";
 import InactiveSaveIcon from "../assets/InactiveSaveIcon.svg";
 
-function SaveButton({ className = "" }) {
+function SaveButton({ className = "", size = 24 }) {
   const [isSaved, setIsSaved] = useState(false);
 
   const toggleSave = () => {
@@ -11,10 +11,10 @@ function SaveButton({ className = "" }) {
 
   return (
     <button onClick={toggleSave} className={`p-1 ${className}`}>
-       <img
+      <img
         src={isSaved ? ActiveSaveIcon : InactiveSaveIcon}
         alt="Save"
-        className="" // you can adjust size here
+        style={{ width: size, height: size }}
       />
     </button>
   );
