@@ -50,10 +50,10 @@ export default function JobDetailsDrawer({ open, onClose, job, onApply }) {
                       <span className={`text-2xl font-bold ${matchScoreColor}`}>{job.matchScore}% Matched</span>
                       <h2 className="text-4xl font-bold mt-1 ">{job.jobTitle}</h2>
 
-                    <div className="flex items-center">
-                      <h3 className="text-xl font-semibold text-[#676767]">{job.companyName}</h3>
-                      <i className="bi bi-info-circle text-[19px] ml-2 cursor-pointer text-gray-500" title="Company Information" />
-                    </div>
+                      <div className="flex items-center">
+                        <h3 className="text-xl font-semibold text-[#676767]">{job.companyName}</h3>
+                        <i className="bi bi-info-circle text-[19px] ml-2 cursor-pointer text-gray-500" title="Company Information" />
+                      </div>
 
                       <p className="text-base text-[#676767]">{job.location}</p>
                     </div>
@@ -85,16 +85,9 @@ export default function JobDetailsDrawer({ open, onClose, job, onApply }) {
                     <div className="mb-6">
                       <h4 className="text-base font-bold mb-2 text-neutral-700">Tag Matches</h4>
                       <div className="flex gap-2 flex-wrap">
-                        <Tag label="Tags that matched" matched={true} />
-                        <Tag label="Tags that matched" matched={true} />
-                        <Tag label="Tags that matched" matched={true} />
-                        <Tag label="Tags that matched" matched={true} />
-                        <Tag label="Tags that matched" matched={true} />
-                        <Tag label="Tags that matched" matched={true} />
-                        <Tag label="Tags that don't" matched={false} />
-                        <Tag label="Tags that don't" matched={false} />
-                        <Tag label="Tags that don't" matched={false} />
-                        <Tag label="Tags that don't" matched={false} />
+                        {job.tags.map((tag, index) => (
+                          <Tag key={index} label={tag.label} matched={tag.matched} />
+                        ))}
                       </div>
                     </div>
                     {/* Apply Button */}
