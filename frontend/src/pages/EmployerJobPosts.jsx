@@ -77,7 +77,10 @@ const EmployerJobPosts = () => {
 
         {/* SearchBar placed after the header */}
         <div className="px-[112px] mt-6 mb-2">
-          <SearchBar />
+          <SearchBar
+            mode="employer"
+            onSearch={(query) => console.log("Employer Search:", query)}
+          />
         </div>
 
         <div className="pl-[112px] pr-[118px] mt-10 mb-10 flex flex-wrap gap-[33px] justify-center">

@@ -1,8 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import SaveButton from "./SaveButton";
 import Tag from "./JobSkillTag";
+import CompanyDetails from "./CompanyDetails";
 
 export default function JobDetailsDrawer({ open, onClose, job, onApply }) {
+  const [companyDetailsOpen, setCompanyDetailsOpen] = useState(false); // State for CompanyDetails drawer
+
   let matchScoreColor = "text-[#27AE60]";
   if (job && job.matchScore < 50) {
     matchScoreColor = "text-[#E74C3C]";
@@ -25,7 +28,6 @@ export default function JobDetailsDrawer({ open, onClose, job, onApply }) {
           open ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        {/* Layout wrapper */}
         <div className="flex flex-col h-full">
           {/* Top Bar */}
           <div className="flex items-center justify-between mt-12 px-10 h-[80px] z-10">
@@ -52,7 +54,11 @@ export default function JobDetailsDrawer({ open, onClose, job, onApply }) {
 
                       <div className="flex items-center">
                         <h3 className="text-xl font-semibold text-[#676767]">{job.companyName}</h3>
-                        <i className="bi bi-info-circle text-[19px] ml-2 cursor-pointer text-gray-500" title="Company Information" />
+                        <i
+                          className="bi bi-info-circle text-[19px] ml-2 cursor-pointer text-gray-500"
+                          title="Company Information"
+                          onClick={() => setCompanyDetailsOpen(true)} // Open CompanyDetails drawer
+                        />
                       </div>
 
                       <p className="text-base text-[#676767]">{job.location}</p>
@@ -80,7 +86,11 @@ export default function JobDetailsDrawer({ open, onClose, job, onApply }) {
                       <h4 className="text-base font-bold mb-1 text-neutral-700">Job Description</h4>
                       <p className="text-sm text-[#676767]">{job.description}</p>
                     </div>
-                    <p className="text-md text-[#676767] font-medium mb-6">2 available positions</p>
+                    <p className="text-md text-[#676767] font-medium mb-6">
+                      {job?.availablePositions > 1
+                        ? `${job.availablePositions} available positions`
+                        : `${job?.availablePositions || 0} available position`}
+                    </p>
                     {/* Tag Matches */}
                     <div className="mb-6">
                       <h4 className="text-base font-bold mb-2 text-neutral-700">Tag Matches</h4>
@@ -111,8 +121,14 @@ export default function JobDetailsDrawer({ open, onClose, job, onApply }) {
         </div>
 
         {/* Footer mask */}
-        <div className="absolute bottom-0 left-0 w-full h-12 bg-white rounded-bl-[30px] z-10" />
       </div>
+
+      {/* CompanyDetails Drawer */}
+      <CompanyDetails
+        open={companyDetailsOpen}
+        onClose={() => setCompanyDetailsOpen(false)} // Close the drawer
+        job={job} // Pass the job details
+      />
     </>
   );
 }

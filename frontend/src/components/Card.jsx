@@ -18,6 +18,7 @@ function Card({
   salaryRangeLow,
   salaryRangeHigh,
   salaryFrequency = "Monthly",
+  companyDescription,
   onViewDetails,
 }) {
 
@@ -32,6 +33,7 @@ function Card({
   salaryRangeLow,
   salaryRangeHigh,
   salaryFrequency,
+  companyDescription
 };
 
   let matchScoreColor = "text-[#27AE60]"; 
