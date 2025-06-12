@@ -17,6 +17,7 @@ import ApplicantProfile from "./pages/ApplicantProfile.jsx";
 import EmployerApplicants from "./pages/EmployerApplicants.jsx";
 import EmployerHomePage from "./pages/EmployerHomePage.jsx";
 import EmployerJobPosts from "./pages/EmployerJobPosts.jsx";
+import ApplicantOnboarding from "./pages/ApplicantOnboarding.jsx";
 
 function App() {
   return (
@@ -38,6 +39,7 @@ function App() {
         <Route path="/employerhomepage" element={<EmployerHomePage />} />
         <Route path="/employerapplicants" element={<EmployerApplicants />} />
         <Route path="/employerjobposts" element={<EmployerJobPosts />} />
+        <Route path="/applicantonboarding" element={<ApplicantOnboarding />} />
       </Routes>
     </Router>
   );
