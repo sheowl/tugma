@@ -22,7 +22,7 @@ const SearchBar = ({ onSearch, mode = "applicant" }) => {
     <form onSubmit={handleSubmit} className="flex w-full gap-4">
       <input
         type="text"
-        className="flex-1 border border-gray-400 rounded-[16px] px-6 py-3 text-[18px] outline-none"
+        className="flex-1 border border-[#6B7280] rounded-[16px] px-6 py-3 text-[14px] text-[#6B7280] font-semibold outline-none"
         placeholder={placeholderText}
         value={query}
         onChange={(e) => setQuery(e.target.value)}

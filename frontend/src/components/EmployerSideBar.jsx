@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, NavLink } from 'react-router-dom';
 import TugmaLogoApplicant from '../assets/TugmaLogoEmployer.svg';
 
 const navItems = [
@@ -11,7 +11,7 @@ const navItems = [
 
 const EmployerSideBar = () => {
     const [activeIndex, setActiveIndex] = useState(0);
-    const navigate = useNavigate ? useNavigate() : null;
+    const navigate = useNavigate();
     const handleNavClick = (idx, path) => {
         setActiveIndex(idx);
         if (path && navigate) {
@@ -21,7 +21,7 @@ const EmployerSideBar = () => {
 
     // Set activeIndex based on current path
     React.useEffect(() => {
-        if (navigate && window && window.location && window.location.pathname) {
+        if (window && window.location && window.location.pathname) {
             const currentPath = window.location.pathname;
             const foundIdx = navItems.findIndex(item => item.path === currentPath);
             if (foundIdx !== -1 && foundIdx !== activeIndex) {
@@ -63,10 +63,12 @@ const EmployerSideBar = () => {
             </div>
 
             {/* Bottom Section */}
-            <a href="/employer-sign-in" className="flex items-center gap-3 text-white text-base pl-[72px] pb-[44px] self-start hover:text-[#E66F24]">
-                <i className="bi bi-box-arrow-right text-xl"></i>
-                <span>Logout</span>
-            </a>
+            <NavLink to="/employer-sign-in"
+            className="flex items-center gap-3 px-6 py-3 w-[190px] h-[50px] text-white text-base cursor-pointer hover:bg-[#E66F24] rounded-[10px]"
+            >
+            <i className="bi bi-box-arrow-right text-xl"></i>
+            <span>Logout</span>
+        </NavLink>
         </div>
     );
 };

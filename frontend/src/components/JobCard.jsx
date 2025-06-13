@@ -1,22 +1,24 @@
 import React, { useState } from "react";
 
-function JobCard({
-  jobTitle = "Job Title",
-  companyName = "Company Name",
-  location = "Sta Mesa, Manila",
-  type = "On-Site",
-  employment = "Full-Time",
-  description = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-  status = "Active",
-  postedDaysAgo = "n",
-  onAction = () => {},
-  actionLabel = "Action",
-  actionOptions = [
-    { label: "View Full", value: "view_full" },
-    { label: "Waitlist", value: "waitlist" },
-    { label: "Reject", value: "reject" },
-  ],
-}) {
+const JobCard = (props) => {
+  const {
+    jobTitle = "Job Title",
+    companyName = "Company Name",
+    location = "Sta Mesa, Manila",
+    type = "On-Site",
+    employment = "Full-Time",
+    description = "",
+    status = "Active",
+    postedDaysAgo = 0,
+    onAction = () => {},
+    actionLabel = "Action",
+    actionOptions = [
+      { label: "View Full", value: "view_full" },
+      { label: "Waitlist", value: "waitlist" },
+      { label: "Reject", value: "reject" },
+    ],
+  } = props;
+
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const handleActionClick = () => {
@@ -30,54 +32,62 @@ function JobCard({
     }
   };
 
+  const statusClass =
+    status === "Archived"
+      ? "text-[#FACC15]"
+      : "text-[#16A34A]";  
+
   return (
-    <div className="bg-white shadow-all-around rounded-[20px] p-6 max-w-[304px] min-h-[330px] flex flex-col justify-between relative">
-      {/* Title & Company */}
-      <div>
-        <div className="text-[24px] font-bold text-[#262424] leading-tight mb-1">{jobTitle}</div>
-        <div className="text-[14px] font-bold text-[#6B7280] leading-tight">{companyName}</div>
-        <div className="text-[10px] text-[#6B7280] font-semibold mb-2">{location}</div>
+    <div
+      className="bg-white border rounded-[20px] shadow-all-around p-8 flex flex-col"
+      style={{
+        width: 316,
+        minWidth: 316,
+        maxWidth: 316,
+        height: 330,
+        minHeight: 330,
+        maxHeight: 330,
+      }}
+    >
+      {/* Main content */}
+      <div className="flex-1 flex flex-col">
+      <div className="font-bold text-2xl whitespace-nowrap overflow-hidden text-ellipsis">{jobTitle}</div>
+        <div className="text-[14px] font-bold text-[#6B7280] flex items-center gap-1">{companyName}</div>
+        <div className="text-[10px] font-semibold text-[#6B7280] flex items-center gap-1">{location}</div>
+        <div className="flex gap-2 mt-2">
+          <span className="bg-[#FFEDD5] text-[#3C3B3B] px-3 py-1 rounded font-semibold text-[11px] flex items-center gap-1">
+            <i className="bi bi-geo-alt-fill text-xs text-[#FF8032]" /> {type}
+          </span>
+          <span className="bg-[#FFEDD5] text-[#3C3B3B] px-3 py-1 rounded font-semibold text-[11px] flex items-center gap-1">
+            <i className="bi bi-briefcase-fill text-xs text-[#FF8032]" /> {employment}
+          </span>
+        </div>
+        <div className="text-[#676767] text-[12px] font-semibold mt-2 break-words w-full line-clamp-2">
+          {description}
+        </div>
       </div>
-
-      {/* Tags */}
-      <div className="flex gap-2 mb-2">
-        <span className="flex items-center gap-1 px-3 py-1 bg-[#FFEDD5] text-[#3C3B3B] text-xs font-bold rounded-[7px]">
-          <i className="bi bi-geo-alt-fill text-[#FF8032]" />
-          {type}
-        </span>
-        <span className="flex items-center gap-1 px-3 py-1 bg-[#FFEDD5] text-[#3C3B3B] text-xs font-bold rounded-[7px]">
-          <i className="bi bi-briefcase-fill text-[#FF8032]" />
-          {employment}
-        </span>
-      </div>
-
-      {/* Description */}
-      <div className="text-[12px] text-[#676767] font-semibold mb-4" style={{ minHeight: 60 }}>
-        {description}
-      </div>
-
-      {/* Status & Action */}
-      <div className="flex items-center justify-between mt-auto">
+      {/* Fixed bottom section */}
+      <div className="flex items-center justify-between pt-4">
         <div>
-          <div className="text-[16px] font-bold text-[#16A34A]">{status}</div>
-          <div className="text-[10px] text-[#6B7280]">
-            Posted: <span className="italic">{postedDaysAgo}</span> days ago
+          <span className={`text-[16px] font-bold ${statusClass}`}>{status}</span>
+          <div className="text-[12px] text-gray-400">
+            Posted: {postedDaysAgo} days ago
           </div>
         </div>
         <div className="relative">
           <button
-            className="h-8 px-6 py-2 border-2 border-[#FF8032] text-[#FF8032] rounded-[10px] text-[14px] font-bold bg-white flex items-center gap-2 hover:bg-[#FF8032]/10 transition-colors"
+            className="border-2 border-[#FF8032] text-[#FF8032] rounded-[10px] px-6 py-2 text-[12px] font-bold bg-white flex items-center hover:bg-[#FF8032]/10 transition-colors"
             onClick={handleActionClick}
             type="button"
           >
-            {actionLabel} <i className="bi bi-caret-down-fill text-xs" />
+            {actionLabel} <i className="bi bi-caret-down-fill text-[12px]" />
           </button>
           {dropdownOpen && (
             <div className="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded shadow z-40">
               {actionOptions.map((option) => (
                 <div
                   key={option.value}
-                  className="px-4 py-2 text-[#FF8032] hover:bg-[#FF8032]/10 hover:text-[#FF8032] cursor-pointer text-sm font-semibold"
+                  className="px-4 py-2 text-[#FF8032] hover:bg-[#FF8032]/10 hover:text-[#FF8032] cursor-pointer text-[12px] font-semibold"
                   onClick={() => handleOptionClick(option)}
                 >
                   {option.label}
@@ -89,6 +99,6 @@ function JobCard({
       </div>
     </div>
   );
-}
+};
 
 export default JobCard;
