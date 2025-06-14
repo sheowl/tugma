@@ -13,18 +13,18 @@ function ApplicantBrowseJobs() {
     const [sortedData, setSortedData] = useState([]); // State for sorted job data
     const [selectedModality, setSelectedModality] = useState(null); // State for modality filter
     const [selectedWorkType, setSelectedWorkType] = useState(null); // State for work type filter
-    const [userName, setUserName] = useState("User"); // State for user's name
+    const [firstName, setFirstName] = useState("User"); // State for user's first name
 
-    // Simulate fetching user name from a database
+    // Simulate fetching first name from a database
     useEffect(() => {
-        const fetchUserName = async () => {
+        const fetchFirstName = async () => {
             // Simulate a delay for fetching data
             setTimeout(() => {
-                setUserName("Julianna Leila"); // Mock name
+                setFirstName("Julianna Leila"); // Mock name
             }, 1000);
         };
 
-        fetchUserName();
+        fetchFirstName();
     }, []);
 
     // Mock job data
@@ -196,7 +196,7 @@ function ApplicantBrowseJobs() {
                         />
                         <div>
                             <div className="font-[Montserrat] text-4xl font-bold text-[#2A4D9B]">
-                                Welcome Back, {userName}!
+                                Welcome Back, {firstName}!
                             </div>
                             <div className="font-semibold italic text-orange-400 text-xl">
                                 Ready to make meets end?
@@ -207,10 +207,7 @@ function ApplicantBrowseJobs() {
                     <div className="flex items-center">
                         <i className="bi bi-person-circle text-4xl text-gray-400"></i>
                         <div className="leading-tight pl-3">
-                            <div className="font-semibold text-black text-sm">{userName}</div>
-                            <div className="text-stone-900 italic text-xs">
-                                User Current/Previous Role
-                            </div>
+                            <div className="font-semibold text-black text-sm">{firstName}</div>
                         </div>
                     </div>
                 </div>
