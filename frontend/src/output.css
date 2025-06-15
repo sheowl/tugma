@@ -916,16 +916,12 @@ video {
   height: 100px;
 }
 
-.h-\[19px\]{
-  height: 19px;
+.h-\[220px\]{
+  height: 220px;
 }
 
 .h-\[24px\]{
   height: 24px;
-}
-
-.h-\[250px\]{
-  height: 250px;
 }
 
 .h-\[325px\]{
@@ -2404,6 +2400,11 @@ body {
 .hover\:bg-\[\#E66F24\]:hover{
   --tw-bg-opacity: 1;
   background-color: rgb(230 111 36 / var(--tw-bg-opacity, 1));
+}
+
+.hover\:bg-\[\#E9EDF8\]:hover{
+  --tw-bg-opacity: 1;
+  background-color: rgb(233 237 248 / var(--tw-bg-opacity, 1));
 }
 
 .hover\:bg-\[\#FF8032\]\/10:hover{

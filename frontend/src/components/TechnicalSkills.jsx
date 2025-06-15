@@ -6,7 +6,8 @@ export default function TechnicalSkills({
   tags = [],
   title,
   selectedProficiency,
-  setProficiency
+  setProficiency,
+  showProficiency = true,
 }) {
   const [openLevel, setOpenLevel] = useState(null);
 
@@ -23,7 +24,10 @@ export default function TechnicalSkills({
       label: "Level 1: Novice",
       description: (
         <ul className="list-disc pl-6 space-y-1 text-sm text-gray-600 mt-1">
-          <li>Has basic knowledge; completed a course or tutorial; understands syntax or usage but has minimal project experience</li>
+          <li>
+            Has basic knowledge; completed a course or tutorial; understands
+            syntax or usage but has minimal project experience
+          </li>
           <li>Watched videos, read docs, or completed 1–2 mini projects</li>
         </ul>
       ),
@@ -32,8 +36,14 @@ export default function TechnicalSkills({
       label: "Level 2: Advanced Beginner",
       description: (
         <ul className="list-disc pl-6 space-y-1 text-sm text-gray-600 mt-1">
-          <li>Can use the skill in real-world scenarios with supervision or references</li>
-          <li>Has used the skill in class projects, freelance tasks, or internships</li>
+          <li>
+            Can use the skill in real-world scenarios with supervision or
+            references
+          </li>
+          <li>
+            Has used the skill in class projects, freelance tasks, or
+            internships
+          </li>
         </ul>
       ),
     },
@@ -41,8 +51,13 @@ export default function TechnicalSkills({
       label: "Level 3: Competent",
       description: (
         <ul className="list-disc pl-6 space-y-1 text-sm text-gray-600 mt-1">
-          <li>Can solve problems and build systems using the skill independently</li>
-          <li>Can debug, optimize, and integrate the skill in team projects or real work</li>
+          <li>
+            Can solve problems and build systems using the skill independently
+          </li>
+          <li>
+            Can debug, optimize, and integrate the skill in team projects or
+            real work
+          </li>
         </ul>
       ),
     },
@@ -50,8 +65,14 @@ export default function TechnicalSkills({
       label: "Level 4: Proficient",
       description: (
         <ul className="list-disc pl-6 space-y-1 text-sm text-gray-600 mt-1">
-          <li>Deep understanding; knows advanced features, tools, and patterns; may mentor others</li>
-          <li>Used in multiple professional projects; contributed to open-source or led teams</li>
+          <li>
+            Deep understanding; knows advanced features, tools, and patterns;
+            may mentor others
+          </li>
+          <li>
+            Used in multiple professional projects; contributed to open-source
+            or led teams
+          </li>
         </ul>
       ),
     },
@@ -59,8 +80,14 @@ export default function TechnicalSkills({
       label: "Level 5: Expert",
       description: (
         <ul className="list-disc pl-6 space-y-1 text-sm text-gray-600 mt-1">
-          <li>Recognized expertise; can architect systems or teach others; solves edge cases and performance issues</li>
-          <li>Published content, spoken at events, or built tools/libraries for this skill</li>
+          <li>
+            Recognized expertise; can architect systems or teach others; solves
+            edge cases and performance issues
+          </li>
+          <li>
+            Published content, spoken at events, or built tools/libraries for
+            this skill
+          </li>
         </ul>
       ),
     },
@@ -71,23 +98,40 @@ export default function TechnicalSkills({
   };
 
   return (
-    <div className="flex flex-row gap-8 justify-center items-start mt-8 mb-8">
+    <div
+      className={`flex gap-8 justify-center items-start mt-8 mb-8 ${
+        showProficiency ? "flex-row" : "flex justify-center"
+      }`}
+    >
       {/* Tag Selection */}
-      <div className="p-6 bg-white rounded-[10px] shadow-all-around w-[416px] min-h-[360px]">
-        <h1 className="text-2xl font-bold text-[#2A4D9B] p-4">{title}</h1>
-        <div className="flex flex-wrap gap-2 p-4">
+      <div
+        className={`p-6 bg-white rounded-[10px] shadow-all-around ${
+          showProficiency ? "w-[416px] min-h-[360px]" : "w-[480px] h-[318px]"
+        }`}
+      >
+        <h1
+          className={`text-2xl font-bold text-[#2A4D9B] p-4 ${
+            showProficiency ? "" : "text-center"
+          }`}
+        >
+          {title}
+        </h1>
+        <div
+          className={`flex flex-wrap gap-2 p-4 ${
+            showProficiency ? "justify-start" : "justify-center"
+          }`}
+        >
           {tags.map((tag) => {
             const isSelected = skills.includes(tag);
             return (
               <button
                 key={tag}
                 onClick={() => toggleTag(tag)}
-                className={`inline-flex items-center gap-2 border rounded-[20px] px-3 py-1 text-sm font-semibold transition-colors
-                  ${
-                    isSelected
-                      ? "bg-[#2A4D9B] text-white border-[#2A4D9B]"
-                      : "text-[#2A4D9B] border-[#2A4D9B]"
-                  }`}
+                className={`inline-flex items-center gap-2 border rounded-[20px] px-3 py-1 text-sm font-semibold transition-colors ${
+                  isSelected
+                    ? "bg-[#2A4D9B] text-white border-[#2A4D9B]"
+                    : "text-[#2A4D9B] border-[#2A4D9B]"
+                }`}
               >
                 <i
                   className={`${
@@ -102,39 +146,49 @@ export default function TechnicalSkills({
       </div>
 
       {/* Proficiency Levels */}
-      <div className="p-6 bg-white rounded-[10px] shadow-all-around w-[416px] min-h-[360px]">
-        <h1 className="text-2xl font-bold text-[#2A4D9B] p-4">Proficiency Level</h1>
-        <div className="space-y-2 p-4">
-          {levels.map((level) => (
-            <div key={level.label} className="border-b pb-2">
-              <div
-                className="flex items-center justify-between cursor-pointer"
-                onClick={() => {
-                  setProficiency(level.label);
-                  toggleOpen(level.label);
-                }}
-              >
-                <label className="h-[19px] flex items-center gap-2 text-[#2A4D9B] tex-base font-semibold cursor-pointer">
-                  <input
-                    type="radio"
-                    name={`proficiency-${title}`}
-                    checked={selectedProficiency === level.label}
-                    onChange={() => setProficiency(level.label)}
-                    className="accent-[#2A4D9B]"
-                  />
-                  {level.label}
-                </label>
-                <span className="text-[#2A4D9B]">
-                  <i className={`bi ${openLevel === level.label ? "bi-chevron-up" : "bi-chevron-down"}`} />
-                </span>
+      {showProficiency && (
+        <div className="p-6 bg-white rounded-[10px] shadow-all-around w-[416px] min-h-[360px]">
+          <h1 className="text-2xl font-bold text-[#2A4D9B] p-4">
+            Proficiency Level
+          </h1>
+          <div className="space-y-4 p-4">
+            {levels.map((level) => (
+              <div key={level.label} className="border-b pb-2">
+                <div
+                  className="flex items-center justify-between cursor-pointer"
+                  onClick={() => {
+                    setProficiency(level.label);
+                    toggleOpen(level.label);
+                  }}
+                >
+                  <label className="flex items-center gap-2 text-[#2A4D9B] text-base font-semibold cursor-pointer">
+                    <input
+                      type="radio"
+                      name={`proficiency-${title}`}
+                      checked={selectedProficiency === level.label}
+                      onChange={() => setProficiency(level.label)}
+                      className="accent-[#2A4D9B]"
+                    />
+                    {level.label}
+                  </label>
+                  <span className="text-[#2A4D9B]">
+                    <i
+                      className={`bi ${
+                        openLevel === level.label
+                          ? "bi-chevron-up"
+                          : "bi-chevron-down"
+                      }`}
+                    />
+                  </span>
+                </div>
+                {openLevel === level.label && (
+                  <div className="mt-2 pl-4">{level.description}</div>
+                )}
               </div>
-              {openLevel === level.label && (
-                <div className="mt-2">{level.description}</div>
-              )}
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
