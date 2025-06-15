@@ -1,14 +1,14 @@
 // Mock data for testing
 const mockUserDetails = {
   contactDetails: {
-    currentAddress: "123 Mock St.",
-    contactNumber: "1234567890",
-    telephoneNumber: "0987654321",
+    currentAddress: "#1 Kurt St. Brgy. Mapagmahal Silang, Cavite",
+    contactNumber: "0992 356 7294",
+    telephoneNumber: "8153-4137",
   },
   educationDetails: {
-    university: "Mock University",
-    degree: "Mock Degree",
-    yearGraduated: "2025",
+    university: "Polytechnic University of the Philippines",
+    degree: "Bachelor of Science in Computer Science",
+    yearGraduated: "2027",
   },
   workExperiences: [],
   field: "",
