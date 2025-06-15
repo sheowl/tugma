@@ -1,5 +1,14 @@
 export default function StepProgressFooter({ step, segment, onContinue, onSkip }) {
-  const totalSegments = step === 2 ? 10 : 3; 
+  const totalSegments = step === 2 ? 10 : 3;
+
+  const handleContinue = () => {
+    if (step === 2 && segment === 10) {
+      console.log("Redirecting to ApplicantProfile"); // Debugging
+      onSkip(); // Redirect to ApplicantProfile
+    } else {
+      onContinue(); // Call the provided onContinue function for other steps/segments
+    }
+  };
 
   return (
     <div className="flex justify-between items-center w-full mt-12 px-[112px]">
@@ -28,7 +37,7 @@ export default function StepProgressFooter({ step, segment, onContinue, onSkip }
           </button>
         )}
         <button
-          onClick={onContinue}
+          onClick={handleContinue} // Use the updated handleContinue function
           className="w-[192px] px-6 py-3 bg-[#2A4D9B] text-white font-bold rounded-md hover:bg-[#1f3d7a]"
         >
           Continue

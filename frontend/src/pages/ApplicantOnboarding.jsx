@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import AppOnbStepOne from "../components/AppOnbStepOne";
 import AppOnbStepTwo from "../components/AppOnbStepTwo";
 import StepProgressFooter from "../components/StepProgressFooter";
@@ -12,16 +13,17 @@ function ApplicantOnboarding() {
   const [workExperiences, setWorkExperiences] = useState([]);
   const [showPopup, setShowPopup] = useState(false);
   const [editingExperience, setEditingExperience] = useState(null);
+  const navigate = useNavigate();
 
-  // Determine the total number of segments dynamically
-  const totalSegments = step === 2 ? 10 : 3; // Step 2 has 10 segments, others have 3
+  const totalSegments = step === 2 ? 10 : 3;
 
   const handleNextSegment = () => {
-    if (segment < totalSegments) {
-      // Move to the next segment within the current step
+    if (step === 2 && segment === 10) {
+      console.log("Redirecting to ApplicantProfile");
+      navigate("/ApplicantProfile");
+    } else if (segment < totalSegments) {
       setSegment((prev) => prev + 1);
     } else {
-      // Move to the next step and reset the segment
       setSegment(1);
       setStep((prev) => prev + 1);
     }
@@ -29,23 +31,20 @@ function ApplicantOnboarding() {
 
   const handleBackSegment = () => {
     if (segment > 1) {
-      // Move to the previous segment within the current step
       setSegment((prev) => prev - 1);
     } else if (step > 1) {
-      // Move to the previous step and set the segment to the last one
-      setSegment(totalSegments);
       setStep((prev) => prev - 1);
+      setSegment(step === 2 ? 3 : 10);
     }
   };
 
   const handleSkipSegment = () => {
-    const totalSegments = step === 2 ? 10 : 3; // Step 2 has 10 segments, others have 3
-
-    if (segment < totalSegments) {
-      // Skip to the next segment
+    if (step === 2 && segment === 10) {
+      console.log("Redirecting to ApplicantProfile (Skip)");
+      navigate("/ApplicantProfile");
+    } else if (segment < totalSegments) {
       setSegment((prev) => prev + 1);
     } else {
-      // If it's the last segment, move to the next step
       setSegment(1);
       setStep((prev) => prev + 1);
     }
@@ -70,7 +69,6 @@ function ApplicantOnboarding() {
 
   return (
     <div className="flex flex-col bg-white">
-      {/* Header */}
       <div className="w-full h-[100px] pl-[112px] pt-[24px] pb-[24px] bg-white shadow-md z-10 relative">
         <img
           src={TugmaLogo}
@@ -78,11 +76,9 @@ function ApplicantOnboarding() {
           className="w-40 h-16 sm:w-60 sm:h-20 md:w-[192px] md:h-[60px]"
         />
       </div>
-
-      {/* Onboarding content (fills remaining space) */}
       <div
         className="flex-grow px-4 bg-gray-50 flex flex-col items-center overflow-y-auto"
-        style={{ height: "calc(100vh - 100px)" }} // subtract header height
+        style={{ height: "calc(100vh - 100px)" }}
       >
         {step === 1 && (
           <AppOnbStepOne
@@ -90,42 +86,37 @@ function ApplicantOnboarding() {
             segment={segment}
             onNext={handleNextSegment}
             onBack={handleBackSegment}
-            fetchUserDetails={() => fetchUserDetails(true)} // Use mock data
-            saveUserDetails={(data) => saveUserDetails(data, true)} // Use mock save
+            fetchUserDetails={() => fetchUserDetails(true)}
+            saveUserDetails={(data) => saveUserDetails(data, true)}
           />
         )}
-
         {step === 2 && (
           <AppOnbStepTwo
             step={step}
             segment={segment}
             onNext={handleNextSegment}
             onBack={handleBackSegment}
-            fetchUserDetails={() => fetchUserDetails(true)} // Use mock data
-            saveUserDetails={(data) => saveUserDetails(data, true)} // Use mock save
+            fetchUserDetails={() => fetchUserDetails(true)}
+            saveUserDetails={(data) => saveUserDetails(data, true)}
           />
         )}
-
-        {/* Step Progress Footer */}
         <div className="mb-8 w-full">
-        <StepProgressFooter
-          step={step}
-          segment={segment}
-          onContinue={handleNextSegment} // Pass the continue handler
-          onSkip={handleSkipSegment} // Pass the skip handler
-        />
+          <StepProgressFooter
+            step={step}
+            segment={segment}
+            onContinue={handleNextSegment}
+            onSkip={handleSkipSegment}
+          />
         </div>
       </div>
-
-      {/* Work Experience Popup */}
       {showPopup && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-[600px]">
             <ApplicantWorkExpPopup
-              onSave={handleSaveWorkExperience} // Pass the onSave function
+              onSave={handleSaveWorkExperience}
               onCancel={() => {
                 setShowPopup(false);
-                setEditingExperience(null); // Reset editing state
+                setEditingExperience(null);
               }}
             />
           </div>

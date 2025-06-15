@@ -167,7 +167,7 @@ export default function TechnicalSkills({
                       name={`proficiency-${title}`}
                       checked={selectedProficiency === level.label}
                       onChange={() => setProficiency(level.label)}
-                      className="accent-[#2A4D9B]"
+                      className="accent-[#2A4D9B] w-5 h-5"
                     />
                     {level.label}
                   </label>

@@ -53,7 +53,7 @@ export default function ApplicantWorkExpPopup({ onSave, onCancel }) {
     };
 
     return (
-        <div className="flex flex-col gap-4 max-h-[800px] overflow-y-auto pr-2">
+        <div className="flex flex-col gap-4 max-h-[800px] overflow-y-auto pr-1">
             <h2 className="text-2xl font-semibold text-[#2A4D9B]">Add Work Experience</h2>
 
             {/* Position/Role */}

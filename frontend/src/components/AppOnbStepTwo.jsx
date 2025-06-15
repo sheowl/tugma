@@ -1,10 +1,35 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 import TechnicalSkills from "./TechnicalSkills";
+import ApplicantCertPopup from "./ApplicantCertPopup";
+import ApplicantCertCard from "./ApplicantCertCard";
+import StepProgressFooter from "./StepProgressFooter";
 
-function AppOnbStepTwo({ step, segment, onNext, onBack }) {
+function AppOnbStepTwo({ step, segment, onBack }) {
   const [skills, setSkills] = useState([]);
   const [proficiency, setProficiency] = useState({});
   const [softSkillsTags, setSoftSkillsTags] = useState([]);
+  const [certifications, setCertifications] = useState([]); // State for certifications
+  const [showCertPopup, setShowCertPopup] = useState(false); // State for showing the popup
+  const popupRef = useRef(null);
+  const navigate = useNavigate(); // Initialize useNavigate
+
+  const handleAddCertification = (certification) => {
+    if (certification) {
+      setCertifications((prev) => [...prev, certification]);
+    }
+  };
+
+  const handleDeleteCertification = (certification) => {
+    setCertifications((prev) => prev.filter((cert) => cert !== certification));
+  };
+
+  const handleContinue = () => {
+    if (step === 2 && segment === 10) {
+      console.log("Navigating to ApplicantProfile"); // Debugging
+      navigate("/ApplicantProfile"); // Redirect to ApplicantProfile
+    }
+  };
 
   const programmingLanguageTags = [
     "Python", "Java", "JavaScript", "C++", "C#", "Go",
@@ -67,6 +92,25 @@ function AppOnbStepTwo({ step, segment, onNext, onBack }) {
       </div>
     </div>
   );
+
+  const workSettings = ["Hybrid", "Remote", "On-Site"];
+  const workTypes = ["Part-Time", "Full-Time", "Contractual", "Internship"];
+
+  function RadioGroup({ title, name, options, grid = false }) {
+    return (
+      <div className="w-[420px] bg-white rounded-[10px] shadow-all-around p-6 h-auto min-h-[240px] font-montserrat">
+        <h1 className="text-2xl font-bold text-[#2A4D9B] p-6">{title}</h1>
+        <div className={grid ? "grid grid-cols-2 gap-x-10 gap-y-2" : "flex flex-col space-y-2"}>
+          {options.map((option) => (
+            <label key={option} className="flex items-center gap-2 text-base pl-6">
+              <input type="radio" name={name} value={option} className="accent-[#2A4D9B] w-5 h-5" />
+              {option}
+            </label>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full h-screen font-montserrat overflow-hidden relative">
@@ -185,10 +229,73 @@ function AppOnbStepTwo({ step, segment, onNext, onBack }) {
         {step === 2 && segment === 9 && (
           <div className="flex flex-col items-center space-y-10">
             <Header />
-            {/* You can add your final segment logic here */}
+            <div className="flex flex-row gap-6 justify-center items-center">
+              <RadioGroup
+                title="Preferred Work Settings"
+                name="workSettings"
+                options={workSettings}
+              />
+                <RadioGroup title="Preferred Work Type" 
+                name="workType" 
+                options={workTypes} 
+                grid />
+
+             </div>
+          </div>
+        )}
+
+        {step === 2 && segment === 10 && (
+          <div className="flex flex-col items-center space-y-10">
+            <Header />
+            <div
+              onClick={() => setShowCertPopup(true)}
+              className="mt-[74px] mb-[140px] flex-shrink-0 w-[416px] h-[200px] p-8 px-10 rounded-2xl border border-dashed border-gray-400 space-y-5
+                  flex flex-col items-center justify-center cursor-pointer hover:shadow-all-around transition-all"
+            >
+              <div className="flex flex-row items-center justify-center space-x-4">
+                <i className="bi bi-plus-circle text-2xl text-[#2A4D9B]" />
+                <h3 className="text-2xl font-bold text-[#2A4D9B] text-center">Add Certification</h3>
+              </div>
+            </div>
+
+            <div className="flex flex-row gap-6 mt-[74px] mb-[70px]">
+              {certifications.map((certification, index) => (
+                <ApplicantCertCard
+                  key={index}
+                  certification={certification}
+                  onDelete={handleDeleteCertification}
+                />
+              ))}
+            </div>
           </div>
         )}
       </main>
+
+      {/* Popup Component */}
+      {showCertPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div
+            ref={popupRef} // Attach the ref to the popup container
+            className="bg-[#E9EDF8] p-6 rounded-[20px] shadow-lg w-[600px] relative"
+          >
+            <button
+              onClick={() => setShowCertPopup(false)} // Close popup on click
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"
+            >
+              <i className="bi bi-x-lg text-xl text-red-600"></i>
+            </button>
+            <ApplicantCertPopup
+              onSave={(certification) => {
+                handleAddCertification(certification);
+                setShowCertPopup(false); // Close popup after saving
+              }}
+              onCancel={() => setShowCertPopup(false)} // Close popup on cancel
+            />
+          </div>
+        </div>
+      )}
+
+
     </div>
   );
 }
