@@ -202,29 +202,6 @@ function AppOnbStepOne({
                 />
               </div>
             </div>
-
-            {/* === Footer Progress and Button === */}
-            <div className="flex justify-between items-center w-full mt-12">
-              <div>
-                <p className="text-sm font-medium text-gray-700 mb-1">Step 1 of 2</p>
-                <div className="flex gap-2">
-                  {[1, 2, 3].map((s) => (
-                    <div
-                      key={s}
-                      className={`h-2 w-8 rounded-full ${
-                        segment >= s ? "bg-[#2A4D9B]" : "bg-gray-300"
-                      }`}
-                    />
-                  ))}
-                </div>
-              </div>
-              <button
-                onClick={handleContinue}
-                className="w-[192px] px-6 py-3 bg-[#2A4D9B] text-white font-medium rounded-md hover:bg-[#1f3d7a]"
-              >
-                Continue
-              </button>
-            </div>
           </div>
         )}
 
@@ -236,7 +213,7 @@ function AppOnbStepOne({
               {/* Back Button */}
               <button
                 onClick={onBack}
-                className="absolute left-0 top-1/3 transform -translate-y-1/2 flex items-center text-[#2A4D9B] hover:text-[#16367D] font-medium"
+                className="absolute left-0 top-0 flex items-center text-[#2A4D9B] hover:text-[#16367D] font-medium"
               >
                 <i className="bi bi-arrow-left mr-2 text-4xl"></i>
               </button>
@@ -252,7 +229,7 @@ function AppOnbStepOne({
                 <div
                   key={card.value}
                   onClick={() => handleCardClick(card.value)}
-                  className={`bg-white max-w-[200px] h-[250px] p-8 px-10 rounded-2xl shadow-all-around border cursor-pointer 
+                  className={`bg-white max-w-[200px] h-[220px] p-8 px-10 rounded-2xl shadow-all-around border cursor-pointer 
                     flex flex-col items-center justify-center space-y-5 text-center
                     ${selectedField === card.value ? 'border-[#2A4D9B]' : 'border-gray-200'}
                   `}
@@ -261,29 +238,6 @@ function AppOnbStepOne({
                   <span className="text-lg font-semibold text-[#2A4D9B]">{card.title}</span>
                 </div>
               ))}
-            </div>
-
-            {/* === Footer Progress and Button === */}
-            <div className="flex justify-between items-center w-full mt-12">
-              <div>
-                <p className="text-sm font-medium text-gray-700 mb-1">Step 1 of 2</p>
-                <div className="flex gap-2">
-                  {[1, 2, 3].map((s) => (
-                    <div
-                      key={s}
-                      className={`h-2 w-8 rounded-full ${
-                        segment >= s ? 'bg-[#2A4D9B]' : 'bg-gray-300'
-                      }`}
-                    />
-                  ))}
-                </div>
-              </div>
-              <button
-                onClick={handleContinue}
-                className="w-[192px] px-6 py-3 bg-[#2A4D9B] text-white font-medium rounded-md hover:bg-[#1f3d7a]"
-              >
-                Continue
-              </button>
             </div>
           </div>
         )}
@@ -295,7 +249,7 @@ function AppOnbStepOne({
             <div className="relative w-full mb-4">
               <button
                 onClick={onBack}
-                className="absolute left-0 top-1/3 transform -translate-y-1/2 flex items-center text-[#2A4D9B] hover:text-[#16367D] font-medium"
+                className="absolute left-0 top-0 flex items-center text-[#2A4D9B] hover:text-[#16367D] font-medium"
               >
                 <i className="bi bi-arrow-left mr-2 text-4xl"></i>
               </button>
@@ -334,38 +288,6 @@ function AppOnbStepOne({
               </div>
             </div>
           </div>
-
-            {/* Footer Progress and Button */}
-            <div className="flex justify-between items-center w-full mt-12">
-              <div>
-                <p className="text-sm font-medium text-gray-700 mb-1">Step 1 of 3</p>
-                <div className="flex gap-2">
-                  {[1, 2, 3].map((s) => (
-                    <div
-                      key={s}
-                      className={`h-2 w-8 rounded-full ${
-                        segment >= s ? "bg-[#2A4D9B]" : "bg-gray-300"
-                      }`}
-                    />
-                  ))}
-                </div>
-              </div>
-                
-                <div className="space-x-4">
-                  <button
-                onClick={onNext}
-                className="w-[192px] px-6 py-3 text-[#2A4D9B] font-bold rounded-md hover:bg-gray-200"
-              >
-                Skip
-              </button>
-              <button
-                onClick={onNext}
-                className="w-[192px] px-6 py-3 bg-[#2A4D9B] text-white font-medium rounded-md hover:bg-[#1f3d7a]"
-              >
-                Next
-              </button>
-              </div>
-            </div>
           </div>
         )}
       </main>

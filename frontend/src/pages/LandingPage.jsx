@@ -1,25 +1,37 @@
-import React from 'react';
-import Card from '../components/Card.jsx';
+import React, { useState } from 'react';
+import TechnicalSkills from "../components/TechnicalSkills";
 
 function LandingPage() {
-    return(
-        <div>
-            <Card
-                jobTitle="UI/UX Designer"
-                companyName="Creative Minds Inc."
-                location="Sta Mesa, Manila"
-                matchScore={92}
-                workSetup="Hybrid"
-                employmentType="Part-Time"
-                description="Design and optimize user interfaces for client projects using Figma and other tools."
-                salaryRangeLow={35}
-                salaryRangeHigh={45}                
-                />
-         </div>
-       
-    );
+  const [skills, setSkills] = useState([]);
+  const [proficiency, setProficiency] = useState(null); // NEW
 
+  const availableTags = [
+    "Python", "Java", "JavaScript", "C++", "C#", "Go",
+    "Rust", "PHP", "TypeScript", "Ruby", "Kotlin", "Swift", "R", "Bash/Shell"
+  ];
 
+  return (
+    <div className="p-6">
+      <TechnicalSkills
+        title="Programming Languages"
+        skills={skills}
+        setSkills={setSkills}
+        tags={availableTags}
+        selectedProficiency={proficiency}
+        setProficiency={setProficiency}
+      />
+
+      <div className="mt-4">
+        <h4 className="font-bold">Selected Skills:</h4>
+        <p>{skills.join(", ") || "None selected"}</p>
+      </div>
+
+      <div className="mt-4">
+        <h4 className="font-bold">Proficiency Level:</h4>
+        <p>{proficiency || "None selected"}</p>
+      </div>
+    </div>
+  );
 }
 
 export default LandingPage;

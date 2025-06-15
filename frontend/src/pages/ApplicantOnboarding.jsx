@@ -1,5 +1,7 @@
 import { useState } from "react";
 import AppOnbStepOne from "../components/AppOnbStepOne";
+import AppOnbStepTwo from "../components/AppOnbStepTwo";
+import StepProgressFooter from "../components/StepProgressFooter";
 import TugmaLogo from "../assets/TugmaLogo.svg";
 import ApplicantWorkExpPopup from "../components/ApplicantWorkExpPopup";
 import { fetchUserDetails, saveUserDetails } from "../services/userService";
@@ -11,10 +13,15 @@ function ApplicantOnboarding() {
   const [showPopup, setShowPopup] = useState(false);
   const [editingExperience, setEditingExperience] = useState(null);
 
+  // Determine the total number of segments dynamically
+  const totalSegments = step === 2 ? 10 : 3; // Step 2 has 10 segments, others have 3
+
   const handleNextSegment = () => {
-    if (segment < 3) {
+    if (segment < totalSegments) {
+      // Move to the next segment within the current step
       setSegment((prev) => prev + 1);
     } else {
+      // Move to the next step and reset the segment
       setSegment(1);
       setStep((prev) => prev + 1);
     }
@@ -22,10 +29,25 @@ function ApplicantOnboarding() {
 
   const handleBackSegment = () => {
     if (segment > 1) {
+      // Move to the previous segment within the current step
       setSegment((prev) => prev - 1);
     } else if (step > 1) {
-      setSegment(3);
+      // Move to the previous step and set the segment to the last one
+      setSegment(totalSegments);
       setStep((prev) => prev - 1);
+    }
+  };
+
+  const handleSkipSegment = () => {
+    const totalSegments = step === 2 ? 10 : 3; // Step 2 has 10 segments, others have 3
+
+    if (segment < totalSegments) {
+      // Skip to the next segment
+      setSegment((prev) => prev + 1);
+    } else {
+      // If it's the last segment, move to the next step
+      setSegment(1);
+      setStep((prev) => prev + 1);
     }
   };
 
@@ -59,17 +81,40 @@ function ApplicantOnboarding() {
 
       {/* Onboarding content (fills remaining space) */}
       <div
-        className="flex-grow px-4 bg-gray-50 flex justify-center items-start overflow-y-auto"
+        className="flex-grow px-4 bg-gray-50 flex flex-col items-center overflow-y-auto"
         style={{ height: "calc(100vh - 100px)" }} // subtract header height
       >
-        <AppOnbStepOne
+        {step === 1 && (
+          <AppOnbStepOne
+            step={step}
+            segment={segment}
+            onNext={handleNextSegment}
+            onBack={handleBackSegment}
+            fetchUserDetails={() => fetchUserDetails(true)} // Use mock data
+            saveUserDetails={(data) => saveUserDetails(data, true)} // Use mock save
+          />
+        )}
+
+        {step === 2 && (
+          <AppOnbStepTwo
+            step={step}
+            segment={segment}
+            onNext={handleNextSegment}
+            onBack={handleBackSegment}
+            fetchUserDetails={() => fetchUserDetails(true)} // Use mock data
+            saveUserDetails={(data) => saveUserDetails(data, true)} // Use mock save
+          />
+        )}
+
+        {/* Step Progress Footer */}
+        <div className="mb-8 w-full">
+        <StepProgressFooter
           step={step}
           segment={segment}
-          onNext={handleNextSegment}
-          onBack={handleBackSegment}
-          fetchUserDetails={() => fetchUserDetails(true)} // Use mock data
-          saveUserDetails={(data) => saveUserDetails(data, true)} // Use mock save
+          onContinue={handleNextSegment} // Pass the continue handler
+          onSkip={handleSkipSegment} // Pass the skip handler
         />
+        </div>
       </div>
 
       {/* Work Experience Popup */}

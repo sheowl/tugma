@@ -18,12 +18,13 @@ import EmployerApplicants from "./pages/EmployerApplicants.jsx";
 import EmployerHomePage from "./pages/EmployerHomePage.jsx";
 import EmployerJobPosts from "./pages/EmployerJobPosts.jsx";
 import ApplicantOnboarding from "./pages/ApplicantOnboarding.jsx";
+import TechnicalSkills from "./components/TechnicalSkills.jsx";
 
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<ApplicantSignIn />} />
+        <Route path="/" element={<LandingPage />} />
         <Route path="/applicant-sign-in" element={<ApplicantSignIn />} />
         <Route path="/employer-sign-in" element={<EmployerSignIn />} />
         <Route path="/applicant-email-registration" element={<ApplicantEmailRegistration />} />
