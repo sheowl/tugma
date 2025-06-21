@@ -4,8 +4,8 @@ from typing import Optional, Dict
 from app.models.enums import CompanySizeEnum
 
 class CompanyBase(BaseModel):
-    company_name: EmailStr
-    company_email: str
+    company_name: str
+    company_email: EmailStr
     location: Optional[str]
     description: Optional[str]
     company_size: Optional[CompanySizeEnum]

@@ -11,7 +11,14 @@ router = APIRouter()
 # Create a new company (employer)
 @router.post("/", response_model=CompanyOut)
 async def create_company(company: CompanyCreate, db: AsyncSession = Depends(get_db)):
-    return await crud.create_company(db, company)
+    try:
+        result = await crud.create_company(db, company)
+        return result
+    except Exception as e:
+        print(f"Error creating company: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 # Get a company by ID
 @router.get("/{company_id}", response_model=CompanyOut)
