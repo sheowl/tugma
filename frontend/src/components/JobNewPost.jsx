@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 
+//POST New Jobs
 const JobNewPost = ({ open, onClose, onSave }) => {
   const [form, setForm] = useState({
     jobTitle: "",
@@ -31,21 +32,37 @@ const JobNewPost = ({ open, onClose, onSave }) => {
     setForm({ ...form, tags: form.tags.filter(t => t !== tag) });
   };
 
+  //POST new jobs
   const handleSubmit = e => {
     e.preventDefault();
-    onSave(form);
-    setForm({
-      jobTitle: "",
-      companyName: "",
-      location: "",
-      salary: "",
-      modality: "",
-      workType: "",
-      description: "",
-      positions: "",
-      tags: [],
-    });
-    setShowTagInput(false);
+    fetch("http://127.0.0.1:8000/api/v1/jobs/jobs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    })
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to post job");
+        return res.json();
+      })
+      .then(data => {
+        if (onSave) onSave(data); // Optionally notify parent
+        setForm({
+          jobTitle: "",
+          companyName: "",
+          location: "",
+          salary: "",
+          modality: "",
+          workType: "",
+          description: "",
+          positions: "",
+          tags: [],
+        });
+        setShowTagInput(false);
+      })
+      .catch(err => {
+        // Optionally show error to user
+        console.error(err);
+      });
   };
 
   if (!open) return null;
