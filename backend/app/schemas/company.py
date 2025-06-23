@@ -4,24 +4,30 @@ from typing import Optional, Dict
 from app.models.enums import CompanySizeEnum
 
 class CompanyBase(BaseModel):
-    company_name: EmailStr
-    company_email: str
-    location: Optional[str]
-    description: Optional[str]
-    company_size: Optional[CompanySizeEnum]
-    employer_profile_picture: Optional[str]
+    company_name: str
+    company_email: EmailStr
+    location: Optional[str] = None
+    description: Optional[str] = None
+    company_size: Optional[CompanySizeEnum] = None
+    employer_profile_picture: Optional[str] = None
     contact_links: Optional[Dict[str, str]] = Field(default_factory=dict)
 
-class CompanyCreate(CompanyBase):
+# Minimal schema for signup - only essential fields
+class CompanySignup(BaseModel):
+    company_name: str
     company_email: EmailStr
     password: str
 
+class CompanyCreate(CompanyBase):
+    password: str
+
 class CompanyUpdate(BaseModel):
-    location: Optional[str]
-    description: Optional[str]
-    company_size: Optional[CompanySizeEnum]
-    employer_profile_picture: Optional[str]
-    contact_links: Optional[Dict[str, str]]
+    company_name: Optional[str] = None
+    location: Optional[str] = None
+    description: Optional[str] = None
+    company_size: Optional[CompanySizeEnum] = None
+    employer_profile_picture: Optional[str] = None
+    contact_links: Optional[Dict[str, str]] = None
 
 class CompanyOut(CompanyBase):
     company_id: int
