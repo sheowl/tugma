@@ -1,8 +1,5 @@
 import React, { useState } from "react";
 
-<<<<<<< HEAD
-//POST New Jobs
-=======
 // Dropdown options
 const modalityOptions = [
   { label: "On-site", value: "on-site" },
@@ -80,7 +77,6 @@ const CustomDropdown = ({
   );
 };
 
->>>>>>> frontend
 const JobNewPost = ({ open, onClose, onSave }) => {
   const [form, setForm] = useState({
     jobTitle: "",
@@ -119,12 +115,7 @@ const JobNewPost = ({ open, onClose, onSave }) => {
     setForm({ ...form, tags: form.tags.filter((t) => t !== tag) });
   };
 
-<<<<<<< HEAD
-  //POST new jobs
-  const handleSubmit = e => {
-=======
   const handleSubmit = (e) => {
->>>>>>> frontend
     e.preventDefault();
     fetch("http://127.0.0.1:8000/api/v1/jobs/jobs", {
       method: "POST",

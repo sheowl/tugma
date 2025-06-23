@@ -2,7 +2,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
-from app.schemas.company import CompanyCreate, CompanyUpdate, CompanyOut
+from app.schemas.company import CompanyCreate, CompanyUpdate, CompanyOut, CompanyOnboardingUpdate
 from app.crud import company as crud
 from app.core.database import get_db
 from app.middleware.auth import get_current_company, get_current_user
@@ -27,14 +27,22 @@ async def create_company(company: CompanyCreate, db: AsyncSession = Depends(get_
 # Protected route - requires JWT authentication
 @router.put("/onboarding")  # ✅ This must come BEFORE /{company_id}
 async def complete_onboarding(
-    company_data: CompanyUpdate,
+    onboarding_data: CompanyOnboardingUpdate,  # ✅ Changed to specific schema
     company_info = Depends(get_current_company),
     db: AsyncSession = Depends(get_db)
 ):
-    """Complete company onboarding - update additional details"""
+    """Complete company onboarding - update location, description, and company_size"""
     try:
         company_id = company_info["db_user"].company_id
-        updated_company = await crud.update_company(db, company_id, company_data)
+        
+        # Convert onboarding data to CompanyUpdate format
+        update_data = CompanyUpdate(
+            location=onboarding_data.location,
+            description=onboarding_data.description,
+            company_size=onboarding_data.company_size
+        )
+        
+        updated_company = await crud.update_company(db, company_id, update_data)
         
         if not updated_company:
             raise HTTPException(status_code=404, detail="Company not found")

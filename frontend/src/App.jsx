@@ -19,7 +19,9 @@ import ApplicantProfile from "./pages/ApplicantProfile.jsx";
 import EmployerApplicants from "./pages/EmployerApplicants.jsx";
 import EmployerHomePage from "./pages/EmployerHomePage.jsx";
 import EmployerJobPosts from "./pages/EmployerJobPosts.jsx";
-<<<<<<< HEAD
+import ApplicantOnboarding from "./pages/ApplicantOnboarding.jsx";
+import EmployerOnboarding from "./pages/EmployerOnboarding.jsx";
+import TechnicalSkills from "./components/TechnicalSkills.jsx";
 // Remove CompanyOnboarding import for now
 
 function App() {
@@ -44,42 +46,12 @@ function App() {
             <Route path="/employerhomepage" element={<EmployerHomePage />} />
             <Route path="/employerapplicants" element={<EmployerApplicants />} />
             <Route path="/employerjobposts" element={<EmployerJobPosts />} />
-            {/* Remove CompanyOnboarding route for now */}
-            {/* <Route path="/company-onboarding" element={<CompanyOnboarding />} /> */}
+            <Route path="/applicantonboarding" element={<ApplicantOnboarding />} />
+            <Route path="/employeronboarding" element={<EmployerOnboarding />} />
           </Routes>
         </div>
       </Router>
     </AuthProvider>
-=======
-import ApplicantOnboarding from "./pages/ApplicantOnboarding.jsx";
-import EmployerOnboarding from "./pages/EmployerOnboarding.jsx";
-import TechnicalSkills from "./components/TechnicalSkills.jsx";
-
-function App() {
-  return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<EmployerSignIn />} />
-        <Route path="/applicant-sign-in" element={<ApplicantSignIn />} />
-        <Route path="/employer-sign-in" element={<EmployerSignIn />} />
-        <Route path="/applicant-email-registration" element={<ApplicantEmailRegistration />} />
-        <Route path="/employer-email-registration" element={<EmployerEmailRegistration />} />
-        <Route path="/empcomreg" element={<EmpComReg />} />
-        <Route path="/appcomreg" element={<AppComReg />} />
-        <Route path="/appverification" element={<AppVerification />} />
-        <Route path="/empverification" element={<EmpVerification />} />
-        <Route path="/applicantbrowsejobs" element={<ApplicantBrowseJobs />} />
-        <Route path="/applicantinbox" element={<ApplicantInbox />} />
-        <Route path="/applicantapplications" element={<ApplicantApplications />} />
-        <Route path="/applicantprofile" element={<ApplicantProfile />} />
-        <Route path="/employerhomepage" element={<EmployerHomePage />} />
-        <Route path="/employerapplicants" element={<EmployerApplicants />} />
-        <Route path="/employerjobposts" element={<EmployerJobPosts />} />
-        <Route path="/applicantonboarding" element={<ApplicantOnboarding />} />
-        <Route path="/employeronboarding" element={<EmployerOnboarding />} />
-      </Routes>
-    </Router>
->>>>>>> frontend
   );
 }
 
