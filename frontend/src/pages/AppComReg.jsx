@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import AppHeader from "../components/AppHeader";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
+import { useNavigate } from "react-router-dom";
 
 const AppComReg = () => {
   const [lastName, setLastName] = useState("");
@@ -10,6 +11,7 @@ const AppComReg = () => {
   const [agreed, setAgreed] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#FEFEFF] font-montserrat pt-32 pb-20 px-4 sm:pt-44 sm:pb-32 sm:px-12 md:pt-[180px] md:pb-[120px] md:px-[240px]">
@@ -152,7 +154,7 @@ const AppComReg = () => {
           <div className="h-6" />
           <button
             type="button"
-            onClick={() => navigate("/employer-sign-in")}
+            onClick={() => navigate("/applicantonboarding")}
             className="max-w-md bg-[#2A4D9B] text-white rounded-2xl hover:bg-[#16367D] transition mt-4 h-[44px] w-[225px] font-semibold text-sm"
           >
             Register
