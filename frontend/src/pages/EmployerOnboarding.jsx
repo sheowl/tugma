@@ -25,10 +25,8 @@ const EmployerOnboarding = () => {
   };
 
   const handleContinue = () => {
-    // Here you would typically validate the form and send data to backend
     console.log('Form data:', formData);
-    // Navigate to next step or employer dashboard
-    navigate('/employerhomepage');
+    navigate('/employer-sign-in');
   };
 
   const companySizeOptions = [
@@ -40,12 +38,12 @@ const EmployerOnboarding = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">         
+    <div className="min-h-screen bg-[#FEFEFF]">         
       <div className="bg-[#F9F9F9] shadow-lg min-h-[128px]">
         <div className="w-full px-0">
-          <div className="flex justify-start items-center">
+          <div className="flex justify-start items-center">            
             <div className="flex items-center mt-10 ml-[112px]">
-              <img src="/src/assets/TugmaLogo.svg" alt="Tugma" className="w-48 h-15" style={{width: '192px', height: '60px'}} />
+              <img src="/src/assets/TugmaLogo.svg" alt="Tugma" className="w-[192px] h-[60px]" />
             </div>
           </div>
         </div>
@@ -60,16 +58,15 @@ const EmployerOnboarding = () => {
           <p className="text-[16px] text-[#3C3B3B] font-semibold">
             Answer a few questions to start posting jobs and finding the right candidates.
           </p>
-        </div>            {/* Form Card */}
-        <div className="bg-[#FEFEFF] rounded-[24px] shadow-2xl mx-auto border border-gray-100" style={{width: '1152px', height: '438px'}}>
-          <h2 className="text-[24px] font-bold text-[#FF8032] mb-10 mt-4 text-center">
+        </div>              
+        {/* Form Card */}
+        <div className="bg-[#FEFEFF] rounded-[24px] shadow-2xl mx-auto border border-gray-100 w-[1152px] h-[438px]">
+          <h2 className="text-[24px] font-bold text-[#FF8032] mb-8 mt-8 text-center">
             Company Information
           </h2>
           
-          <div className="grid grid-cols-2 gap-36">
-            {/* Left Side - Location and Description */}
-            <div className="space-y-8 ml-16">
-              {/* Location Field */}
+          <div className="grid grid-cols-2 gap-16">
+            <div className="space-y-8 ml-24">
               <div>
                 <label className="block text-[16px] font-semibold text-[#3C3B3B] mb-3">
                   Location of the Company
@@ -79,7 +76,7 @@ const EmployerOnboarding = () => {
                   name="location"
                   value={formData.location}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border-2 border-[#6B7280] rounded-[8px] focus:ring-2 focus:ring-[#FF8032] focus:border-[#FF8032] outline-none transition-colors text-[14px]"
+                  className="w-full h-50 px-4 py-3 border-2 border-[#6B7280] rounded-[8px] focus:ring-2 focus:ring-[#FF8032] focus:border-[#FF8032] outline-none transition-colors text-[14px]"
                   placeholder=""
                 />
               </div>
@@ -94,18 +91,17 @@ const EmployerOnboarding = () => {
                   value={formData.description}
                   onChange={handleInputChange}
                   rows="6"
-                  className="w-full px-4 py-3 border-2 border-[#6B7280] rounded-[8px] focus:ring-2 focus:ring-[#FF8032] focus:border-[#FF8032] outline-none transition-colors resize-none text-[14px]"
+                  className="w-full h-[128px] px-4 py-3 border-2 border-[#6B7280] rounded-[8px] focus:ring-2 focus:ring-[#FF8032] focus:border-[#FF8032] outline-none transition-colors resize-none text-[14px]"
                   placeholder=""
                 />
               </div>
             </div>
 
-            {/* Right Side - Company Size */}
             <div>
-              <label className="block text-[16px] font-semibold text-[#3C3B3B] mb-6">
+              <label className="block text-[16px] font-semibold text-[#3C3B3B] mb-6 ml-32">
                 How many people are in your company?
               </label>
-              <div className="space-y-5">
+              <div className="space-y-4 ml-32">
                 {companySizeOptions.map((option) => (
                   <div
                     key={option.value}
@@ -139,19 +135,18 @@ const EmployerOnboarding = () => {
                   </div>
                 ))}
               </div>
-            </div>
+            </div>         
           </div>
         </div>
-
-        {/* Continue Button - Outside the form */}
-        <div className="flex justify-end max-w-4xl mx-auto mt-8">
-          <button
-            onClick={handleContinue}
-            className="bg-[#FF8032] hover:bg-[#e6722d] text-white font-semibold px-8 py-3 rounded-[8px] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#FF8032] focus:ring-offset-2 text-[14px]"
-          >
-            Continue
-          </button>
-        </div>
+      </div>
+      
+      <div className="flex justify-end pr-[220px] mt-4">
+        <button
+          onClick={handleContinue}
+          className="w-[192px] h-[44px] bg-[#FF8032] hover:bg-[#E66F24] text-white font-semibold px-8 py-3 rounded-[8px] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#FF8032] focus:ring-offset-2 text-[14px]"
+        >
+          Continue
+        </button>
       </div>
     </div>
   );

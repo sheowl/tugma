@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import JobCard from '../components/JobCard.jsx';
 import EmployerSideBar from "../components/EmployerSideBar";
 import SearchBar from "../components/SearchBar";
@@ -42,6 +43,7 @@ const filterOptions = [
 ];
 
 const EmployerJobPosts = () => {
+  const navigate = useNavigate();
   const [jobPosts, setJobPosts] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [selectedSort, setSelectedSort] = useState(sortOptions[0].value);
@@ -49,7 +51,6 @@ const EmployerJobPosts = () => {
   const [selectedWorkType, setSelectedWorkType] = useState(null);  const [selectedStatus, setSelectedStatus] = useState(null);
   const [postingDetailsOpen, setPostingDetailsOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
-  const [openDropdownId, setOpenDropdownId] = useState(null);
   
   useEffect(() => {
     const exampleJobPosts = [
@@ -127,11 +128,17 @@ const EmployerJobPosts = () => {
     setSelectedJob(jobData);
     setPostingDetailsOpen(true);
   };
-
   const handleEditJob = () => {
     setPostingDetailsOpen(false);
-    // Add edit job logic here if needed
     console.log('Edit job clicked');
+  };
+
+  const handleViewApplicants = () => {
+    navigate('/employerapplicants', { 
+      state: { 
+        jobPosts: jobPosts 
+      } 
+    });
   };
 
   const getFilteredAndSortedJobs = () => {
@@ -257,9 +264,7 @@ const EmployerJobPosts = () => {
     <div className="min-h-screen bg-[#FF8032] flex items-start overflow-hidden">
       <EmployerSideBar />
       <div className="flex-1 h-screen bg-white rounded-tl-[40px] overflow-y-auto p-2 sm:p-4 md:p-6 shadow-md w-full max-w-full">
-        {/* Custom Header */}
         <div className="flex justify-between items-center p-4 pl-[112px] pr-[118px]">
-          {/* Left Section */}
           <div>            
             <h1 className="text-[48px] font-bold text-[#FF8032] -mb-1 mt-8">Manage Postings</h1>
             <p className="text-[22px] text-[#FF8032] font-semibold">
@@ -277,12 +282,10 @@ const EmployerJobPosts = () => {
                 <span className="text-[#FF8032] font-bold text-[18px] leading-tight">Company Name</span>
                 <span className="text-[#FF8032] italic text-[13px] leading-tight">Company/Business Type</span>
               </div>
-              <i className="bi bi-bell text-[24px] text-[#FF8032]"></i>
             </div>
           </div>
         </div>
 
-        {/* SearchBar placed after the header */}
         <div className="px-[112px] mt-2 mb-2 flex gap-4 items-center">
           <div className="flex-1">
             <SearchBar
@@ -306,10 +309,13 @@ const EmployerJobPosts = () => {
             width="w-80"
             color="#FF8032"
           />
-        </div>          <div className="pl-[112px] pr-[118px] mt-10 mb-10 flex flex-col gap-[20px]">
-          {getFilteredAndSortedJobs().length > 0 ? (
-            getFilteredAndSortedJobs().map(job => (              <JobCard
+        </div>          
+        <div className="pl-[112px] pr-[118px] mt-10 mb-10 flex flex-col gap-[20px]">
+          {getFilteredAndSortedJobs().length > 0 ? (            
+            getFilteredAndSortedJobs().map(job => (              
+            <JobCard
                 key={job.id}
+                id={job.id}
                 jobTitle={job.jobTitle}
                 companyName={job.companyName}
                 location={job.location}
@@ -319,6 +325,7 @@ const EmployerJobPosts = () => {
                 status={job.status}
                 postedDaysAgo={job.postedDaysAgo}
                 onViewDetails={handleViewJobDetails}
+                onViewApplicants={handleViewApplicants}
               />
             ))
           ) : (
@@ -334,7 +341,8 @@ const EmployerJobPosts = () => {
           className="fixed bottom-8 right-8 w-16 h-16 bg-[#FF8032] rounded-full shadow-lg flex items-center justify-center cursor-pointer transition hover:bg-[#ff984d] focus:outline-none z-50"
         >
           <span className="text-white text-[32px] leading-none" style={{ fontWeight: 200 }}>+</span>
-        </button>        <JobNewPost
+        </button>        
+        <JobNewPost
           open={showModal}
           onClose={() => setShowModal(false)}
           onSave={handleAddJob}
