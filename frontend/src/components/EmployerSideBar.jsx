@@ -1,34 +1,36 @@
 import React, { useState } from 'react';
-import { useNavigate, NavLink } from 'react-router-dom';
+import { useNavigate, NavLink, useLocation } from 'react-router-dom';
 import TugmaLogoApplicant from '../assets/TugmaLogoEmployer.svg';
 
 const navItems = [
     { icon: 'bi-house', label: 'Home Page', path: '/EmployerHomePage' },
     { icon: 'bi-clipboard2', label: 'Job Posts', path: '/EmployerJobPosts' },
-    { icon: 'bi-person-rolodex', label: 'Applicants', path: '/EmployerApplicants' },
-    { icon: 'bi-building-gear', label: 'Company' },
+    { icon: 'bi-building-gear', label: 'Company', path: '/EmployerOnboarding'},
 ];
 
 const EmployerSideBar = () => {
-    const [activeIndex, setActiveIndex] = useState(0);
     const navigate = useNavigate();
+    const location = useLocation();
+    
+    // Simple function to determine which menu should be active
+    const getActiveIndex = () => {
+        const currentPath = location.pathname;
+        
+        // If on employerapplicants page, highlight Job Posts
+        if (currentPath === '/employerapplicants') {
+            return 1; // Job Posts index
+        }
+        
+        // Find exact match
+        const foundIndex = navItems.findIndex(item => item.path === currentPath);
+        return foundIndex !== -1 ? foundIndex : 0;
+    };
+
     const handleNavClick = (idx, path) => {
-        setActiveIndex(idx);
         if (path && navigate) {
             navigate(path);
         }
     };
-
-    // Set activeIndex based on current path
-    React.useEffect(() => {
-        if (window && window.location && window.location.pathname) {
-            const currentPath = window.location.pathname;
-            const foundIdx = navItems.findIndex(item => item.path === currentPath);
-            if (foundIdx !== -1 && foundIdx !== activeIndex) {
-                setActiveIndex(foundIdx);
-            }
-        }
-    }, [navigate]);
 
     return (
         <div className="w-[336px] bg-[#FF8032] min-h-screen flex flex-col justify-between items-center pt-14 pb-6">
@@ -43,12 +45,11 @@ const EmployerSideBar = () => {
 
                 {/* Navigation */}
                 <nav className="w-full px-6">
-                    <ul className="flex flex-col gap-[30px] font-bold items-center">
-                        {navItems.map((item, idx) => (
+                    <ul className="flex flex-col gap-[30px] font-bold items-center">                        {navItems.map((item, idx) => (
                             <li
                                 key={item.label}
                                 className={`flex items-center gap-3 px-6 py-3 w-[190px] h-[50px] rounded-[10px] text-base cursor-pointer transition-colors duration-150 ${
-                                    activeIndex === idx
+                                    getActiveIndex() === idx
                                         ? 'bg-white text-[#FF8032]'
                                         : 'text-white hover:bg-[#E66F24]'
                                 }`}

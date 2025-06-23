@@ -102,7 +102,7 @@ const EmployerApplicantHeader = ({
               <i className="bi bi-pencil-fill text-[20px] pl-4"></i>
             </span>
           </h1>
-          <p className="text-[20px] text-[#FF873F] font-semibold mt-1">
+          <p className="text-[20px] text-[#FF873F] font-semibold -mt-2">
             Total Applicants: <span className="italic">{totalApplicants}</span>
           </p>
         </div>
@@ -117,12 +117,13 @@ const EmployerApplicantHeader = ({
               <div className="w-8 h-8 rounded-full bg-[#FFE3D2] flex items-center justify-center">
                 <span className="text-[#FF8032] text-lg font-bold">?</span>
               </div>
-            )}
-            <div className="text-right text-[#FF8032]">
-              <div className="text-[14px] font-bold">{companyName}</div>
-              <div className="text-[12px] font-opensans italic">
-                {companyType}
+            )}            
+            <div className="text-right text-[#FF8032] flex items-center gap-2">
+              <div>
+                <div className="text-[14px] font-bold">{companyName}</div>
+                <div className="text-[12px] font-opensans italic">{companyType}</div>
               </div>
+              <i className="bi bi-bell text-[24px]"></i>
             </div>
           </div>
           {/* Dropdown Buttons */}

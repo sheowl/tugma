@@ -4,6 +4,7 @@ import EmployerSideBar from "../components/EmployerSideBar";
 import SearchBar from "../components/SearchBar";
 import JobNewPost from "../components/JobNewPost";
 import Dropdown from "../components/Dropdown";
+import EmployerPostingDetails from "../components/EmployerPostingDetails";
 
 // --- Dropdown options for custom content ---
 const sortOptions = [
@@ -40,32 +41,16 @@ const filterOptions = [
   },
 ];
 
-const PostNewJobCard = ({ onClick }) => (
-  <button
-    onClick={onClick}
-    className="bg-[#FF8032] rounded-[20px] shadow-all-around flex flex-col items-center justify-center cursor-pointer transition hover:bg-[#ff984d] focus:outline-none"
-    style={{
-      width: 304,
-      minHeight: 330,
-      maxWidth: 304,
-      minWidth: 304,
-      height: 330,
-      marginBottom: 0,
-    }}
-  >
-    <span className="text-white text-[64px] leading-none mb-2" style={{ fontWeight: 300 }}>+</span>
-    <span className="text-white text-[24px] font-bold">Post New Job</span>
-  </button>
-);
-
 const EmployerJobPosts = () => {
   const [jobPosts, setJobPosts] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [selectedSort, setSelectedSort] = useState(sortOptions[0].value);
   const [selectedModality, setSelectedModality] = useState(null);
-  const [selectedWorkType, setSelectedWorkType] = useState(null);
-  const [selectedStatus, setSelectedStatus] = useState(null);
-
+  const [selectedWorkType, setSelectedWorkType] = useState(null);  const [selectedStatus, setSelectedStatus] = useState(null);
+  const [postingDetailsOpen, setPostingDetailsOpen] = useState(false);
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [openDropdownId, setOpenDropdownId] = useState(null);
+  
   useEffect(() => {
     const exampleJobPosts = [
       {
@@ -75,7 +60,7 @@ const EmployerJobPosts = () => {
         location: "Sta Mesa, Manila",
         type: "On-Site",
         employment: "Full-Time",
-        description: "Develop and maintain web applications using React and Node.js.",
+        description: "Develop and maintain web applications using React and Node.js. Develop and maintain web applications using React and Node.js. Develop and maintain web applications using React and Node.js. Develop and maintain web applications using React and Node.js. Develop and maintain web applications using React and Node.js. Develop and maintain web applications using React and Node.js. Develop and maintain web applications using React and Node.js. Develop and maintain web applications using React and Node.js.",
         status: "Active",
         postedDaysAgo: 3,
       },
@@ -90,11 +75,42 @@ const EmployerJobPosts = () => {
         status: "Archived",
         postedDaysAgo: 7,
       },
+      {
+        id: 3,
+        jobTitle: "Data Analyst",
+        companyName: "Analytics Corp",
+        location: "BGC, Taguig",
+        type: "Hybrid",
+        employment: "Full-Time",
+        description: "Analyze data trends and create reports for business insights.",
+        status: "Active",
+        postedDaysAgo: 1,
+      },
+      {
+        id: 4,
+        jobTitle: "Marketing Intern",
+        companyName: "Digital Marketing Agency",
+        location: "Ortigas, Pasig",
+        type: "On-Site",
+        employment: "Internship",
+        description: "Support marketing campaigns and learn digital marketing strategies.",
+        status: "Active",
+        postedDaysAgo: 5,
+      },
+      {
+        id: 5,
+        jobTitle: "Backend Developer",
+        companyName: "Server Solutions",
+        location: "Alabang, Muntinlupa",
+        type: "Remote",
+        employment: "Contractual",
+        description: "Build and maintain server-side applications and APIs.",
+        status: "Archived",
+        postedDaysAgo: 10,
+      },
     ];
     setJobPosts(exampleJobPosts);
-  }, []);
-
-  const handleAddJob = (job) => {
+  }, []);  const handleAddJob = (job) => {
     setJobPosts([
       {
         ...job,
@@ -107,7 +123,67 @@ const EmployerJobPosts = () => {
     setShowModal(false);
   };
 
-  // --- Custom dropdown content for Sort ---
+  const handleViewJobDetails = (jobData) => {
+    setSelectedJob(jobData);
+    setPostingDetailsOpen(true);
+  };
+
+  const handleEditJob = () => {
+    setPostingDetailsOpen(false);
+    // Add edit job logic here if needed
+    console.log('Edit job clicked');
+  };
+
+  const getFilteredAndSortedJobs = () => {
+    let filteredJobs = jobPosts;
+
+    // Apply filters
+    if (selectedModality) {
+      filteredJobs = filteredJobs.filter(job => {
+        const jobType = job.type.toLowerCase();
+        return jobType === selectedModality || 
+               (selectedModality === 'on-site' && jobType === 'on-site') ||
+               (selectedModality === 'hybrid' && jobType === 'hybrid') ||
+               (selectedModality === 'remote' && jobType === 'remote');
+      });
+    }
+
+    if (selectedWorkType) {
+      filteredJobs = filteredJobs.filter(job => {
+        const jobEmployment = job.employment.toLowerCase();
+        return jobEmployment === selectedWorkType ||
+               (selectedWorkType === 'full-time' && jobEmployment === 'full-time') ||
+               (selectedWorkType === 'part-time' && jobEmployment === 'part-time') ||
+               (selectedWorkType === 'contractual' && jobEmployment === 'contractual') ||
+               (selectedWorkType === 'internship' && jobEmployment === 'internship');
+      });
+    }
+
+    if (selectedStatus) {
+      filteredJobs = filteredJobs.filter(job => 
+        job.status.toLowerCase() === selectedStatus
+      );
+    }
+
+    // Apply sorting
+    const sortedJobs = [...filteredJobs].sort((a, b) => {
+      switch (selectedSort) {
+        case 'az':
+          return a.jobTitle.localeCompare(b.jobTitle);
+        case 'za':
+          return b.jobTitle.localeCompare(a.jobTitle);
+        case 'newest':
+          return a.postedDaysAgo - b.postedDaysAgo;
+        case 'oldest':
+          return b.postedDaysAgo - a.postedDaysAgo;
+        default:
+          return 0;
+      }
+    });
+
+    return sortedJobs;
+  };
+
   const sortContent = (
     <div className="flex flex-col">
       {sortOptions.map(opt => (
@@ -184,24 +260,30 @@ const EmployerJobPosts = () => {
         {/* Custom Header */}
         <div className="flex justify-between items-center p-4 pl-[112px] pr-[118px]">
           {/* Left Section */}
-          <div>
-            <h1 className="text-[48px] font-bold text-[#FF8032] mb-1 mt-8">Manage Postings</h1>
+          <div>            
+            <h1 className="text-[48px] font-bold text-[#FF8032] -mb-1 mt-8">Manage Postings</h1>
             <p className="text-[22px] text-[#FF8032] font-semibold">
-              Jobs Posted: <span className="italic">{jobPosts.length}</span>
+              Jobs Posted: <span className="italic">{getFilteredAndSortedJobs().length}</span>
+              {jobPosts.length !== getFilteredAndSortedJobs().length && (
+                <span> / {jobPosts.length}</span>
+              )}
             </p>
-          </div>
+          </div>          
           {/* Right Section */}
           <div className="flex items-center gap-3">
             <span className="w-10 h-10 rounded-full bg-[#FF8032]/20 block"></span>
-            <div className="flex flex-col">
-              <span className="text-[#FF8032] font-bold text-[18px] leading-tight">Company Name</span>
-              <span className="text-[#FF8032] italic text-[13px] leading-tight">Company/Business Type</span>
+            <div className="flex items-center gap-2">
+              <div className="flex flex-col">
+                <span className="text-[#FF8032] font-bold text-[18px] leading-tight">Company Name</span>
+                <span className="text-[#FF8032] italic text-[13px] leading-tight">Company/Business Type</span>
+              </div>
+              <i className="bi bi-bell text-[24px] text-[#FF8032]"></i>
             </div>
           </div>
         </div>
 
         {/* SearchBar placed after the header */}
-        <div className="px-[112px] mt-6 mb-2 flex gap-4 items-center">
+        <div className="px-[112px] mt-2 mb-2 flex gap-4 items-center">
           <div className="flex-1">
             <SearchBar
               mode="employer"
@@ -224,13 +306,9 @@ const EmployerJobPosts = () => {
             width="w-80"
             color="#FF8032"
           />
-        </div>
-
-        <div className="pl-[112px] pr-[118px] mt-10 mb-10 flex flex-wrap gap-[33px] justify-center">
-          <PostNewJobCard onClick={() => setShowModal(true)} />
-          {jobPosts.length > 0 ? (
-            jobPosts.map(job => (
-              <JobCard
+        </div>          <div className="pl-[112px] pr-[118px] mt-10 mb-10 flex flex-col gap-[20px]">
+          {getFilteredAndSortedJobs().length > 0 ? (
+            getFilteredAndSortedJobs().map(job => (              <JobCard
                 key={job.id}
                 jobTitle={job.jobTitle}
                 companyName={job.companyName}
@@ -240,16 +318,34 @@ const EmployerJobPosts = () => {
                 description={job.description}
                 status={job.status}
                 postedDaysAgo={job.postedDaysAgo}
+                onViewDetails={handleViewJobDetails}
               />
             ))
           ) : (
-            <div>No job posts found.</div>
+            <div className="text-center text-[#6B7280] text-[16px] py-8">
+              No job posts match the selected filters.
+            </div>
           )}
         </div>
-        <JobNewPost
+        
+        {/* Floating Add Button */}
+        <button
+          onClick={() => setShowModal(true)}
+          className="fixed bottom-8 right-8 w-16 h-16 bg-[#FF8032] rounded-full shadow-lg flex items-center justify-center cursor-pointer transition hover:bg-[#ff984d] focus:outline-none z-50"
+        >
+          <span className="text-white text-[32px] leading-none" style={{ fontWeight: 200 }}>+</span>
+        </button>        <JobNewPost
           open={showModal}
           onClose={() => setShowModal(false)}
           onSave={handleAddJob}
+        />
+        
+        {/* Employer Posting Details Drawer */}
+        <EmployerPostingDetails
+          open={postingDetailsOpen}
+          onClose={() => setPostingDetailsOpen(false)}
+          job={selectedJob}
+          onEdit={handleEditJob}
         />
       </div>
     </div>

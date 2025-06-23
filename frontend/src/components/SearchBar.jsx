@@ -29,7 +29,6 @@ const SearchBar = ({ onSearch, mode = "applicant" }) => {
       />
       <button
         type="submit"
-        className={`flex items-center gap-2 ${buttonColor} text-white font-bold rounded-[12px] px-8 py-3 text-[18px] transition`}
       >
         <FiSearch size={22} />
         Search
