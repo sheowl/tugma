@@ -1,17 +1,18 @@
-﻿from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession  # Fixed: removed the extra 'l'
+﻿from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
 from app.schemas.company import CompanyCreate, CompanyUpdate, CompanyOut
 from app.crud import company as crud
 from app.core.database import get_db
-from app.middleware.auth import get_current_company
+from app.middleware.auth import get_current_company, get_current_user
 
 router = APIRouter()
 
-# Create a new company (employer)
+# Public route - no authentication needed
 @router.post("/", response_model=CompanyOut)
 async def create_company(company: CompanyCreate, db: AsyncSession = Depends(get_db)):
+    """Public endpoint for creating company (used by auth signup)"""
     try:
         result = await crud.create_company(db, company)
         return result
@@ -21,36 +22,10 @@ async def create_company(company: CompanyCreate, db: AsyncSession = Depends(get_
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
-# Get a company by ID
-@router.get("/{company_id}", response_model=CompanyOut)
-async def get_company(company_id: int, db: AsyncSession = Depends(get_db)):
-    company = await crud.get_company_by_id(db, company_id)
-    if not company:
-        raise HTTPException(status_code=404, detail="Company not found")
-    return company
+# SPECIFIC ROUTES FIRST - Put these BEFORE parameterized routes
 
-# Update company profile
-@router.put("/{company_id}", response_model=CompanyOut)
-async def update_company(
-    company_id: int,
-    updates: CompanyUpdate,
-    db: AsyncSession = Depends(get_db)
-):
-    updated = await crud.update_company(db, company_id, updates)
-    if not updated:
-        raise HTTPException(status_code=404, detail="Company not found")
-    return updated
-
-# Delete company profile (optional)
-@router.delete("/{company_id}")
-async def delete_company(company_id: int, db: AsyncSession = Depends(get_db)):
-    success = await crud.delete_company(db, company_id)
-    if not success:
-        raise HTTPException(status_code=404, detail="Company not found")
-    return {"detail": "Company deleted successfully"}
-
-# Complete company onboarding - update additional details
-@router.put("/onboarding")
+# Protected route - requires JWT authentication
+@router.put("/onboarding")  # ✅ This must come BEFORE /{company_id}
 async def complete_onboarding(
     company_data: CompanyUpdate,
     company_info = Depends(get_current_company),
@@ -59,8 +34,6 @@ async def complete_onboarding(
     """Complete company onboarding - update additional details"""
     try:
         company_id = company_info["db_user"].company_id
-        
-        # Update company with onboarding data
         updated_company = await crud.update_company(db, company_id, company_data)
         
         if not updated_company:
@@ -75,15 +48,13 @@ async def complete_onboarding(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-# Check if company needs to complete onboarding
-@router.get("/onboarding-status")
+@router.get("/onboarding-status")  # ✅ This must come BEFORE /{company_id}
 async def get_onboarding_status(
     company_info = Depends(get_current_company)
 ):
     """Check if company needs to complete onboarding"""
     company = company_info["db_user"]
     
-    # Check if essential onboarding fields are filled
     needs_onboarding = not all([
         company.location,
         company.description,
@@ -99,4 +70,81 @@ async def get_onboarding_status(
             "employer_profile_picture": bool(company.employer_profile_picture)
         }
     }
+
+@router.get("/me/profile", response_model=CompanyOut)  # ✅ This must come BEFORE /{company_id}
+async def get_my_company_profile(
+    company_info = Depends(get_current_company)
+):
+    """Get authenticated company's own profile"""
+    return company_info["db_user"]
+
+@router.put("/me/profile", response_model=CompanyOut)  # ✅ This must come BEFORE /{company_id}
+async def update_my_company_profile(
+    updates: CompanyUpdate,
+    company_info = Depends(get_current_company),
+    db: AsyncSession = Depends(get_db)
+):
+    """Update authenticated company's own profile"""
+    try:
+        company_id = company_info["db_user"].company_id
+        updated_company = await crud.update_company(db, company_id, updates)
+        
+        if not updated_company:
+            raise HTTPException(status_code=404, detail="Company not found")
+        
+        return updated_company
+        
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# PARAMETERIZED ROUTES LAST - Put these AFTER specific routes
+
+# Public route - no authentication needed
+@router.get("/{company_id}", response_model=CompanyOut)  # ✅ Now this comes after specific routes
+async def get_company(company_id: int, db: AsyncSession = Depends(get_db)):
+    """Get company profile (public for job seekers to view)"""
+    company = await crud.get_company_by_id(db, company_id)
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    return company
+
+# Protected route - requires authentication + ownership
+@router.put("/{company_id}", response_model=CompanyOut)  # ✅ Now this comes after specific routes
+async def update_company(
+    company_id: int,
+    updates: CompanyUpdate,
+    company_info = Depends(get_current_company),
+    db: AsyncSession = Depends(get_db)
+):
+    """Update company profile (only by authenticated company owner)"""
+    authenticated_company_id = company_info["db_user"].company_id
+    if authenticated_company_id != company_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, 
+            detail="You can only update your own company profile"
+        )
+    
+    updated = await crud.update_company(db, company_id, updates)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Company not found")
+    return updated
+
+@router.delete("/{company_id}")  # ✅ Now this comes after specific routes
+async def delete_company(
+    company_id: int, 
+    company_info = Depends(get_current_company),
+    db: AsyncSession = Depends(get_db)
+):
+    """Delete company profile (only by authenticated company owner)"""
+    authenticated_company_id = company_info["db_user"].company_id
+    if authenticated_company_id != company_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, 
+            detail="You can only delete your own company profile"
+        )
+    
+    success = await crud.delete_company(db, company_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Company not found")
+    return {"detail": "Company deleted successfully"}
 
