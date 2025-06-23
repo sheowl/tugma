@@ -10,11 +10,11 @@ class MainFieldEnum(str, Enum):
 
 
 class CompanySizeEnum(str, Enum):
-    me = "Me"
-    micro = "Micro"
-    small = "Small"
-    medium = "Medium"
-    large = "Large"
+    Me = "Me"
+    Micro = "Micro"
+    Small = "Small"
+    Medium = "Medium"
+    Large = "Large"
 
 
 class WorkSettingEnum(str, Enum):

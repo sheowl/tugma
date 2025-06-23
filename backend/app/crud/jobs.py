@@ -35,3 +35,13 @@ async def update_job(db: AsyncSession, job_id: int, job_update: JobUpdate) -> Op
         await db.refresh(job)
     return job
 
+async def delete_job(db: AsyncSession, job_id: int) -> bool:
+    result = await db.execute(select(Job).where(Job.job_id == job_id))
+    job = result.scalars().first()
+    
+    if job:
+        await db.delete(job)
+        await db.commit()
+        return True
+    return False
+
