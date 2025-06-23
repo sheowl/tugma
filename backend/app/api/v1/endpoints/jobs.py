@@ -8,7 +8,7 @@ from app.core.database import get_db
 from app.schemas.jobs import JobCreate, JobUpdate, JobOut
 from app.crud import jobs as crud
 
-router = APIRouter(prefix="/jobs", tags=["Jobs"])
+router = APIRouter(prefix="/jobs", tags=["jobs"])
 
 # Create a job
 @router.post("/", response_model=JobOut)
