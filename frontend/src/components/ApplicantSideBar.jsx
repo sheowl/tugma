@@ -4,7 +4,6 @@ import TugmaLogoApplicant from '../assets/TugmaLogoApplicant.svg';
 
 const navItems = [
   { name: 'Browse Jobs', icon: 'bi-search', path: '/applicantbrowsejobs' },
-  { name: 'Inbox', icon: 'bi-inbox-fill', path: '/applicantinbox' },
   { name: 'Applications', icon: 'bi-briefcase-fill', path: '/applicantapplications' },
   { name: 'Profile', icon: 'bi-person-fill', path: '/applicantprofile' },
 ];
