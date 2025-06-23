@@ -40,3 +40,11 @@ async def update_job(job_id: int, job_update: JobUpdate, db: AsyncSession = Depe
     if not updated_job:
         raise HTTPException(status_code=404, detail="Job not found")
     return updated_job
+
+# Delete a job
+@router.delete("/{job_id}")
+async def delete_job(job_id: int, db: AsyncSession = Depends(get_db)):
+    success = await crud.delete_job(db, job_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return {"message": "Job deleted successfully"}
