@@ -1,5 +1,6 @@
-﻿from sqlalchemy import Integer, String, Text, Enum, JSON, ForeignKey, Boolean, Date
+﻿from sqlalchemy import Integer, String, Text, JSON, ForeignKey, Boolean, Date
 from sqlalchemy.orm import relationship, Mapped, mapped_column
+from sqlalchemy.dialects.postgresql import ENUM
 from app.models.base import Base
 from app.models.enums import MainFieldEnum, WorkSettingEnum, WorkTypeEnum
 from datetime import date
@@ -8,7 +9,7 @@ class Applicant(Base):
     __tablename__ = "Applicant"
 
     applicant_id: Mapped[int] = mapped_column(primary_key=True)
-    email: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    applicant_email: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     first_name: Mapped[str] = mapped_column(String, nullable=False)
     last_name: Mapped[str] = mapped_column(String, nullable=False)
     password: Mapped[str] = mapped_column(String, nullable=False)
@@ -18,9 +19,9 @@ class Applicant(Base):
     university: Mapped[str] = mapped_column(String, nullable=True)
     degree: Mapped[str] = mapped_column(String, nullable=True)
     year_graduated: Mapped[int] = mapped_column(Integer, nullable=True)
-    field: Mapped[MainFieldEnum] = mapped_column(Enum(MainFieldEnum), nullable=True)
-    preferred_worksetting: Mapped[WorkSettingEnum] = mapped_column(Enum(WorkSettingEnum), nullable=True)
-    preferred_worktype: Mapped[WorkTypeEnum] = mapped_column(Enum(WorkTypeEnum), nullable=True)
+    field: Mapped[MainFieldEnum] = mapped_column(ENUM('Software Development', 'Infrastructure & System', 'AI/ML', 'Data Science', 'Cybersecurity', 'UI/UX', name="main_field_enum"), nullable=True)
+    preferred_worksetting: Mapped[WorkSettingEnum] = mapped_column(ENUM('hybrid', 'remote', 'onsite', name="worksetting_enum"), nullable=True)
+    preferred_worktype: Mapped[WorkTypeEnum] = mapped_column(ENUM('part-time', 'fulltime', 'contractual', 'internship', name="worktype_enum"), nullable=True)
     applicant_profile_picture: Mapped[str] = mapped_column(Text, nullable=True)
     social_links: Mapped[dict] = mapped_column(JSON, nullable=True)
 

@@ -12,8 +12,10 @@ class JobApplicationCreate(JobApplicationBase):
     applicant_id: int
     job_id: int
 
-class JobApplicationUpdate(JobApplicationBase):
-    pass
+class JobApplicationUpdate(BaseModel):
+    status: Optional[str] = None
+    remarks: Optional[str] = None
+    # Don't include created_at - it should never be updated
 
 class JobApplicationOut(JobApplicationBase):
     applicant_id: int

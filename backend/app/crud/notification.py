@@ -5,10 +5,20 @@ from sqlalchemy.future import select
 from app.models.notification import Notification
 from app.schemas.notification import NotificationCreate
 from typing import List, Optional
+from datetime import datetime
 
 
 async def create_notification(session: AsyncSession, notification: NotificationCreate) -> Notification:
-    db_notification = Notification(**notification.dict())
+    notification_data = notification.dict()
+    
+    # Handle timezone-aware datetime
+    if 'created_at' in notification_data and notification_data['created_at'] is not None:
+        created_at = notification_data['created_at']
+        if hasattr(created_at, 'tzinfo') and created_at.tzinfo is not None:
+            # Convert timezone-aware to timezone-naive
+            notification_data['created_at'] = created_at.replace(tzinfo=None)
+    
+    db_notification = Notification(**notification_data)
     session.add(db_notification)
     await session.commit()
     await session.refresh(db_notification)

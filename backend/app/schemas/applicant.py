@@ -43,10 +43,25 @@ class ApplicantUpdate(BaseModel):
     social_links: Optional[Dict[str, str]] = None
 
 # For responses
-class ApplicantOut(ApplicantBase):
+class ApplicantOut(BaseModel):
     applicant_id: int
+    applicant_email: str
+    first_name: str
+    last_name: str
+    current_address: Optional[str] = None
+    contact_number: Optional[str] = None
+    telephone_number: Optional[str] = None
+    university: Optional[str] = None
+    degree: Optional[str] = None
+    year_graduated: Optional[int] = None
+    field: Optional[MainFieldEnum] = None
+    preferred_worksetting: Optional[WorkSettingEnum] = None
+    preferred_worktype: Optional[WorkTypeEnum] = None
+    applicant_profile_picture: Optional[str] = None
+    social_links: Optional[dict] = None
 
-    model_config = {"from_attributes": True}
+    class Config:
+        from_attributes = True  # For Pydantic v2, use from_attributes instead of orm_mode
 
 # Applicant Work Experience
 class ApplicantWorkExperienceBase(BaseModel):

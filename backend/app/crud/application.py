@@ -2,6 +2,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
+from datetime import datetime
 
 from app.models.application import JobApplication, JobMatching
 from app.schemas.application import JobApplicationCreate, JobApplicationUpdate
@@ -9,7 +10,17 @@ from app.models.jobs import Job
 
 # Submit a new job application
 async def create_job_application(db: AsyncSession, app_in: JobApplicationCreate) -> JobApplication:
-    application = JobApplication(**app_in.model_dump())
+    # Convert the data and handle created_at manually
+    app_data = app_in.model_dump(exclude={'created_at'})  # Exclude created_at from the input
+    
+    application = JobApplication(
+        applicant_id=app_data.get('applicant_id'),
+        job_id=app_data.get('job_id'),
+        status=app_data.get('status'),
+        remarks=app_data.get('remarks'),
+        created_at=datetime.utcnow()  # Use timezone-naive datetime
+    )
+    
     db.add(application)
     await db.commit()
     await db.refresh(application)
@@ -43,7 +54,10 @@ async def update_application_status(
     if not application:
         return None
 
-    for field, value in update_data.model_dump(exclude_unset=True).items():
+    # Exclude created_at from updates since it shouldn't be modified
+    for field, value in update_data.model_dump(exclude_unset=True, exclude={'created_at'}).items():
+        if field == 'created_at':
+            continue  # Skip created_at field
         setattr(application, field, value)
 
     await db.commit()
