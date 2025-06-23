@@ -12,7 +12,7 @@ const SearchBar = ({ onSearch, mode = "applicant" }) => {
   // Determine placeholder and styles based on mode
   const isEmployerMode = mode === "employer";
   const placeholderText = isEmployerMode
-    ? "Search for applicants..."
+    ? "What job are you looking for?"
     : "What job are you looking for?";
   const buttonColor = isEmployerMode
     ? "bg-[#FF8032] hover:bg-[#ff984d]" // Employer mode: Blue
@@ -29,6 +29,7 @@ const SearchBar = ({ onSearch, mode = "applicant" }) => {
       />
       <button
         type="submit"
+        className={`w-[222px] flex items-center gap-2 ${buttonColor} text-white font-bold rounded-[12px] px-16 py-3 text-[18px] transition`}
       >
         <FiSearch size={22} />
         Search
