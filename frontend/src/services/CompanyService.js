@@ -1,6 +1,6 @@
 import AuthService from './AuthService';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
 
 class CompanyService {
     // Onboarding operations
@@ -23,10 +23,27 @@ class CompanyService {
         return response.json();
     }
 
-    // Profile operations
+    // Dashboard operations
+    async getDashboardStats() {
+        const response = await AuthService.makeAuthenticatedRequest(
+            `${API_BASE_URL}/v1/companies/dashboard/stats`,
+            { method: "GET" }
+        );
+        return response.json();
+    }
+
+    async getRecentApplicants(limit = 3) {
+        const response = await AuthService.makeAuthenticatedRequest(
+            `${API_BASE_URL}/v1/companies/dashboard/recent-applicants?limit=${limit}`,
+            { method: "GET" }
+        );
+        return response.json();
+    }
+
+    // Profile operations - Fix the URL
     async getProfile() {
         const response = await AuthService.makeAuthenticatedRequest(
-            `${API_BASE_URL}/v1/companies/me/profile`,
+            `${API_BASE_URL}/v1/companies/me/profile`,  // ✅ Change 'company' to 'companies'
             { method: "GET" }
         );
         return response.json();
@@ -34,7 +51,7 @@ class CompanyService {
 
     async updateProfile(data) {
         const response = await AuthService.makeAuthenticatedRequest(
-            `${API_BASE_URL}/v1/companies/me/profile`,
+            `${API_BASE_URL}/v1/companies/me/profile`,  // ✅ Fixed: changed from company to companies
             {
                 method: "PUT",
                 body: JSON.stringify(data),

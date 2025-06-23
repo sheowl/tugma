@@ -138,12 +138,12 @@ const EmployerOnboarding = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">         
+    <div className="min-h-screen bg-[#FEFEFF]">         
       <div className="bg-[#F9F9F9] shadow-lg min-h-[128px]">
         <div className="w-full px-0">
-          <div className="flex justify-start items-center">
+          <div className="flex justify-start items-center">            
             <div className="flex items-center mt-10 ml-[112px]">
-              <img src="/src/assets/TugmaLogo.svg" alt="Tugma" className="w-48 h-15" style={{width: '192px', height: '60px'}} />
+              <img src="/src/assets/TugmaLogo.svg" alt="Tugma" className="w-[192px] h-[60px]" />
             </div>
           </div>
         </div>
@@ -174,10 +174,8 @@ const EmployerOnboarding = () => {
             Company Information
           </h2>
           
-          <div className="grid grid-cols-2 gap-36">
-            {/* Left Side - Location and Description */}
-            <div className="space-y-8 ml-16">
-              {/* Location Field */}
+          <div className="grid grid-cols-2 gap-16">
+            <div className="space-y-8 ml-24">
               <div>
                 <label className="block text-[16px] font-semibold text-[#3C3B3B] mb-3">
                   Location of the Company *
@@ -212,12 +210,11 @@ const EmployerOnboarding = () => {
               </div>
             </div>
 
-            {/* Right Side - Company Size */}
             <div>
               <label className="block text-[16px] font-semibold text-[#3C3B3B] mb-6">
                 How many people are in your company? *
               </label>
-              <div className="space-y-5">
+              <div className="space-y-4 ml-32">
                 {companySizeOptions.map((option) => (
                   <div
                     key={option.value}
@@ -252,7 +249,7 @@ const EmployerOnboarding = () => {
                   </div>
                 ))}
               </div>
-            </div>
+            </div>         
           </div>
         </div>
 

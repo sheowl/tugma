@@ -15,6 +15,7 @@ const JobCard = (props) => {
     onAction = () => {},
     actionLabel = "Action",
     onViewDetails = () => {},
+    onViewApplicants = () => {},
     dropdownOpen = false,
     onDropdownToggle = () => {},
     onCardHover = () => {},  } = props;
@@ -31,7 +32,9 @@ const JobCard = (props) => {
     : [
         { label: "Edit", value: "edit" },
         { label: "Restore", value: "restore" },
-        { label: "Delete", value: "delete" },      ];
+        { label: "Delete", value: "delete" },      
+      ];
+
   const handleActionClick = () => {
     onDropdownToggle(id);
   };
@@ -42,7 +45,7 @@ const JobCard = (props) => {
       onAction(option);
     }
   };  const handleViewApplicants = () => {
-    navigate('/employerapplicants');
+    onViewApplicants();
   };
 
   const handleViewPostingDetails = () => {
@@ -105,7 +108,8 @@ const JobCard = (props) => {
               type="button"
             >
               {actionLabel} <i className="bi bi-caret-down-fill text-[16px]" />
-            </button>            {dropdownOpen && (
+            </button>            
+            {dropdownOpen && (
               <div className="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded shadow z-[100]">
                 {actionOptions.map((option) => (
                   <div
@@ -117,12 +121,14 @@ const JobCard = (props) => {
                   </div>
                 ))}
               </div>
-            )}</div>          <button 
+            )}</div>          
+            <button 
             className="w-[144px] h-[32px] bg-transparent text-white px-5 py-3 rounded-lg text-[12px] text-[#FF8032] font-semibold border-2 border-[#FF8032] font-semibold hover:bg-[#FF8032] hover:text-white transition-colors flex items-center gap-2"
             onClick={handleViewApplicants}
           >
             View Applicants
-          </button>        </div>
+          </button>        
+          </div>
       </div>
     </div>
   );

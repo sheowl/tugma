@@ -115,6 +115,21 @@ export const AuthProvider = ({ children }) => {
     return await CompanyService.getOnboardingStatus();
   };
 
+  // Company dashboard methods
+  const getDashboardStats = async () => {
+    if (!isEmployer()) {
+      throw new Error('Only employers can access dashboard stats');
+    }
+    return await CompanyService.getDashboardStats();
+  };
+
+  const getRecentApplicants = async (limit = 3) => {
+    if (!isEmployer()) {
+      throw new Error('Only employers can access recent applicants');
+    }
+    return await CompanyService.getRecentApplicants(limit);
+  };
+
   const value = {
     // State
     user,
@@ -144,6 +159,10 @@ export const AuthProvider = ({ children }) => {
     updateCompanyProfile,
     completeOnboarding,
     getOnboardingStatus,
+    
+    // Company dashboard methods
+    getDashboardStats,
+    getRecentApplicants,
   };
 
   return (

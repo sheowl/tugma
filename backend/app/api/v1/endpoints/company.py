@@ -156,3 +156,49 @@ async def delete_company(
         raise HTTPException(status_code=404, detail="Company not found")
     return {"detail": "Company deleted successfully"}
 
+@router.get("/dashboard/stats")  # Add this new endpoint
+async def get_company_dashboard_stats(
+    company_info = Depends(get_current_company),
+    db: AsyncSession = Depends(get_db)
+):
+    """Get dashboard statistics for authenticated company"""
+    try:
+        company_id = company_info["db_user"].company_id
+        
+        # Get stats using CRUD functions
+        stats = await crud.get_company_dashboard_stats(db, company_id)
+        
+        return {
+            "active_jobs": stats["active_jobs"],
+            "total_applications": stats["total_applications"],
+            "pending_reviews": stats["pending_reviews"],
+            "company_info": {
+                "company_name": company_info["db_user"].company_name,
+                "company_size": company_info["db_user"].company_size,
+                "location": company_info["db_user"].location
+            }
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/dashboard/recent-applicants")  # Add this new endpoint
+async def get_recent_applicants(
+    limit: int = 3,
+    company_info = Depends(get_current_company),
+    db: AsyncSession = Depends(get_db)
+):
+    """Get recent applicants for authenticated company"""
+    try:
+        company_id = company_info["db_user"].company_id
+        
+        # Get recent applicants using CRUD function
+        recent_applicants = await crud.get_recent_applicants(db, company_id, limit)
+        
+        return {
+            "recent_applicants": recent_applicants
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
