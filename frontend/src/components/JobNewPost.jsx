@@ -77,10 +77,7 @@ const CustomDropdown = ({
   );
 };
 
-<<<<<<< HEAD
-=======
 //POST New Jobs
->>>>>>> origin/applicant-el
 const JobNewPost = ({ open, onClose, onSave }) => {
   const [form, setForm] = useState({
     jobTitle: "",
@@ -119,11 +116,7 @@ const JobNewPost = ({ open, onClose, onSave }) => {
     setForm({ ...form, tags: form.tags.filter((t) => t !== tag) });
   };
 
-<<<<<<< HEAD
   const handleSubmit = (e) => {
-=======
-  const handleSubmit = e => {
->>>>>>> origin/applicant-el
     e.preventDefault();
     fetch("http://127.0.0.1:8000/api/v1/jobs/jobs", {
       method: "POST",
@@ -135,7 +128,7 @@ const JobNewPost = ({ open, onClose, onSave }) => {
         return res.json();
       })
       .then(data => {
-        if (onSave) onSave(data); // Optionally notify parent
+        if (onSave) onSave(data);
         setForm({
           jobTitle: "",
           companyName: "",
@@ -150,7 +143,6 @@ const JobNewPost = ({ open, onClose, onSave }) => {
         setShowTagInput(false);
       })
       .catch(err => {
-        // Optionally show error to user
         console.error(err);
       });
   };
