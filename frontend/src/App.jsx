@@ -2,6 +2,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext'; // Import AuthProvider
+import { JobsProvider } from './context/JobsContext';
 import "./output.css";
 import ApplicantEmailRegistration from "./pages/Applicant_Email_Registration.jsx";
 import EmployerEmailRegistration from "./pages/Employer_Email_Registration.jsx";
@@ -27,6 +28,7 @@ import TechnicalSkills from "./components/TechnicalSkills.jsx";
 function App() {
   return (
     <AuthProvider>  {/* Wrap entire app with AuthProvider */}
+      <JobsProvider>
       <Router>
         <div className="App">
           <Routes>
@@ -51,6 +53,7 @@ function App() {
           </Routes>
         </div>
       </Router>
+      </JobsProvider>
     </AuthProvider>
   );
 }
