@@ -50,7 +50,7 @@ const EmpComReg = () => {
       const data = await res.json();
       if (res.ok) {
         // Registration successful, redirect to employer sign-in
-        navigate("/employer-sign-in");
+        navigate("/employeronboarding");
       } else {
         setError(data.detail || "Registration failed.");
       }

@@ -11,9 +11,6 @@ const AppComReg = () => {
   const [agreed, setAgreed] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-<<<<<<< HEAD
-  const navigate = useNavigate();
-=======
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -64,7 +61,6 @@ const AppComReg = () => {
     }
     setLoading(false);
   };
->>>>>>> auth-updates
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#FEFEFF] font-montserrat pt-32 pb-20 px-4 sm:pt-44 sm:pb-32 sm:px-12 md:pt-[180px] md:pb-[120px] md:px-[240px]">
@@ -209,13 +205,8 @@ const AppComReg = () => {
           </div>
           <div className="h-6" />
           <button
-<<<<<<< HEAD
-            type="button"
-            onClick={() => navigate("/applicantonboarding")}
-=======
             type="submit"
             disabled={loading}
->>>>>>> auth-updates
             className="max-w-md bg-[#2A4D9B] text-white rounded-2xl hover:bg-[#16367D] transition mt-4 h-[44px] w-[225px] font-semibold text-sm"
           >
             {loading ? "Registering..." : "Register"}
