@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, NavLink, useLocation } from 'react-router-dom';
 import TugmaLogoApplicant from '../assets/TugmaLogoEmployer.svg';
+import { useAuth } from "../context/AuthContext";
 
 const navItems = [
     { icon: 'bi-house', label: 'Home Page', path: '/EmployerHomePage' },

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from "react-router-dom";
 import ApplicantSideBar from '../components/ApplicantSideBar';
 import Card from '../components/Card';
 import ApplicantDashLogo from '../assets/ApplicantDashLogo.svg';
@@ -10,14 +11,15 @@ import ApplicantNotification from '../components/ApplicantNotification';
 function ApplicantBrowseJobs() {
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [selectedJob, setSelectedJob] = useState(null);
-    const [selectedSort, setSelectedSort] = useState("descending"); // Default sort option set to descending
-    const [sortedData, setSortedData] = useState([]); // State for sorted job data
-    const [selectedModality, setSelectedModality] = useState(null); // State for modality filter
-    const [selectedWorkType, setSelectedWorkType] = useState(null); // State for work type filter
-    const [firstName, setFirstName] = useState("User"); // State for user's first name
-    const [showNotifications, setShowNotifications] = useState(false);
-    const [searchQuery, setSearchQuery] = useState(""); // State for search query
-    
+    const navigate = useNavigate();
+
+    // Auth check: redirect if not logged in
+    useEffect(() => {
+        // You can check for "access_token", "user", or whatever you use for auth
+        if (!localStorage.getItem("access_token")) {
+            navigate("/applicant-sign-in", { replace: true });
+        }
+    }, [navigate]);
 
      const sampleData = [
   { title: "Some Job Here", company: "Company Name Here", status: "Accepted", timeAgo: "3 hours ago" },
