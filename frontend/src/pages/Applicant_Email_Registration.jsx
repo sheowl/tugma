@@ -91,7 +91,6 @@ const Applicant_Email_Registration = () => {
           <button
             type="submit"
             disabled={loading}
-            onClick={() => navigate("/appverification")}
             className="max-w-md bg-[#2A4D9B] text-white rounded-2xl hover:bg-[#16367D] transition mt-4 h-[44px] w-[225px] font-semibold text-sm"
           >
             {loading ? "Sending..." : "Verify Email"}

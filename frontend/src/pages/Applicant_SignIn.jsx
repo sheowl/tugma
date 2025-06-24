@@ -9,6 +9,7 @@ const Applicant_SignIn = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const { applicantLogin } = useAuth();
   const navigate = useNavigate();
 
@@ -27,11 +28,31 @@ const Applicant_SignIn = () => {
           onSubmit={async (e) => {
             e.preventDefault();
             setError("");
-            const result = await applicantLogin(username, password);
-            if (result.success) {
-              navigate("/applicantbrowsejobs");
-            } else {
-              setError(result.error || "Login failed");
+            setIsLoading(true);
+
+            // Basic validation
+            if (!username || !password) {
+              setError("Please fill in all fields");
+              setIsLoading(false);
+              return;
+            }
+            if (!username.includes("@")) {
+              setError("Please enter a valid email address");
+              setIsLoading(false);
+              return;
+            }
+
+            try {
+              const result = await applicantLogin(username, password);
+              if (result.success) {
+                navigate("/applicantbrowsejobs");
+              } else {
+                setError(result.error || "Login failed");
+              }
+            } catch (error) {
+              setError("Network error. Please check your connection.");
+            } finally {
+              setIsLoading(false);
             }
           }}
         >
@@ -43,6 +64,8 @@ const Applicant_SignIn = () => {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Email"
+              required
+              disabled={isLoading}
             />
           </div>
           <div className="relative w-full max-w-xs sm:max-w-xs md:max-w-md">
@@ -54,6 +77,8 @@ const Applicant_SignIn = () => {
               style={{ paddingRight: "3.5rem" }}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              required
+              disabled={isLoading}
             />
             <button
               type="button"
@@ -98,9 +123,19 @@ const Applicant_SignIn = () => {
           <div className="h-2" />
           <button
             type="submit"
-            className="max-w-md bg-[#2A4D9B] text-white rounded-2xl hover:bg-[#16367D] transition mt-4 h-[44px] w-[225px] font-semibold text-sm"
+            className={`max-w-md bg-[#2A4D9B] text-white rounded-2xl hover:bg-[#16367D] transition mt-4 h-[44px] w-[225px] font-semibold text-sm ${
+              isLoading ? "bg-gray-400 cursor-not-allowed" : ""
+            }`}
+            disabled={isLoading}
           >
-            Sign In
+            {isLoading ? (
+              <div className="flex items-center justify-center">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                Signing In...
+              </div>
+            ) : (
+              "Sign In"
+            )}
           </button>
         </form>
         <p className="text-center text-sm text-[#6B7280] font-semibold mt-2">
