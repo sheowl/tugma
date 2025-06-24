@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AuthService from '../services/AuthService';
+import CompanyService from '../services/CompanyService';
 
 const AuthContext = createContext();
 
@@ -104,14 +105,29 @@ export const AuthProvider = ({ children }) => {
     if (!isEmployer()) {
       throw new Error('Only employers can complete onboarding');
     }
-    return await AuthService.completeOnboarding(data);
+    return await CompanyService.completeOnboarding(data);
   };
 
   const getOnboardingStatus = async () => {
     if (!isEmployer()) {
       throw new Error('Only employers can check onboarding status');
     }
-    return await AuthService.getOnboardingStatus();
+    return await CompanyService.getOnboardingStatus();
+  };
+
+  // Company dashboard methods
+  const getDashboardStats = async () => {
+    if (!isEmployer()) {
+      throw new Error('Only employers can access dashboard stats');
+    }
+    return await CompanyService.getDashboardStats();
+  };
+
+  const getRecentApplicants = async (limit = 3) => {
+    if (!isEmployer()) {
+      throw new Error('Only employers can access recent applicants');
+    }
+    return await CompanyService.getRecentApplicants(limit);
   };
 
   const value = {
@@ -143,6 +159,10 @@ export const AuthProvider = ({ children }) => {
     updateCompanyProfile,
     completeOnboarding,
     getOnboardingStatus,
+    
+    // Company dashboard methods
+    getDashboardStats,
+    getRecentApplicants,
   };
 
   return (

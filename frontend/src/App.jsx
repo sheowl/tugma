@@ -2,6 +2,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext'; // Import AuthProvider
+import { JobsProvider } from './context/JobsContext';
 import "./output.css";
 import ApplicantEmailRegistration from "./pages/Applicant_Email_Registration.jsx";
 import EmployerEmailRegistration from "./pages/Employer_Email_Registration.jsx";
@@ -19,11 +20,15 @@ import ApplicantProfile from "./pages/ApplicantProfile.jsx";
 import EmployerApplicants from "./pages/EmployerApplicants.jsx";
 import EmployerHomePage from "./pages/EmployerHomePage.jsx";
 import EmployerJobPosts from "./pages/EmployerJobPosts.jsx";
+import ApplicantOnboarding from "./pages/ApplicantOnboarding.jsx";
+import EmployerOnboarding from "./pages/EmployerOnboarding.jsx";
+import TechnicalSkills from "./components/TechnicalSkills.jsx";
 // Remove CompanyOnboarding import for now
 
 function App() {
   return (
     <AuthProvider>  {/* Wrap entire app with AuthProvider */}
+      <JobsProvider>
       <Router>
         <div className="App">
           <Routes>
@@ -43,11 +48,12 @@ function App() {
             <Route path="/employerhomepage" element={<EmployerHomePage />} />
             <Route path="/employerapplicants" element={<EmployerApplicants />} />
             <Route path="/employerjobposts" element={<EmployerJobPosts />} />
-            {/* Remove CompanyOnboarding route for now */}
-            {/* <Route path="/company-onboarding" element={<CompanyOnboarding />} /> */}
+            <Route path="/applicantonboarding" element={<ApplicantOnboarding />} />
+            <Route path="/employeronboarding" element={<EmployerOnboarding />} />
           </Routes>
         </div>
       </Router>
+      </JobsProvider>
     </AuthProvider>
   );
 }

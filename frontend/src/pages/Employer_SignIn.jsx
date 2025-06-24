@@ -36,12 +36,8 @@ const Employer_SignIn = () => {
       const result = await companyLogin(email, password);
       
       if (result.success) {
-        // Check if onboarding is needed
-        if (result.data.needs_onboarding) {
-          navigate("/company-onboarding");
-        } else {
-          navigate("/EmployerHomePage");
-        }
+        // Always go to onboarding page - let it handle the logic
+        navigate("/employeronboarding");
       } else {
         setError(result.error || "Login failed. Please try again.");
       }

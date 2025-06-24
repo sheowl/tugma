@@ -29,6 +29,12 @@ class CompanyUpdate(BaseModel):
     employer_profile_picture: Optional[str] = None
     contact_links: Optional[Dict[str, str]] = None
 
+# NEW: Specific schema for onboarding - only the 3 required fields
+class CompanyOnboardingUpdate(BaseModel):
+    location: str
+    description: str
+    company_size: CompanySizeEnum
+
 class CompanyOut(CompanyBase):
     company_id: int
 

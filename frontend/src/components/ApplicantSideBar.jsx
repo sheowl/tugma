@@ -1,15 +1,24 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import TugmaLogoApplicant from '../assets/TugmaLogoApplicant.svg';
+import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const navItems = [
   { name: 'Browse Jobs', icon: 'bi-search', path: '/applicantbrowsejobs' },
-  { name: 'Inbox', icon: 'bi-inbox-fill', path: '/applicantinbox' },
   { name: 'Applications', icon: 'bi-briefcase-fill', path: '/applicantapplications' },
   { name: 'Profile', icon: 'bi-person-fill', path: '/applicantprofile' },
 ];
 
 const ApplicantSideBar = () => {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/applicant-sign-in");
+  };
+
   return (
         <div className="w-[336px] bg-[#2A4D9B] min-h-screen flex flex-col justify-between items-center pt-14 pb-6">
         {/* Top Section */}
@@ -44,6 +53,7 @@ const ApplicantSideBar = () => {
 
       {/* Logout */}
       <NavLink to="/applicant-sign-in"
+        onClick={handleLogout}
         className="flex items-center gap-3 px-6 py-3 w-[190px] h-[50px] text-white text-base cursor-pointer hover:bg-[#1f3c7b] rounded-[10px]"
         >
         <i className="bi bi-box-arrow-right text-xl"></i>
