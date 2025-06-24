@@ -77,6 +77,7 @@ const CustomDropdown = ({
   );
 };
 
+//POST New Jobs
 const JobNewPost = ({ open, onClose, onSave }) => {
   const [form, setForm] = useState({
     jobTitle: "",
@@ -127,7 +128,7 @@ const JobNewPost = ({ open, onClose, onSave }) => {
         return res.json();
       })
       .then(data => {
-        if (onSave) onSave(data); // Optionally notify parent
+        if (onSave) onSave(data);
         setForm({
           jobTitle: "",
           companyName: "",
@@ -142,7 +143,6 @@ const JobNewPost = ({ open, onClose, onSave }) => {
         setShowTagInput(false);
       })
       .catch(err => {
-        // Optionally show error to user
         console.error(err);
       });
   };

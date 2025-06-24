@@ -2,6 +2,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import delete
 from typing import Optional, List
 from app.core.auth import get_password_hash
 from app.models.applicant import Applicant, ApplicantWorkExperience, ApplicantCertificate
@@ -62,12 +63,67 @@ async def update_applicant(db: AsyncSession, db_applicant: Applicant, updates: A
     return db_applicant
 
 
-async def delete_applicant(db: AsyncSession, applicant_id: int) -> None:
-    result = await db.execute(select(Applicant).where(Applicant.applicant_id == applicant_id))
-    applicant = result.scalars().first()
-    if applicant:
-        await db.delete(applicant)
-        await db.commit()
+async def delete_applicant(db: AsyncSession, applicant_id: int):
+    # Import all the models you need to delete
+    from app.models.application import JobApplication, JobMatching
+    from app.models.notification import Notification
+    from app.models.interview import InterviewDetails
+    
+    # 1. Delete all work experiences (already handled by CASCADE)
+    work_exp_stmt = delete(ApplicantWorkExperience).where(
+        ApplicantWorkExperience.applicant_id == applicant_id
+    )
+    await db.execute(work_exp_stmt)
+    
+    # 2. Delete all certificates
+    cert_stmt = delete(ApplicantCertificate).where(
+        ApplicantCertificate.applicant_id == applicant_id
+    )
+    await db.execute(cert_stmt)
+    
+    # 3. Delete all job applications
+    app_stmt = delete(JobApplication).where(
+        JobApplication.applicant_id == applicant_id
+    )
+    await db.execute(app_stmt)
+    
+    # 4. Delete all job matching records
+    match_stmt = delete(JobMatching).where(
+        JobMatching.applicant_id == applicant_id
+    )
+    await db.execute(match_stmt)
+    
+    # 5. Delete all notifications
+    notif_stmt = delete(Notification).where(
+        Notification.recipient_applicant_id == applicant_id
+    )
+    await db.execute(notif_stmt)
+    
+    # 6. Delete all interview records
+    interview_stmt = delete(InterviewDetails).where(
+        InterviewDetails.applicant_id == applicant_id
+    )
+    await db.execute(interview_stmt)
+    
+    # 7. Delete any applicant tags
+    from app.models.applicant import ApplicantTag, ApplicantProficiency
+    tag_stmt = delete(ApplicantTag).where(
+        ApplicantTag.applicant_id == applicant_id
+    )
+    await db.execute(tag_stmt)
+    
+    # 8. Delete applicant proficiency records
+    prof_stmt = delete(ApplicantProficiency).where(
+        ApplicantProficiency.applicant_id == applicant_id
+    )
+    await db.execute(prof_stmt)
+    
+    # 9. Finally, delete the applicant
+    stmt = delete(Applicant).where(Applicant.applicant_id == applicant_id)
+    result = await db.execute(stmt)
+    await db.commit()
+    
+    return result.rowcount > 0
 
 
 async def get_all_applicants(db: AsyncSession) -> List[Applicant]:
