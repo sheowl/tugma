@@ -18,7 +18,7 @@ def clean_string(s: Optional[str]) -> Optional[str]:
 
 async def create_applicant(db: AsyncSession, applicant_in: ApplicantCreate) -> Applicant:
     new_applicant = Applicant(
-        email=applicant_in.email,
+        applicant_email=applicant_in.email,
         first_name=clean_string(applicant_in.first_name),
         last_name=clean_string(applicant_in.last_name),
         password=get_password_hash(applicant_in.password),

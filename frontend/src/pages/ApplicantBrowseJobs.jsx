@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import ApplicantSideBar from '../components/ApplicantSideBar';
 import Card from '../components/Card';
 import ApplicantDashLogo from '../assets/ApplicantDashLogo.svg';
@@ -16,6 +16,7 @@ function ApplicantBrowseJobs() {
     const [selectedWorkType, setSelectedWorkType] = useState(null); // State for work type filter
     const [firstName, setFirstName] = useState("User"); // State for user's first name
     const [showNotifications, setShowNotifications] = useState(false);
+    const [searchQuery, setSearchQuery] = useState(""); // State for search query
     
 
      const sampleData = [
@@ -189,6 +190,21 @@ function ApplicantBrowseJobs() {
         setSortedData(sorted); // Update the sorted and filtered data
     }, [selectedSort, selectedModality, selectedWorkType]);
 
+    const filteredJobs = useMemo(() => {
+        if (!searchQuery.trim()) {
+            return sortedData;
+        }
+
+        const searchTerm = searchQuery.toLowerCase().trim();
+
+        return sortedData.filter(job => {
+            return (
+                job.jobTitle.toLowerCase().includes(searchTerm) ||
+                job.companyName.toLowerCase().includes(searchTerm)
+            );
+        });
+    }, [searchQuery, sortedData]);
+
     return (
         <div className="min-h-screen bg-[#2A4D9B] flex items-start">
             {/* Sidebar */}
@@ -244,14 +260,21 @@ function ApplicantBrowseJobs() {
 
                 {/* Search Bar and Dropdowns */}
                 <div className="px-[112px] mt-0 mb-5 flex justify-between items-center">
-                    <SearchBar onSearch={(query) => console.log("Applicant Search:", query)} />
+                    <SearchBar 
+    onSearch={(query) => {
+        setSearchQuery(query);
+        console.log("Applicant Search:", query);
+    }}
+    value={searchQuery}
+    onChange={(query) => setSearchQuery(query)}
+/>
                 </div>
 
                 {/* Job Count */}
                 <div className="pl-[112px] pr-[118px]">
                     <div className="flex items-center justify-between mb-2">
                         <div className="text-base font-semibold text-gray-500 mb-2">
-                            {sortedData.length} matches displayed
+                            {filteredJobs.length} matches displayed
                         </div>
                         <div className="flex gap-4">
                             <Dropdown
@@ -342,7 +365,7 @@ function ApplicantBrowseJobs() {
 
                 {/* Job Cards */}
                 <div className="pl-[112px] pr-[118px] mt-10 mb-10 flex flex-wrap gap-[33px] justify-center">
-                    {sortedData.map((job) => (
+                    {filteredJobs.map((job) => (
                         <Card
                             key={job.id}
                             jobTitle={job.jobTitle}
