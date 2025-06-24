@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Card from '../components/Card.jsx';
 import EmployerSideBar from "../components/EmployerSideBar";
 import EmployerApplicantHeader from "../components/EmployerApplicantHeader";
@@ -6,9 +7,17 @@ import EmpCard from "../components/EmpCard";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi"; // replace FaChevron with FiChevron
 
 const EmployerApplicants = () => {
+  const navigate = useNavigate();
   const [applicants, setApplicants] = useState([]);
   const [sortBy, setSortBy] = useState('best');
   const [selectedJobNumber, setSelectedJobNumber] = useState(1);
+
+  useEffect(() => {
+    // Check for access_token in localStorage
+    if (!localStorage.getItem("access_token")) {
+      navigate("/employer-sign-in", { replace: true });
+    }
+  }, [navigate]);
 
   useEffect(() => {
     // Simulate fetching from backend. Replace with real API call in production.

@@ -5,6 +5,34 @@ import AppHeader from "../components/AppHeader";
 const Applicant_Email_Registration = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleVerifyEmail = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      const res = await fetch(
+        "http://localhost:8000/api/v1/auth/applicant/send-otp",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        }
+      );
+      const data = await res.json();
+      if (res.ok) {
+        localStorage.setItem("pending_applicant_email", email);
+        navigate("/appverification");
+      } else {
+        setError(data.detail || "Failed to send verification code.");
+      }
+    } catch (err) {
+      setError("Network error. Please try again.");
+    }
+    setLoading(false);
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#FEFEFF] font-montserrat pt-32 pb-20 px-4 sm:pt-44 sm:pb-32 sm:px-12 md:pt-[180px] md:pb-[120px] md:px-[240px]">
       <AppHeader />
@@ -13,7 +41,13 @@ const Applicant_Email_Registration = () => {
           Register to find jobs that match your skills
         </h1>
         <div className="h-4 sm:h-8 md:h-10" />
-        <form className="flex flex-col gap-4 sm:gap-6 items-center w-full">
+        <form
+          className="flex flex-col gap-4 sm:gap-6 items-center w-full"
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleVerifyEmail();
+          }}
+        >
           <div className="w-full max-w-xl">
             <label
               htmlFor="email"
@@ -55,13 +89,17 @@ const Applicant_Email_Registration = () => {
           <div className="h-6" />
 
           <button
-            type="button"
+            type="submit"
+            disabled={loading}
             onClick={() => navigate("/appverification")}
             className="max-w-md bg-[#2A4D9B] text-white rounded-2xl hover:bg-[#16367D] transition mt-4 h-[44px] w-[225px] font-semibold text-sm"
           >
-            Verify Email
+            {loading ? "Sending..." : "Verify Email"}
           </button>
         </form>
+        {error && (
+          <div className="text-red-500 text-sm mb-2">{error}</div>
+        )}
 
         <p className="text-center text-sm text-[#6B7280] font-semibold mt-2">
           Already have an account?{" "}

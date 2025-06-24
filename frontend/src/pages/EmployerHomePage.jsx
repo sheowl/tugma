@@ -1,8 +1,18 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import EmployerSideBar from "../components/EmployerSideBar";
 import EmployerApplicantHeader from "../components/EmployerApplicantHeader";
 
 const EmployerHomePage = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check for access_token in localStorage
+    if (!localStorage.getItem("access_token")) {
+      navigate("/employer-sign-in", { replace: true });
+    }
+  }, [navigate]);
+
   return (
     <div className="min-h-screen bg-[#FF8032] flex items-start overflow-hidden">
       <EmployerSideBar />

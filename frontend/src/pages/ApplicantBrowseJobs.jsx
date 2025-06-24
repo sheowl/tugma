@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from "react-router-dom";
 import ApplicantSideBar from '../components/ApplicantSideBar';
 import Card from '../components/Card'; 
 import ApplicantDashLogo from '../assets/ApplicantDashLogo.svg';
@@ -7,6 +8,15 @@ import JobDetailsDrawer from '../components/JobDetailsDrawer';
 function ApplicantBrowseJobs() {
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [selectedJob, setSelectedJob] = useState(null);
+    const navigate = useNavigate();
+
+    // Auth check: redirect if not logged in
+    useEffect(() => {
+        // You can check for "access_token", "user", or whatever you use for auth
+        if (!localStorage.getItem("access_token")) {
+            navigate("/applicant-sign-in", { replace: true });
+        }
+    }, [navigate]);
 
     const handleViewDetails = (job) => {
         setSelectedJob(job);

@@ -1,4 +1,4 @@
-﻿from fastapi import APIRouter, HTTPException, Depends
+﻿from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.middleware.auth import supabase
@@ -6,8 +6,15 @@ from app.core.database import get_db
 from app.crud import applicant as applicant_crud
 from app.crud import company as company_crud
 from app.core.auth import get_password_hash
+from app.core.email import send_otp_email
+import random
+import time
 
 router = APIRouter()
+
+# In-memory OTP store (for demo/dev only)
+applicant_otp_store = {}
+company_otp_store = {}
 
 # === APPLICANT AUTH SCHEMAS ===
 class ApplicantSignUp(BaseModel):
@@ -213,3 +220,85 @@ async def get_current_user_info(db: AsyncSession = Depends(get_db)):
             
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+# OTP section for applicants
+@router.post("/applicant/send-otp")
+async def send_applicant_otp(request: Request):
+    data = await request.json()
+    email = data.get("email")
+    if not email:
+        raise HTTPException(status_code=400, detail="Email is required")
+
+    cooldown = 60  # seconds
+    now = time.time()
+    if email in applicant_otp_store and now - applicant_otp_store[email]["timestamp"] < cooldown:
+        raise HTTPException(status_code=429, detail="Please wait before requesting another code.")
+
+    otp = str(random.randint(1000, 9999))
+    applicant_otp_store[email] = {"otp": otp, "timestamp": now}
+
+    # Send OTP email 
+    send_otp_email(email, otp)
+
+    # For demo: print OTP to backend logs
+    print(f"OTP for {email}: {otp}")
+
+    return {"message": "OTP sent to email"}
+
+@router.post("/applicant/verify-otp")
+async def verify_applicant_otp(request: Request):
+    data = await request.json()
+    email = data.get("email")
+    otp = data.get("otp")
+    if not email or not otp:
+        raise HTTPException(status_code=400, detail="Email and OTP are required")
+
+    entry = applicant_otp_store.get(email)
+    if not entry:
+        raise HTTPException(status_code=400, detail="No OTP found for this email.")
+
+    if entry["otp"] == otp:
+        del applicant_otp_store[email]
+        return {"message": "OTP verified"}
+    else:
+        raise HTTPException(status_code=400, detail="The code you entered is incorrect. Please try again or resend a new code.")
+
+# OTP section for companies
+@router.post("/company/send-otp")
+async def send_company_otp(request: Request):
+    data = await request.json()
+    email = data.get("email")
+    if not email:
+        raise HTTPException(status_code=400, detail="Email is required")
+
+    cooldown = 60  # seconds
+    now = time.time()
+    if email in company_otp_store and now - company_otp_store[email]["timestamp"] < cooldown:
+        raise HTTPException(status_code=429, detail="Please wait before requesting another code.")
+
+    otp = str(random.randint(1000, 9999))
+    company_otp_store[email] = {"otp": otp, "timestamp": now}
+
+    send_otp_email(email, otp)
+    print(f"Company OTP for {email}: {otp}")
+
+    return {"message": "OTP sent to email"}
+
+@router.post("/company/verify-otp")
+async def verify_company_otp(request: Request):
+    data = await request.json()
+    email = data.get("email")
+    otp = data.get("otp")
+    if not email or not otp:
+        raise HTTPException(status_code=400, detail="Email and OTP are required")
+
+    entry = company_otp_store.get(email)
+    if not entry:
+        raise HTTPException(status_code=400, detail="No OTP found for this email.")
+
+    if entry["otp"] == otp:
+        del company_otp_store[email]
+        return {"message": "OTP verified"}
+    else:
+        raise HTTPException(status_code=400, detail="The code you entered is incorrect. Please try again or resend a new code.")

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import JobCard from '../components/JobCard.jsx';
 import EmployerSideBar from "../components/EmployerSideBar";
 import EmployerApplicantHeader from "../components/EmployerApplicantHeader";
@@ -26,6 +27,14 @@ const PostNewJobCard = ({ onClick }) => (
 const EmployerJobPosts = () => {
   const [jobPosts, setJobPosts] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check for access_token in localStorage
+    if (!localStorage.getItem("access_token")) {
+      navigate("/employer-sign-in", { replace: true });
+    }
+  }, [navigate]);
 
   useEffect(() => {
     // Simulate fetching from backend. Replace with real API call in production.
