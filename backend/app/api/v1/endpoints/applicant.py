@@ -16,7 +16,7 @@ from app.schemas.applicant import (
 from app.crud import applicant as crud
 from app.core.database import get_db
 
-router = APIRouter(prefix="/applicants", tags=["Applicants"])
+router = APIRouter(prefix="/applicants", tags=["applicants"])
 
 # Create a new applicant
 @router.post("/", response_model=ApplicantOut, status_code=status.HTTP_201_CREATED)
