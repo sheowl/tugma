@@ -1,9 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import ApplicantSideBar from '../components/ApplicantSideBar';
 import ApplicantTracker from '../components/ApplicantTracker';
 import SearchBar from '../components/SearchBar';
 import ApplicantDashLogo from '../assets/ApplicantDashLogo.svg';
-import { useState, useEffect } from 'react';
 import Dropdown from '../components/Dropdown';
 import ApplicantNotification from '../components/ApplicantNotification';
 
@@ -14,6 +13,7 @@ function ApplicantApplications() {
     const [selectedModality, setSelectedModality] = useState(null); // State for modality filter
     const [selectedWorkType, setSelectedWorkType] = useState(null); // State for work type filter
     const [showNotifications, setShowNotifications] = useState(false);
+    const [searchQuery, setSearchQuery] = useState(""); // Add search query state
 
 
     const sampleData = [
@@ -113,6 +113,22 @@ function ApplicantApplications() {
             setSortedData(sorted); // Update the sorted and filtered data
         }, [selectedSort, selectedModality, selectedWorkType]);
 
+    // Add search filtering functionality
+    const filteredApplications = useMemo(() => {
+        if (!searchQuery.trim()) {
+            return sortedData;
+        }
+
+        const searchTerm = searchQuery.toLowerCase().trim();
+
+        return sortedData.filter(job => {
+            return (
+                job.jobTitle.toLowerCase().includes(searchTerm) ||
+                job.companyName.toLowerCase().includes(searchTerm)
+            );
+        });
+    }, [searchQuery, sortedData]);
+
     return (
         <div className="min-h-screen bg-[#2A4D9B] flex items-start overflow-hidden">
             <ApplicantSideBar />
@@ -167,14 +183,21 @@ function ApplicantApplications() {
 
                 {/* Search Bar and Dropdowns */}
                 <div className="px-[112px] mt-0 mb-5 flex justify-between items-center">
-                    <SearchBar onSearch={(query) => console.log("Applicant Search:", query)} />
+                    <SearchBar 
+                    onSearch={(query) => {
+                        setSearchQuery(query);
+                        console.log("Applicant Search:", query);
+                    }}
+                    value={searchQuery}
+                    onChange={(query) => setSearchQuery(query)}
+                    />
                 </div>
 
                 {/* Job Count */}
                 <div className="pl-[112px] pr-[118px]">
                     <div className="flex items-center justify-between mb-2">
                         <div className="text-base font-semibold text-gray-500 mb-2">
-                            {sortedData.length} matches displayed
+                            {filteredApplications.length} matches displayed
                         </div>
                         <div className="flex gap-4">
                             <Dropdown
@@ -266,7 +289,7 @@ function ApplicantApplications() {
                 {/* Job Applications */}
                 <div className="pl-[112px] pr-[118px]">
                       <div className="grid grid-cols-2 gap-10 mt-10 mb-10">
-                    {sortedData.map((job, index) => (
+                    {filteredApplications.map((job, index) => (
                         <div key={index} className="flex items-center justify-between mb-2">
                             <ApplicantTracker
                                 jobTitle={job.jobTitle}
