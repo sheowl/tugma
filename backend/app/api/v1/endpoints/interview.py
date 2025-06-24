@@ -8,7 +8,7 @@ from app.schemas.interview import InterviewDetailsCreate, InterviewDetailsUpdate
 from app.crud import interview as crud
 from app.core.database import get_db
 
-router = APIRouter(prefix="/interviews", tags=["Interviews"])
+router = APIRouter(prefix="/interviews", tags=["interviews"])
 
 # Create interview
 @router.post("/", response_model=InterviewDetailsOut)

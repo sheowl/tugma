@@ -1,4 +1,9 @@
+<<<<<<< HEAD
 import React, { useState, useEffect, useMemo } from 'react';
+=======
+import React, { useEffect } from 'react';
+import { useNavigate } from "react-router-dom";
+>>>>>>> auth-updates
 import ApplicantSideBar from '../components/ApplicantSideBar';
 import ApplicantTracker from '../components/ApplicantTracker';
 import SearchBar from '../components/SearchBar';
@@ -7,6 +12,7 @@ import Dropdown from '../components/Dropdown';
 import ApplicantNotification from '../components/ApplicantNotification';
 
 function ApplicantApplications() {
+<<<<<<< HEAD
     const firstName = "Julianna Leila"; // Replace with actual user data
     const [selectedSort, setSelectedSort] = useState("descending"); // Default sort option set to descending
     const [sortedData, setSortedData] = useState([]); // State for sorted job data
@@ -128,6 +134,15 @@ function ApplicantApplications() {
             );
         });
     }, [searchQuery, sortedData]);
+=======
+    const navigate = useNavigate();
+
+    useEffect(() => {
+      if (!localStorage.getItem("access_token")) {
+        navigate("/applicant-sign-in", { replace: true });
+      }
+    }, [navigate]);
+>>>>>>> auth-updates
 
     return (
         <div className="min-h-screen bg-[#2A4D9B] flex items-start overflow-hidden">

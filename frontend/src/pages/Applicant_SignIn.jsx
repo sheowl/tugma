@@ -1,11 +1,15 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
+import { useAuth } from "../context/AuthContext";
 import TugmaLogo from "../assets/TugmaLogo.svg";
 
 const Applicant_SignIn = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const { applicantLogin } = useAuth();
   const navigate = useNavigate();
 
   return (
@@ -20,9 +24,15 @@ const Applicant_SignIn = () => {
         </h1>
         <form
           className="space-y-3 sm:space-y-4 w-full flex flex-col items-center justify-center"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            navigate("/applicantbrowsejobs");
+            setError("");
+            const result = await applicantLogin(username, password);
+            if (result.success) {
+              navigate("/applicantbrowsejobs");
+            } else {
+              setError(result.error || "Login failed");
+            }
           }}
         >
           <div className="w-full max-w-xs sm:max-w-xs md:max-w-md">
@@ -42,6 +52,8 @@ const Applicant_SignIn = () => {
               className="w-full px-1 sm:px-2 md:px-3 py-1 sm:py-1.5 md:py-2 rounded-lg md:rounded-xl bg-[#F9F9F9] border border-[#6B7280] hover:border-2 text-black focus:outline-none focus:ring-2 md:focus:ring-4 focus:ring-blue-200 text-xs sm:text-sm md:text-base placeholder:font-montserrat placeholder:text-xs sm:placeholder:text-sm md:placeholder:text-base"
               placeholder="Password"
               style={{ paddingRight: "3.5rem" }}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
             />
             <button
               type="button"
@@ -80,6 +92,9 @@ const Applicant_SignIn = () => {
               </span>
             </button>
           </div>
+          {error && (
+            <div className="text-red-500 text-sm mb-2">{error}</div>
+          )}
           <div className="h-2" />
           <button
             type="submit"

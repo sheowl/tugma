@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { useState, useEffect } from "react";
+=======
+import React, { useState, useEffect } from "react";
+>>>>>>> auth-updates
 import { useNavigate } from "react-router-dom";
 import JobCard from '../components/JobCard.jsx';
 import EmployerSideBar from "../components/EmployerSideBar";
@@ -56,6 +60,7 @@ const EmployerJobPosts = () => {
   } = useJobs();
   
   const [showModal, setShowModal] = useState(false);
+<<<<<<< HEAD
   const [selectedSort, setSelectedSort] = useState(sortOptions[0].value);
   const [selectedModality, setSelectedModality] = useState(null);
   const [selectedWorkType, setSelectedWorkType] = useState(null);
@@ -67,6 +72,16 @@ const EmployerJobPosts = () => {
   const [companyProfile, setCompanyProfile] = useState(null);
   const [companyLoading, setCompanyLoading] = useState(false);
   const [companyError, setCompanyError] = useState(null);
+=======
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check for access_token in localStorage
+    if (!localStorage.getItem("access_token")) {
+      navigate("/employer-sign-in", { replace: true });
+    }
+  }, [navigate]);
+>>>>>>> auth-updates
 
   // Fetch company profile
   const fetchCompanyProfile = async () => {

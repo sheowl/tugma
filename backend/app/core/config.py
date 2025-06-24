@@ -30,6 +30,12 @@ class Settings(BaseSettings):
     SUPABASE_JWT_SECRET: str
     SUPABASE_ANON_KEY: str
 
+    # Email Settings
+    EMAIL_HOST: str
+    EMAIL_PORT: int
+    EMAIL_USER: str
+    EMAIL_PASSWORD: str
+
     # CORS Settings with defaults
     ALLOWED_ORIGINS: List[str] = Field(default_factory=lambda: ["http://localhost:3000", "http://localhost:5173"])
     ALLOWED_METHODS: List[str] = Field(default_factory=lambda: ["GET", "POST", "PUT", "DELETE", "OPTIONS"])

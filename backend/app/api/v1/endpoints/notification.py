@@ -8,7 +8,7 @@ from app.schemas.notification import NotificationCreate, NotificationOut
 from app.crud import notification as crud
 from app.core.database import get_db
 
-router = APIRouter(prefix="/notifications", tags=["Notifications"])
+router = APIRouter(prefix="/notifications", tags=["notifications"])
 
 # Create a notification
 @router.post("/", response_model=NotificationOut)

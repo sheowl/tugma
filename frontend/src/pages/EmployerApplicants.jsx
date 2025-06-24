@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from "react";
+<<<<<<< HEAD
 import { useLocation, useNavigate } from "react-router-dom";
+=======
+import { useNavigate } from "react-router-dom";
+>>>>>>> auth-updates
 import Card from '../components/Card.jsx';
 import EmployerSideBar from "../components/EmployerSideBar";
 import EmployerApplicantHeader from "../components/EmployerApplicantHeader";
@@ -7,7 +11,10 @@ import EmpCard from "../components/EmpCard";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 
 const EmployerApplicants = () => {
+<<<<<<< HEAD
   const location = useLocation();
+=======
+>>>>>>> auth-updates
   const navigate = useNavigate();
   const [applicants, setApplicants] = useState([]);
   const [sortBy, setSortBy] = useState('best');
@@ -17,11 +24,92 @@ const EmployerApplicants = () => {
   const jobPostsData = location.state?.jobPosts || [];
 
   useEffect(() => {
+<<<<<<< HEAD
     // If no job posts data is passed, redirect back to job posts page
     if (!jobPostsData || jobPostsData.length === 0) {
       navigate('/employerjobposts');
       return;
     }
+=======
+    // Check for access_token in localStorage
+    if (!localStorage.getItem("access_token")) {
+      navigate("/employer-sign-in", { replace: true });
+    }
+  }, [navigate]);
+
+  useEffect(() => {
+    // Simulate fetching from backend. Replace with real API call in production.
+    const exampleApplicants = [
+      {
+        id: 1,
+        jobNumber: 1,
+        matched: 85,
+        isNew: true,
+        candidateName: "Juan Dela Cruz",
+        role: "Software Engineer",
+        skills: ["React", "Node.js", "CSS", "HTML", "JavaScript"],
+        moreSkillsCount: 2,
+        appliedDaysAgo: 9,
+      },
+      {
+        id: 2,
+        jobNumber: 2,
+        matched: 100,
+        isNew: false,
+        candidateName: "Maria Santos",
+        role: "Frontend Developer",
+        skills: ["Vue.js", "Sass", "HTML", "JavaScript"],
+        moreSkillsCount: 1,
+        appliedDaysAgo: 5,
+      },
+      {
+        id: 3,
+        jobNumber: 2,
+        matched: 95,
+        isNew: true,
+        candidateName: "Pedro Ramirez",
+        role: "Backend Developer",
+        skills: ["Python", "Django", "REST API", "PostgreSQL"],
+        moreSkillsCount: 0,
+        appliedDaysAgo: 10,
+      },
+      {
+        id: 4,
+        jobNumber: 3,
+        matched: 50,
+        isNew: true,
+        candidateName: "Juan Dela Cruz",
+        role: "Software Engineer",
+        skills: ["React", "Node.js", "CSS", "HTML", "JavaScript"],
+        moreSkillsCount: 2,
+        appliedDaysAgo: 2,
+      },
+      {
+        id: 5,
+        jobNumber: 2,
+        matched: 80,
+        isNew: true,
+        candidateName: "Juan Dela Cruz",
+        role: "Software Engineer",
+        skills: ["React", "Node.js", "CSS", "HTML", "JavaScript"],
+        moreSkillsCount: 2,
+        appliedDaysAgo: 1,
+      },
+      {
+        id: 6,
+        jobNumber: 4,
+        matched: 62,
+        isNew: true,
+        candidateName: "Juan Dela Cruz",
+        role: "Software Engineer",
+        skills: ["React", "Node.js", "CSS", "HTML", "JavaScript"],
+        moreSkillsCount: 2,
+        appliedDaysAgo: 7,
+      },
+    ];
+    setApplicants(exampleApplicants);
+  }, []);
+>>>>>>> auth-updates
 
     // Generate applicants for each job post    // Generate applicants for each job post
     const generateApplicantsForJobs = () => {
