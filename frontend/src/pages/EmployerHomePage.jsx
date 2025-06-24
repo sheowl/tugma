@@ -1,9 +1,4 @@
-<<<<<<< HEAD
 import React, { useState, useEffect } from "react";
-=======
-import React, { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
->>>>>>> auth-updates
 import EmployerSideBar from "../components/EmployerSideBar";
 import SearchBar from "../components/SearchBar";
 import { 
@@ -18,7 +13,6 @@ import { useNavigate } from "react-router-dom";
 
 const EmployerHomePage = () => {
   const navigate = useNavigate();
-<<<<<<< HEAD
   
   // State for dashboard data
   const [stats, setStats] = useState({
@@ -165,15 +159,6 @@ const EmployerHomePage = () => {
       </div>
     );
   }
-=======
-
-  useEffect(() => {
-    // Check for access_token in localStorage
-    if (!localStorage.getItem("access_token")) {
-      navigate("/employer-sign-in", { replace: true });
-    }
-  }, [navigate]);
->>>>>>> auth-updates
 
   return (
     <div className="min-h-screen bg-[#FF8032] flex items-start overflow-hidden">

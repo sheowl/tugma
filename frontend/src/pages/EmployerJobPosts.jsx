@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 import { useState, useEffect } from "react";
-=======
-import React, { useState, useEffect } from "react";
->>>>>>> auth-updates
 import { useNavigate } from "react-router-dom";
 import JobCard from '../components/JobCard.jsx';
 import EmployerSideBar from "../components/EmployerSideBar";
@@ -60,7 +56,6 @@ const EmployerJobPosts = () => {
   } = useJobs();
   
   const [showModal, setShowModal] = useState(false);
-<<<<<<< HEAD
   const [selectedSort, setSelectedSort] = useState(sortOptions[0].value);
   const [selectedModality, setSelectedModality] = useState(null);
   const [selectedWorkType, setSelectedWorkType] = useState(null);
@@ -72,16 +67,6 @@ const EmployerJobPosts = () => {
   const [companyProfile, setCompanyProfile] = useState(null);
   const [companyLoading, setCompanyLoading] = useState(false);
   const [companyError, setCompanyError] = useState(null);
-=======
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    // Check for access_token in localStorage
-    if (!localStorage.getItem("access_token")) {
-      navigate("/employer-sign-in", { replace: true });
-    }
-  }, [navigate]);
->>>>>>> auth-updates
 
   // Fetch company profile
   const fetchCompanyProfile = async () => {
@@ -328,7 +313,7 @@ const EmployerJobPosts = () => {
         {/* Header */}
         <div className="flex justify-between items-center p-4 pl-[112px] pr-[118px]">
           <div>
-            <h1 className="text-[48px] font-bold text-[#FF8032] -mb-1 mt-8">Manage Postings</h1>
+            <h1 className="text-[48px] font-bold text-[#FF8032] -mb-1 mt-8">Job Posts</h1>
             <p className="text-[22px] text-[#FF8032] font-semibold">
               Jobs Posted: <span className="italic">{getFilteredAndSortedJobs().length}</span>
               {jobPosts.length !== getFilteredAndSortedJobs().length && (
