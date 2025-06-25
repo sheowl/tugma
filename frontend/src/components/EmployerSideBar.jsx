@@ -12,7 +12,8 @@ const navItems = [
 const EmployerSideBar = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    
+    const { logout } = useAuth();
+
     // Simple function to determine which menu should be active
     const getActiveIndex = () => {
         const currentPath = location.pathname;
@@ -31,6 +32,12 @@ const EmployerSideBar = () => {
         if (path && navigate) {
             navigate(path);
         }
+    };
+
+    const handleLogout = (e) => {
+        e.preventDefault();
+        logout();
+        navigate("/employer-sign-in");
     };
 
     return (
@@ -65,12 +72,14 @@ const EmployerSideBar = () => {
             </div>
 
             {/* Bottom Section */}
-            <NavLink to="/employer-sign-in"
-            className="flex items-center gap-3 px-6 py-3 w-[190px] h-[50px] text-white text-base cursor-pointer hover:bg-[#E66F24] rounded-[10px]"
+            <a
+                href="/employer-sign-in"
+                onClick={handleLogout}
+                className="flex items-center gap-3 px-6 py-3 w-[190px] h-[50px] text-white text-base cursor-pointer hover:bg-[#E66F24] rounded-[10px]"
             >
-            <i className="bi bi-box-arrow-right text-xl"></i>
-            <span>Logout</span>
-        </NavLink>
+                <i className="bi bi-box-arrow-right text-xl"></i>
+                <span>Logout</span>
+            </a>
         </div>
     );
 };

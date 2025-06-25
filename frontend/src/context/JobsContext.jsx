@@ -162,7 +162,12 @@ export function JobsProvider({ children }) {
 
   // Auto-fetch company jobs on mount
   useEffect(() => {
-    fetchJobs(2); // Default to company ID 2
+    // Only fetch if logged in and company_id exists
+    const accessToken = localStorage.getItem("access_token");
+    const companyId = localStorage.getItem("company_id");
+    if (accessToken && companyId) {
+      fetchJobs(companyId);
+    }
   }, []);
 
   const value = {
