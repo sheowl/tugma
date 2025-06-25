@@ -8,3 +8,8 @@
 body {
   font-family: 'Montserrat', 'Open Sans', sans-serif;
 }
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  pointer-events: none;
+}

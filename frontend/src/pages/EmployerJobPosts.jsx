@@ -4,10 +4,15 @@ import JobCard from '../components/JobCard.jsx';
 import EmployerSideBar from "../components/EmployerSideBar";
 import SearchBar from "../components/SearchBar";
 import JobNewPost from "../components/JobNewPost";
+import JobEditPost from "../components/JobEditPost";
 import Dropdown from "../components/Dropdown";
 import EmployerPostingDetails from "../components/EmployerPostingDetails";
+<<<<<<< HEAD
 import { useJobs } from "../context/JobsContext"; // This should work now
 import CompanyService from "../services/CompanyService";
+=======
+import { exampleJobPosts } from "../context/jobPostsData";
+>>>>>>> frontend-employer
 
 // --- Dropdown options for custom content ---
 const sortOptions = [
@@ -46,6 +51,7 @@ const filterOptions = [
 
 const EmployerJobPosts = () => {
   const navigate = useNavigate();
+<<<<<<< HEAD
   const { 
     jobs: jobPosts, 
     loading, 
@@ -128,16 +134,67 @@ const EmployerJobPosts = () => {
     } catch (error) {
       console.error('Failed to create job:', error);
     }
+=======
+  const [jobPosts, setJobPosts] = useState([]);
+  const [showModal, setShowModal] = useState(false);  const [companyInfo, setCompanyInfo] = useState({
+    name: 'Company Name',
+    type: 'Company/Business Type',
+    location: 'Company Location'
+  });
+  const [selectedSort, setSelectedSort] = useState(sortOptions[0].value);
+  const [selectedModality, setSelectedModality] = useState(null);  const [selectedWorkType, setSelectedWorkType] = useState(null);
+  const [selectedStatus, setSelectedStatus] = useState(null);
+  const [postingDetailsOpen, setPostingDetailsOpen] = useState(false);
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [openDropdownId, setOpenDropdownId] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [jobToEdit, setJobToEdit] = useState(null);  useEffect(() => {
+    setJobPosts(exampleJobPosts);
+      // Load company data
+    const savedCompanyData = localStorage.getItem('companyData');
+    if (savedCompanyData) {
+      const { companyData } = JSON.parse(savedCompanyData);
+      setCompanyInfo({
+        name: companyData.name || 'Company Name',
+        type: companyData.type || 'Company/Business Type',
+        location: companyData.location || 'Company Location'
+      });
+    }
+  }, []);const handleAddJob = (job) => {
+    setJobPosts([
+      {
+        ...job,
+        id: Date.now(),
+        status: "Active",
+        postedDaysAgo: 0,
+      },
+      ...jobPosts,
+    ]);
+    setShowModal(false);
+>>>>>>> frontend-employer
   };
 
   const handleViewJobDetails = (jobData) => {
     setSelectedJob(jobData);
     setPostingDetailsOpen(true);
+<<<<<<< HEAD
   };
 
   const handleEditJob = () => {
+=======
+  };  
+  
+  const handleEditJob = (jobData) => {
+    const completeJobData = jobPosts.find(job => 
+      job.id === jobData.id || 
+      (job.jobTitle === jobData.jobTitle && job.companyName === jobData.companyName)
+    );
+    
+    setJobToEdit(completeJobData || jobData);
+    setShowEditModal(true);
+>>>>>>> frontend-employer
     setPostingDetailsOpen(false);
-    console.log('Edit job clicked');
+    console.log('Edit job clicked', completeJobData || jobData);
   };
 
   const handleViewApplicants = async () => {
@@ -149,6 +206,72 @@ const EmployerJobPosts = () => {
       });
     } catch (error) {
       console.error('Error navigating to applicants:', error);
+    }
+  };
+  const handleDropdownToggle = (jobId) => {
+    setOpenDropdownId(openDropdownId === jobId ? null : jobId);
+  };
+  const handleEditJobSave = (updatedJobData) => {
+    console.log('Saving job with data:', updatedJobData);
+    setJobPosts(prevJobs => 
+      prevJobs.map(job => 
+        job.id === jobToEdit.id ? updatedJobData : job
+      )
+    );
+    setShowEditModal(false);
+    setJobToEdit(null);
+  };
+
+  const handleEditModalClose = () => {
+    setShowEditModal(false);
+    setJobToEdit(null);
+  };const handleJobAction = (jobId, action) => {
+    console.log(`Action ${action} for job ${jobId}`);
+    
+    setOpenDropdownId(null);
+      if (action === 'edit') {
+      // Handle edit action
+      const jobData = jobPosts.find(job => job.id === jobId);
+      if (jobData) {
+        console.log('Opening job for editing:', jobData.jobTitle);
+        setJobToEdit(jobData);
+        setShowEditModal(true);
+      }
+    } else if (action === 'archive') {
+      // Handle archive action
+      console.log('Archiving job:', jobId);
+      setJobPosts(prevJobs => 
+        prevJobs.map(job => 
+          job.id === jobId ? { ...job, status: 'Archived' } : job
+        )
+      );
+    } else if (action === 'restore') {
+      // Handle restore action
+      console.log('Restoring job:', jobId);
+      setJobPosts(prevJobs => 
+        prevJobs.map(job => 
+          job.id === jobId ? { ...job, status: 'Active' } : job
+        )
+      );
+    } else if (action === 'delete') {
+      // Handle delete action with confirmation
+      const jobToDelete = jobPosts.find(job => job.id === jobId);
+      console.log('Attempting to delete job:', jobToDelete?.jobTitle);
+      
+      const confirmDelete = window.confirm(
+        `Are you sure you want to delete the job posting "${jobToDelete?.jobTitle}"? This action cannot be undone.`
+      );
+      
+      if (confirmDelete) {
+        console.log('User confirmed deletion, removing job:', jobId);
+        setJobPosts(prevJobs => {
+          const newJobs = prevJobs.filter(job => job.id !== jobId);
+          console.log('Jobs after deletion:', newJobs.length, 'remaining');
+          return newJobs;
+        });
+      } else {
+        console.log('User cancelled deletion');
+      }
     }
   };
 
@@ -268,6 +391,7 @@ const EmployerJobPosts = () => {
 
   return (
     <div className="min-h-screen bg-[#FF8032] flex items-start overflow-hidden">
+<<<<<<< HEAD
       <EmployerSideBar companyProfile={companyProfile} />
       <div className="flex-1 h-screen bg-white rounded-tl-[40px] overflow-y-auto p-2 sm:p-4 md:p-6 shadow-md w-full max-w-full">
         
@@ -311,6 +435,10 @@ const EmployerJobPosts = () => {
         )}
 
         {/* Header */}
+=======
+      <EmployerSideBar />
+      <div className="flex-1 h-screen bg-[#FEFEFF] rounded-tl-[40px] overflow-y-auto p-2 sm:p-4 md:p-6 shadow-md w-full max-w-full">
+>>>>>>> frontend-employer
         <div className="flex justify-between items-center p-4 pl-[112px] pr-[118px]">
           <div>
             <h1 className="text-[48px] font-bold text-[#FF8032] -mb-1 mt-8">Job Posts</h1>
@@ -320,6 +448,7 @@ const EmployerJobPosts = () => {
                 <span> / {jobPosts.length}</span>
               )}
             </p>
+<<<<<<< HEAD
           </div>
           
           {/* Right Section - Company Info */}
@@ -332,6 +461,19 @@ const EmployerJobPosts = () => {
                 </span>
                 <span className="text-[#FF8032] italic text-[13px] leading-tight">
                   {companyProfile?.company_size || "Company/Business Type"}
+=======
+          </div>          
+          {/* Right Section */}           
+          <div className="flex items-center gap-3 mt-12">
+            <span className="w-10 h-10 rounded-full bg-[#FF8032]/20 block"></span>
+            <div className="flex items-center gap-2">
+              <div className="flex flex-col">
+                <span className="text-[#FF8032] font-bold text-[18px] leading-tight">{companyInfo.name}</span>
+                <span className="text-[#FF8032] italic text-[13px] leading-tight">{companyInfo.type}</span>
+                <span className="text-[#FF8032] text-[12px] leading-tight flex items-center gap-1">
+                  <i className="bi bi-geo-alt-fill text-[#FF8032] text-[14px]"></i>
+                  {companyInfo.location}
+>>>>>>> frontend-employer
                 </span>
               </div>
             </div>
@@ -366,9 +508,15 @@ const EmployerJobPosts = () => {
 
         {/* Job Posts List */}
         <div className="pl-[112px] pr-[118px] mt-10 mb-10 flex flex-col gap-[20px]">
+<<<<<<< HEAD
           {!loading && !companyLoading && getFilteredAndSortedJobs().length > 0 ? (
             getFilteredAndSortedJobs().map(job => (
               <JobCard
+=======
+          {getFilteredAndSortedJobs().length > 0 ? (            
+            getFilteredAndSortedJobs().map(job => (                
+            <JobCard
+>>>>>>> frontend-employer
                 key={job.id}
                 id={job.id}
                 jobTitle={job.jobTitle}
@@ -381,6 +529,9 @@ const EmployerJobPosts = () => {
                 postedDaysAgo={job.postedDaysAgo}
                 onViewDetails={handleViewJobDetails}
                 onViewApplicants={handleViewApplicants}
+                dropdownOpen={openDropdownId === job.id}
+                onDropdownToggle={handleDropdownToggle}
+                onAction={handleJobAction}
               />
             ))
           ) : !loading && !companyLoading ? (
@@ -396,9 +547,13 @@ const EmployerJobPosts = () => {
           className="fixed bottom-8 right-8 w-16 h-16 bg-[#FF8032] rounded-full shadow-lg flex items-center justify-center cursor-pointer transition hover:bg-[#ff984d] focus:outline-none z-50"
         >
           <span className="text-white text-[32px] leading-none" style={{ fontWeight: 200 }}>+</span>
+<<<<<<< HEAD
         </button>
         
         {/* Job Creation Modal */}
+=======
+        </button>          
+>>>>>>> frontend-employer
         <JobNewPost
           open={showModal}
           onClose={() => setShowModal(false)}
@@ -406,7 +561,18 @@ const EmployerJobPosts = () => {
           companyProfile={companyProfile}
         />
         
+<<<<<<< HEAD
         {/* Job Details Modal */}
+=======
+        <JobEditPost
+          open={showEditModal}
+          onClose={handleEditModalClose}
+          onSave={handleEditJobSave}
+          jobData={jobToEdit}
+        />
+        
+        {/* Employer Posting Details Drawer */}
+>>>>>>> frontend-employer
         <EmployerPostingDetails
           open={postingDetailsOpen}
           onClose={() => setPostingDetailsOpen(false)}

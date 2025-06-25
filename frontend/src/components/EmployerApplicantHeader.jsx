@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Dropdown from "./Dropdown";
 
 const sortOptions = [
@@ -24,14 +25,13 @@ const color = "#FF8032";
 const selectedBg = color + '1A';
 
 const EmployerApplicantHeader = ({
-  jobPostNumber = 2, // TODO: Replace default with backend value
+  jobTitle = 'Job Title', // TODO: Replace default with backend value
   totalApplicants = 'N', // TODO: Replace default with backend value
-  companyName = 'Company Name', // TODO: Replace default with backend value
-  companyType = 'Company/Business Type', // TODO: Replace default with backend value
-  companyLogo = null, // TODO: Replace default with backend image/icon URL or component
   onSortChange = () => {}, // callback for sort change
   selectedSort = sortOptions[0].value,
+  onClose = () => {}, // callback for close/back button
 }) => {
+  const navigate = useNavigate();
   const [selectedMatchScore, setSelectedMatchScore] = useState(null);
   const [selectedStatus, setSelectedStatus] = useState(null);
 
@@ -90,44 +90,29 @@ const EmployerApplicantHeader = ({
       </div>
     </div>
   );
-
   return (
-    <div className="mt-6 bg-white relative">
-      <div className="flex justify-between items-center p-4 pl-[112px] pr-[118px]">
-        {/* Left Section */}
+    <div className="mt-6 bg-white relative">    
+    <button
+        className="absolute top-8 left-8 text-3xl text-[#FF8032] hover:text-[#E66F24]"
+        onClick={() => navigate('/EmployerJobPosts')}
+        aria-label="Go back to job posts"
+      >
+        <i className="bi bi-arrow-left text-[52px]" />
+      </button>
+      
+      <div className="flex justify-between items-center p-4 pl-[112px] pr-[118px]">        
+      {/* Left Section */}
         <div className="flex flex-col justify-center h-full">
-          <h1 className="text-[48px] font-bold text-[#FF873F] flex items-center gap-2">
-            Job Post {jobPostNumber}
-            <span className="text-gray-400 text-sm cursor-pointer flex items-center">
-              <i className="bi bi-pencil-fill text-[20px] pl-4"></i>
-            </span>
-          </h1>
+          <h1 className="text-[48px] font-bold text-[#3C3B3B] flex items-center gap-2"> {jobTitle} </h1>
           <p className="text-[20px] text-[#FF873F] font-semibold -mt-2">
             Total Applicants: <span className="italic">{totalApplicants}</span>
           </p>
         </div>
 
         {/* Right Section */}
-        <div className="flex flex-col items-end gap-4 justify-center h-full text-right mt-8">
-          <div className="flex items-center justify-end space-x-2 mt-0 text-right">
-            {/* Company Logo/Icon Placeholder */}
-            {companyLogo ? (
-              <img src={companyLogo} alt="Company Logo" className="w-8 h-8 rounded-full object-cover" />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-[#FFE3D2] flex items-center justify-center">
-                <span className="text-[#FF8032] text-lg font-bold">?</span>
-              </div>
-            )}            
-            <div className="text-right text-[#FF8032] flex items-center gap-2">
-              <div>
-                <div className="text-[14px] font-bold">{companyName}</div>
-                <div className="text-[12px] font-opensans italic">{companyType}</div>
-              </div>
-              <i className="bi bi-bell text-[24px]"></i>
-            </div>
-          </div>
+        <div className="flex flex-col items-end gap-4 justify-center h-full text-right mt-16">
           {/* Dropdown Buttons */}
-          <div className="flex justify-end gap-6 text-[16px] font-semibold relative mt-0 text-right z-30">
+          <div className="flex justify-end text-[16px] font-semibold relative mt-0 text-right z-30">
             <Dropdown
               label="Sort by"
               customContent={sortContent}
@@ -137,7 +122,7 @@ const EmployerApplicantHeader = ({
             <Dropdown
               label="Filter by"
               customContent={filterContent}
-              width="w-72"
+              width="w-92"
               color={color}
             />
           </div>
