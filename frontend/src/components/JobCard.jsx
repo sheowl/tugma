@@ -40,8 +40,9 @@ const JobCard = (props) => {
     console.log('Option clicked:', option, 'Job ID:', id);
     onDropdownToggle(id); 
     if (option && onAction) {
-      console.log('Calling onAction with:', id, option.value);
-      onAction(id, option.value);
+      console.log('Calling onAction with complete job data:', props);
+      // Pass the complete job object instead of just id and action
+      onAction(props, option.value); // Pass entire props object
     }
   };const handleViewApplicants = () => {
     const job = {

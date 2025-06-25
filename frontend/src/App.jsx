@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext'; // Import AuthProvider
 import { JobsProvider } from './context/JobsContext';
 import { CompanyProvider } from './context/CompanyContext';
+import { TagsProvider } from './context/TagsContext'; // Import TagsProvider
 import "./output.css";
 import ApplicantEmailRegistration from "./pages/Applicant_Email_Registration.jsx";
 import EmployerEmailRegistration from "./pages/Employer_Email_Registration.jsx";
@@ -32,35 +33,37 @@ function App() {
   return (
     <AuthProvider>  {/* Wrap entire app with AuthProvider */}
       <CompanyProvider>  {/* Add CompanyProvider here */}
-        <JobsProvider>
-          <Router>
-            <div className="App">
-              <Routes>
-                <Route path="/" element={<ApplicantSignIn />} />
-                <Route path="/applicant-sign-in" element={<ApplicantSignIn />} />
-                <Route path="/employer-sign-in" element={<EmployerSignIn />} />
-                <Route path="/applicant-email-registration" element={<ApplicantEmailRegistration />} />
-                <Route path="/employer-email-registration" element={<EmployerEmailRegistration />} />
-                <Route path="/empcomreg" element={<EmpComReg />} />
-                <Route path="/appcomreg" element={<AppComReg />} />
-                <Route path="/appverification" element={<AppVerification />} />
-                <Route path="/empverification" element={<EmpVerification />} />
-                <Route path="/applicantbrowsejobs" element={<ApplicantBrowseJobs />} />
-                <Route path="/applicantinbox" element={<ApplicantInbox />} />
-                <Route path="/applicantapplications" element={<ApplicantApplications />} />
-                <Route path="/applicantprofile" element={<ApplicantProfile />} />
-                <Route path="/employerhomepage" element={<EmployerHomePage />} />
-                <Route path="/employerapplicants" element={<EmployerApplicants />} />
-                <Route path="/employerjobposts" element={<EmployerJobPosts />} />
-                <Route path="/applicantonboarding" element={<ApplicantOnboarding />} />
-                <Route path="/employeronboarding" element={<EmployerOnboarding />} />
-                <Route path="/companypage" element={<CompanyPage />} />
-                <Route path="/edit-company-profile" element={<EditCompanyPage />} />
-                <Route path="/applicantresume" element={<ApplicantResume />} />
-              </Routes>
-            </div>
-          </Router>
-        </JobsProvider>
+        <TagsProvider>  {/* Add TagsProvider for categories and tags */}
+          <JobsProvider>
+            <Router>
+              <div className="App">
+                <Routes>
+                  <Route path="/" element={<ApplicantSignIn />} />
+                  <Route path="/applicant-sign-in" element={<ApplicantSignIn />} />
+                  <Route path="/employer-sign-in" element={<EmployerSignIn />} />
+                  <Route path="/applicant-email-registration" element={<ApplicantEmailRegistration />} />
+                  <Route path="/employer-email-registration" element={<EmployerEmailRegistration />} />
+                  <Route path="/empcomreg" element={<EmpComReg />} />
+                  <Route path="/appcomreg" element={<AppComReg />} />
+                  <Route path="/appverification" element={<AppVerification />} />
+                  <Route path="/empverification" element={<EmpVerification />} />
+                  <Route path="/applicantbrowsejobs" element={<ApplicantBrowseJobs />} />
+                  <Route path="/applicantinbox" element={<ApplicantInbox />} />
+                  <Route path="/applicantapplications" element={<ApplicantApplications />} />
+                  <Route path="/applicantprofile" element={<ApplicantProfile />} />
+                  <Route path="/employerhomepage" element={<EmployerHomePage />} />
+                  <Route path="/employerapplicants" element={<EmployerApplicants />} />
+                  <Route path="/employerjobposts" element={<EmployerJobPosts />} />
+                  <Route path="/applicantonboarding" element={<ApplicantOnboarding />} />
+                  <Route path="/employeronboarding" element={<EmployerOnboarding />} />
+                  <Route path="/companypage" element={<CompanyPage />} />
+                  <Route path="/edit-company-profile" element={<EditCompanyPage />} />
+                  <Route path="/applicantresume" element={<ApplicantResume />} />
+                </Routes>
+              </div>
+            </Router>
+          </JobsProvider>
+        </TagsProvider>
       </CompanyProvider>
     </AuthProvider>
   );

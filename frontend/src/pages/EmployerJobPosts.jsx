@@ -1,4 +1,6 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { useCompany } from '../context/CompanyContext';
 import { useNavigate } from "react-router-dom";
 import JobCard from '../components/JobCard.jsx';
 import EmployerSideBar from "../components/EmployerSideBar";
@@ -7,8 +9,6 @@ import JobNewPost from "../components/JobNewPost";
 import JobEditPost from "../components/JobEditPost";
 import Dropdown from "../components/Dropdown";
 import EmployerPostingDetails from "../components/EmployerPostingDetails";
-import { useAuth } from "../context/AuthContext";
-import { useCompany } from "../context/CompanyContext";
 
 // --- Dropdown options for custom content ---
 const sortOptions = [
@@ -83,7 +83,7 @@ const EmployerJobPosts = () => {
     updateJob, 
     deleteJob,
     getCompanyProfile,
-    companyJobs,
+    companyProfile,
     loading: companyLoading,
     error: companyError,
     clearError
@@ -130,7 +130,7 @@ const EmployerJobPosts = () => {
 
       // Map backend attributes to frontend attributes
       const mapJobData = (job) => {
-        // Helper function to format salary range
+        // Helper function to format salary range for display only
         const formatSalary = (salary) => {
           if (!salary || salary < 1000) return "1K"; // Floor salary to 1000
           return `${Math.floor(salary / 1000)}K`; // Convert to "K" format
@@ -146,10 +146,14 @@ const EmployerJobPosts = () => {
           description: job.description || "No description available",
           status: job.status || "Active",
 
-          // Salary mapping with formatting
-          salaryMin: formatSalary(parseInt(job.salary_min, 10)), // Parse and format salary_min
-          salaryMax: formatSalary(parseInt(job.salary_max, 10)), // Parse and format salary_max
-          salaryRange: `${formatSalary(parseInt(job.salary_min, 10))} - ${formatSalary(parseInt(job.salary_max, 10))}`, // Combined range
+          // Keep raw salary values for editing
+          salaryMin: parseInt(job.salary_min, 10) || 0, // Keep as numbers for editing
+          salaryMax: parseInt(job.salary_max, 10) || 0, // Keep as numbers for editing
+          
+          // Formatted salary for display
+          salaryMinDisplay: formatSalary(parseInt(job.salary_min, 10)), 
+          salaryMaxDisplay: formatSalary(parseInt(job.salary_max, 10)),
+          salaryRange: `${formatSalary(parseInt(job.salary_min, 10))} - ${formatSalary(parseInt(job.salary_max, 10))}`, // Combined range for display
 
           // Position mapping
           availablePositions: parseInt(job.position_count, 10) || 0, // Parse position_count
@@ -248,16 +252,10 @@ const EmployerJobPosts = () => {
   };  
   
   const handleEditJob = (jobData) => {
-    // Find the complete job data
-    const completeJobData = jobPosts.find(job => 
-      job.id === jobData.id || 
-      (job.jobTitle === jobData.jobTitle && job.companyName === jobData.companyName)
-    );
-    
-    setJobToEdit(completeJobData || jobData);
+    console.log('Editing job:', jobData); // Debug log
+    setJobToEdit(jobData); // Set both for consistency
+    setSelectedJob(jobData); // Pass the complete job object
     setShowEditModal(true);
-    setPostingDetailsOpen(false);
-    console.log('Edit job clicked', completeJobData || jobData);
   };
 
   const handleEditJobSave = async (updatedJobData) => {
@@ -265,19 +263,35 @@ const EmployerJobPosts = () => {
       setError("");
       clearError();
 
-      console.log('Updating job with data:', updatedJobData);
+      // Use selectedJob instead of jobToEdit, and add null check
+      if (!selectedJob || !selectedJob.id) {
+        console.error('No job selected for editing:', selectedJob);
+        setError("No job selected for editing");
+        return;
+      }
+
+      console.log('Updating job with ID:', selectedJob.id);
+      console.log('Update data:', updatedJobData);
       
       // Update job using CompanyContext
-      const updatedJob = await updateJob(jobToEdit.id, updatedJobData);
+      const updatedJob = await updateJob(selectedJob.id, updatedJobData);
       
       console.log('Job updated successfully:', updatedJob);
       
-      // Close modal and clear edit data
+      // Close modal and clear edit data FIRST
       setShowEditModal(false);
       setJobToEdit(null);
+      setSelectedJob(null);
       
-      // Reload jobs to get updated list
-      await loadJobsAndCompanyData();
+      // THEN reload jobs after a small delay to prevent interference
+      setTimeout(async () => {
+        try {
+          await loadJobsAndCompanyData();
+          console.log('Job list refreshed after update');
+        } catch (error) {
+          console.error('Error refreshing job list:', error);
+        }
+      }, 100);
       
     } catch (error) {
       console.error("Error updating job:", error);
@@ -288,6 +302,7 @@ const EmployerJobPosts = () => {
   const handleEditModalClose = () => {
     setShowEditModal(false);
     setJobToEdit(null);
+    setSelectedJob(null); // Also clear selectedJob
   };
 
   const handleViewApplicants = () => {
@@ -302,64 +317,24 @@ const EmployerJobPosts = () => {
     setOpenDropdownId(openDropdownId === jobId ? null : jobId);
   };
 
-  const handleJobAction = async (jobId, action) => {
-    try {
-      console.log(`Action ${action} for job ${jobId}`);
-      
-      setOpenDropdownId(null);
-      setError("");
-      clearError();
-
-      if (action === 'edit') {
-        // Handle edit action
-        const jobData = jobPosts.find(job => job.id === jobId);
-        if (jobData) {
-          console.log('Opening job for editing:', jobData.jobTitle);
-          setJobToEdit(jobData);
-          setShowEditModal(true);
-        }
-      } else if (action === 'archive') {
-        // Handle archive action - update job status
-        console.log('Archiving job:', jobId);
-        const jobToArchive = jobPosts.find(job => job.id === jobId);
-        if (jobToArchive) {
-          await updateJob(jobId, { ...jobToArchive, status: 'archived' });
-          await loadJobsAndCompanyData(); // Reload to get updated data
-        }
-      } else if (action === 'restore') {
-        // Handle restore action - update job status
-        console.log('Restoring job:', jobId);
-        const jobToRestore = jobPosts.find(job => job.id === jobId);
-        if (jobToRestore) {
-          await updateJob(jobId, { ...jobToRestore, status: 'active' });
-          await loadJobsAndCompanyData(); // Reload to get updated data
-        }
-      } else if (action === 'delete') {
-        // Handle delete action with confirmation
-        const jobToDelete = jobPosts.find(job => job.id === jobId);
-        console.log('Attempting to delete job:', jobToDelete?.jobTitle);
-        
-        const confirmDelete = window.confirm(
-          `Are you sure you want to delete the job posting "${jobToDelete?.jobTitle}"? This action cannot be undone.`
-        );
-        
-        if (confirmDelete) {
-          console.log('User confirmed deletion, removing job:', jobId);
-          
-          // Delete job using CompanyContext
-          await deleteJob(jobId);
-          
-          console.log('Job deleted successfully');
-          
-          // Reload jobs to get updated list
-          await loadJobsAndCompanyData();
-        } else {
-          console.log('User cancelled deletion');
-        }
-      }
-    } catch (error) {
-      console.error(`Error performing ${action} action:`, error);
-      setError(error.message || `Failed to ${action} job. Please try again.`);
+  const handleJobAction = (jobData, action) => {
+    console.log('Job action:', action, 'Job data:', jobData);
+    
+    switch (action) {
+      case 'edit':
+        handleEditJob(jobData); // Pass complete job data
+        break;
+      case 'archive':
+        handleArchiveJob(jobData.id);
+        break;
+      case 'delete':
+        handleDeleteJob(jobData.id);
+        break;
+      case 'restore':
+        handleRestoreJob(jobData.id);
+        break;
+      default:
+        console.log('Unknown action:', action);
     }
   };
 
@@ -507,6 +482,49 @@ const EmployerJobPosts = () => {
     </div>
   );
 
+  // Show loading while company data is being fetched
+  if (companyLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-[#FF8032] font-semibold text-lg">
+          Loading company data...
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-red-500 font-semibold text-lg text-center">
+          Please log in to access this page.
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if company data failed to load
+  if (companyError) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-red-500 font-semibold text-lg text-center">
+          Error loading company data: {companyError}
+          <br />
+          <button 
+            onClick={() => getCompanyProfile()}
+            className="mt-4 bg-[#FF8032] text-white px-4 py-2 rounded-lg hover:bg-[#E66F24] transition"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Debug: Show what company profile contains
+  console.log('Company profile in EmployerJobPosts:', companyProfile);
+
   return (
     <div className="min-h-screen bg-[#FF8032] flex items-start overflow-hidden">
       <EmployerSideBar />
@@ -629,13 +647,15 @@ const EmployerJobPosts = () => {
           open={showModal}
           onClose={() => setShowModal(false)}
           onSave={handleAddJob}
+          companyData={companyProfile} // Pass company data as prop
+          userData={user} // Pass user data as prop
         />
         
         <JobEditPost
           open={showEditModal}
           onClose={handleEditModalClose}
           onSave={handleEditJobSave}
-          jobData={jobToEdit}
+          jobData={selectedJob}
         />
         
         {/* Employer Posting Details Drawer */}

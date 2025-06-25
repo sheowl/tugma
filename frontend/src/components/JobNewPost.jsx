@@ -1,15 +1,18 @@
 import React, { useState } from "react";
-import TAGS from "./Tags";
+import { useJobs } from "../context/JobsContext";
+import { useAuth } from "../context/AuthContext";
+import TAGS from "./Tags"
+import { getProficiencyLevel, getProficiencyOptions } from "../utils/jobMappings";
 
-// Dropdown options
+// Dropdown options - Update values to match backend
 const modalityOptions = [
-  { label: "On-site", value: "on-site" },
+  { label: "On-site", value: "onsite" },
   { label: "Hybrid", value: "hybrid" },
   { label: "Remote", value: "remote" },
 ];
 
 const workTypeOptions = [
-  { label: "Full-Time", value: "full-time" },
+  { label: "Full-Time", value: "fulltime" },
   { label: "Contractual", value: "contractual" },
   { label: "Part-Time", value: "part-time" },
   { label: "Internship", value: "internship" },
@@ -20,31 +23,25 @@ const positionOptions = Array.from({ length: 100 }, (_, i) => ({
   value: i + 1,
 }));
 
-const salaryOptions = [
-  { label: "₱10,000 - ₱15,000", value: "10k-15k" },
-  { label: "₱15,001 - ₱20,000", value: "15k-20k" },
-  { label: "₱20,001 - ₱30,000", value: "20k-30k" },
-  { label: "₱30,001 - ₱50,000", value: "30k-50k" },
-  { label: "₱50,001+", value: "50k-up" },
-];
-
+// Fix the categoryOptions to match your TAGS object keys exactly
 const categoryOptions = [
-  { label: <span className="text-[#FF8032] font-bold">Web Development</span>, value: "web-development" },
-  { label: <span className="text-[#FF8032] font-bold">Programming Languages</span>, value: "programming-languages" },
-  { label: <span className="text-[#FF8032] font-bold">AI/ML/Data Science</span>, value: "ai-ml-data-science" },
-  { label: <span className="text-[#FF8032] font-bold">Databases</span>, value: "databases" },
-  { label: <span className="text-[#FF8032] font-bold">DevOps</span>, value: "devops" },
-  { label: <span className="text-[#FF8032] font-bold">Cybersecurity</span>, value: "cybersecurity" },
-  { label: <span className="text-[#FF8032] font-bold">Mobile Development</span>, value: "mobile-development" },
-  { label: <span className="text-[#FF8032] font-bold">Soft Skills</span>, value: "soft-skills" },
+  { label: <span className="text-[#FF8032] font-bold">Web Development</span>, value: "Web Development" },
+  { label: <span className="text-[#FF8032] font-bold">Programming Languages</span>, value: "Programming Languages" },
+  { label: <span className="text-[#FF8032] font-bold">AI/ML/Data Science</span>, value: "AI/ML/Data Science" },
+  { label: <span className="text-[#FF8032] font-bold">Databases</span>, value: "Databases" },
+  { label: <span className="text-[#FF8032] font-bold">DevOps</span>, value: "DevOps" },
+  { label: <span className="text-[#FF8032] font-bold">Cybersecurity</span>, value: "Cybersecurity" },
+  { label: <span className="text-[#FF8032] font-bold">Mobile Development</span>, value: "Mobile Development" },
+  { label: <span className="text-[#FF8032] font-bold">Soft Skills</span>, value: "Soft Skills" },
 ];
 
+// Also fix proficiencyOptions to use numeric values for backend
 const proficiencyOptions = [
-  { label: <span className="text-[#FF8032]">Level 1: <span className="font-bold">Novice</span></span>, value: "novice" },
-  { label: <span className="text-[#FF8032]">Level 2: <span className="font-bold">Advanced Beginner</span></span>, value: "advanced-beginner" },
-  { label: <span className="text-[#FF8032]">Level 3: <span className="font-bold">Competent</span></span>, value: "competent" },
-  { label: <span className="text-[#FF8032]">Level 4: <span className="font-bold">Proficient</span></span>, value: "proficient" },
-  { label: <span className="text-[#FF8032]">Level 5: <span className="font-bold">Expert</span></span>, value: "expert" },
+  { label: <span className="text-[#FF8032]">Level 1: <span className="font-bold">Novice</span></span>, value: 1 },
+  { label: <span className="text-[#FF8032]">Level 2: <span className="font-bold">Advanced Beginner</span></span>, value: 2 },
+  { label: <span className="text-[#FF8032]">Level 3: <span className="font-bold">Competent</span></span>, value: 3 },
+  { label: <span className="text-[#FF8032]">Level 4: <span className="font-bold">Proficient</span></span>, value: 4 },
+  { label: <span className="text-[#FF8032]">Level 5: <span className="font-bold">Expert</span></span>, value: 5 },
 ];
 
 // Reusable Dropdown
@@ -100,19 +97,24 @@ const CustomDropdown = ({
 };
 
 //POST New Jobs
-const JobNewPost = ({ open, onClose, onSave }) => {
+const JobNewPost = ({ open, onClose, onSave, companyData, userData }) => {
+  // Use AuthContext and props for data
+  const { user, isAuthenticated } = useAuth();
+  const { createJob, loading: contextLoading, error: contextError, clearError } = useJobs();
+  
+  // Use company data from props (companyProfile from CompanyContext)
+  const company = companyData || {};
+  const currentUser = userData || user;
+
+  // Update form state to include salary min/max
   const [form, setForm] = useState({
     jobTitle: "",
     companyName: "",
     location: "",
-    salary: "",
-    modality: "",
-    workType: "",
+    salaryMin: "",
+    salaryMax: "",
     description: "",
-    positions: "",
     tags: [],
-    category: "",
-    proficiency: ""
   });
 
   const [tagInput, setTagInput] = useState("");
@@ -120,13 +122,21 @@ const JobNewPost = ({ open, onClose, onSave }) => {
   const [selectedModality, setSelectedModality] = useState(null);
   const [selectedWorkType, setSelectedWorkType] = useState(null);
   const [availablePositions, setAvailablePositions] = useState(null);
-  const [selectedSalary, setSelectedSalary] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedProficiency, setSelectedProficiency] = useState(null);
-  const [openDropdown, setOpenDropdown] = useState(null); // shared state
+  const [openDropdown, setOpenDropdown] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    
+    // Handle salary fields
+    if (name === 'salaryMin' || name === 'salaryMax') {
+      const numericValue = value.replace(/[^0-9]/g, '');
+      setForm({ ...form, [name]: numericValue });
+    } else {
+      setForm({ ...form, [name]: value });
+    }
   };
 
   const handleTagAdd = () => {
@@ -138,48 +148,208 @@ const JobNewPost = ({ open, onClose, onSave }) => {
 
   const handleTagRemove = (tag) => {
     setForm({ ...form, tags: form.tags.filter((t) => t !== tag) });
-  };  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Create the job data with form values 
-    const jobData = {
-      jobTitle: form.jobTitle,
-      companyName: form.companyName,
-      location: form.location,
-      salary: selectedSalary, 
-      type: selectedModality,
-      employment: selectedWorkType,
-      description: form.description,
-      availablePositions: availablePositions,
-      tags: form.tags,
-      applicantCount: form.applicantCount || 0,
-      category: selectedCategory,
-      proficiency: selectedProficiency
-    };
-    onSave(jobData);
-    setForm({
-      jobTitle: "",
-      companyName: "",
-      location: "",
-      salary: "",
-      modality: "",
-      workType: "",
-      description: "",
-      positions: "",
-      tags: [],
-      category: "",
-      proficiency: ""
-    });
-    setSelectedModality(null);
-    setSelectedWorkType(null);
-    setAvailablePositions(null);
-    setSelectedSalary(null);
-    setSelectedCategory(null);
-    setSelectedProficiency(null);
-    setShowTagInput(false);
   };
-  
-  // Get tags for the selected category
-  const availableTags = selectedCategory ? TAGS[categoryOptions.find(opt => opt.value === selectedCategory)?.label.props.children] || [] : [];
+
+  // Add salary validation
+  const isSalaryValid = () => {
+    const min = parseInt(form.salaryMin) || 0;
+    const max = parseInt(form.salaryMax) || 0;
+    if (min < 0 || max < 0) return false;
+    return min > 0 && max > 0 && min <= max;
+  };
+
+  // Update handleSubmit to use the passed company data
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!isSalaryValid()) {
+      alert('Please enter valid salary amounts');
+      return;
+    }
+
+    // Check authentication first
+    if (!isAuthenticated) {
+      alert('Please log in to create a job posting.');
+      return;
+    }
+
+    // Make sure we have company data
+    if (!company || !company.company_id) {
+      alert('Company information is not available. Please try refreshing the page.');
+      return;
+    }
+
+    // Validate required fields with detailed logging
+    const missingFields = [];
+    
+    if (!form.jobTitle?.trim()) missingFields.push('Job Title');
+    if (!form.description?.trim()) missingFields.push('Job Description');
+    if (!selectedModality) missingFields.push('Job Modality');
+    if (!selectedWorkType) missingFields.push('Work Type');
+    if (!availablePositions) missingFields.push('Available Positions');
+    if (!form.salaryMin || parseInt(form.salaryMin) <= 0) missingFields.push('Minimum Salary');
+    if (!form.salaryMax || parseInt(form.salaryMax) <= 0) missingFields.push('Maximum Salary');
+
+    if (missingFields.length > 0) {
+      alert(`Please fill in the following required fields:\n• ${missingFields.join('\n• ')}`);
+      return;
+    }
+
+    try {
+      setSaving(true);
+      clearError();
+      
+      // Map category name to category ID for backend
+      const categoryMapping = {
+        "Web Development": 1,
+        "Programming Languages": 2, 
+        "Databases": 3,
+        "AI/ML/Data Science": 4,
+        "DevOps": 5,
+        "Cybersecurity": 7,
+        "Mobile Development": 8,
+        "Soft Skills": 9
+      };
+      
+      // Transform data to match backend expected format exactly
+      const jobData = {
+        job_title: form.jobTitle.trim(),
+        salary_min: parseInt(form.salaryMin),
+        salary_max: parseInt(form.salaryMax),
+        setting: selectedModality,
+        work_type: selectedWorkType,
+        description: form.description.trim(),
+        date_added: new Date().toISOString().split('T')[0],
+        created_at: new Date().toISOString(),
+        position_count: parseInt(availablePositions),
+        required_category_id: selectedCategory ? (categoryMapping[selectedCategory] || 0) : 0,
+        required_proficiency: parseInt(selectedProficiency) || 0,
+        company_id: parseInt(company.company_id)
+      };
+      
+      // Final validation with detailed error messages
+      const validationErrors = [];
+      
+      if (!jobData.job_title) validationErrors.push(`Job title is missing: "${jobData.job_title}"`);
+      if (!jobData.salary_min || jobData.salary_min <= 0) validationErrors.push(`Invalid salary_min: ${jobData.salary_min}`);
+      if (!jobData.salary_max || jobData.salary_max <= 0) validationErrors.push(`Invalid salary_max: ${jobData.salary_max}`);
+      if (jobData.salary_min > jobData.salary_max) validationErrors.push(`salary_min (${jobData.salary_min}) > salary_max (${jobData.salary_max})`);
+      if (!jobData.setting) validationErrors.push(`Missing setting: "${jobData.setting}"`);
+      if (!jobData.work_type) validationErrors.push(`Missing work_type: "${jobData.work_type}"`);
+      if (!jobData.description) validationErrors.push(`Missing description: "${jobData.description}"`);
+      if (!jobData.position_count || jobData.position_count <= 0) validationErrors.push(`Invalid position_count: ${jobData.position_count}`);
+      if (!jobData.company_id) validationErrors.push(`Missing company_id: ${jobData.company_id}`);
+      
+      // Check if these are valid enum values
+      const validSettings = ['onsite', 'hybrid', 'remote'];
+      const validWorkTypes = ['fulltime', 'contractual', 'part-time', 'internship'];
+      
+      if (!validSettings.includes(jobData.setting)) {
+        validationErrors.push(`Invalid setting enum: "${jobData.setting}". Must be one of: ${validSettings.join(', ')}`);
+      }
+      
+      if (!validWorkTypes.includes(jobData.work_type)) {
+        validationErrors.push(`Invalid work_type enum: "${jobData.work_type}". Must be one of: ${validWorkTypes.join(', ')}`);
+      }
+      
+      if (validationErrors.length > 0) {
+        alert('Validation errors found:\n\n' + validationErrors.join('\n'));
+        return;
+      }
+      
+      const result = await createJob(jobData);
+      
+      if (onSave) {
+        onSave(result);
+      }
+      
+      // Reset form
+      setForm({
+        jobTitle: "",
+        companyName: "",
+        location: "",
+        salaryMin: "",
+        salaryMax: "",
+        description: "",
+        tags: [],
+      });
+      setSelectedModality(null);
+      setSelectedWorkType(null);
+      setAvailablePositions(null);
+      setSelectedCategory(null);
+      setSelectedProficiency(null);
+      setShowTagInput(false);
+      
+      onClose();
+      
+    } catch (error) {
+      // Try to get more detailed error information
+      if (error.message.includes('422')) {
+        alert('Backend validation error: Please check all required fields.');
+      } else {
+        alert(`Failed to create job: ${error.message}`);
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Get tags for the selected category (keep exactly as is)
+  const availableTags = selectedCategory ? TAGS[selectedCategory] || [] : [];
+
+  // Check authentication
+  if (!isAuthenticated) {
+    return (
+      <>
+        <div
+          className={`fixed inset-0 bg-black bg-opacity-40 transition-opacity duration-300 z-40 ${
+            open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+          }`}
+          onClick={onClose}
+        />
+        
+        <div
+          className={`fixed top-0 right-0 h-full w-[640px] bg-white shadow-2xl z-50 transform transition-transform duration-300 rounded-tl-[30px] rounded-bl-[30px] ${
+            open ? "translate-x-0" : "translate-x-full"
+          }`}
+        >
+          <div className="p-10 w-full h-full flex items-center justify-center">
+            <div className="text-red-500 font-semibold text-lg text-center">
+              Please log in to create job postings.
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // Check company data (companyProfile)
+  if (!company || !company.company_id) {
+    return (
+      <>
+        <div
+          className={`fixed inset-0 bg-black bg-opacity-40 transition-opacity duration-300 z-40 ${
+            open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+          }`}
+          onClick={onClose}
+        />
+        
+        <div
+          className={`fixed top-0 right-0 h-full w-[640px] bg-white shadow-2xl z-50 transform transition-transform duration-300 rounded-tl-[30px] rounded-bl-[30px] ${
+            open ? "translate-x-0" : "translate-x-full"
+          }`}
+        >
+          <div className="p-10 w-full h-full flex items-center justify-center">
+            <div className="text-red-500 font-semibold text-lg text-center">
+              Company profile not loaded.<br />
+              Available properties: {Object.keys(company || {}).join(', ')}<br />
+              Please ensure you're logged in as an employer.
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -204,6 +374,14 @@ const JobNewPost = ({ open, onClose, onSave }) => {
         >
           <i className="bi bi-arrow-left text-[52px]" />
         </button>
+        
+        {/* Error display */}
+        {contextError && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 mt-16">
+            Error: {contextError}
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit} className="flex flex-col gap-5 mt-16 ml-12">
           <div>
             <div className="relative flex items-center">
@@ -226,7 +404,7 @@ const JobNewPost = ({ open, onClose, onSave }) => {
                 className="outline-none border-b-2 border-[transparent] focus:border-[#FF8032] w-full font-bold text-[#6B7280] placeholder:text-[20px] placeholder:font-bold placeholder:text-[#6B7280]"
                 name="companyName"
                 placeholder="Company Name"
-                value={form.companyName}
+                value={form.companyName || company.company_name || ''}
                 onChange={handleChange}
                 required
               />
@@ -236,28 +414,60 @@ const JobNewPost = ({ open, onClose, onSave }) => {
                 className="outline-none border-b-2 border-transparent focus:border-[#FF8032] w-full font-semibold text-[#6B7280] placeholder:text-[16px] placeholder:font-semibold placeholder:text-[#6B7280]"
                 name="location"
                 placeholder="Job Location"
-                value={form.location}
+                value={form.location || company.location || ''}
                 onChange={handleChange}
                 required
               />
             </div>
           </div>          
+          
+          {/* Replace salary dropdown with min/max inputs */}
           <div className="flex flex-col gap-2">
             <label className="text-[16px] font-semibold text-[#3C3B3B] mb-1">
-              Job Salary
-            </label>
+              Job Salary Range
+            </label>            
             <div className="flex items-center gap-2">
-              <CustomDropdown
-                options={salaryOptions}
-                selected={selectedSalary}
-                onSelect={setSelectedSalary}
-                placeholder="Action"
-                openDropdown={openDropdown}
-                setOpenDropdown={setOpenDropdown}
-                dropdownKey="salary"
-              />
-              <span className="text-[16px] text-[#262424]">monthly</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[16px] text-[#262424] font-semibold">₱</span>
+                <input
+                  type="number"
+                  name="salaryMin"
+                  placeholder="Minimum"
+                  value={form.salaryMin}
+                  onChange={handleChange}
+                  className="h-8 px-3 py-2 border-2 border-[#FF8032] focus:border-[#FF8032] focus:outline-none focus:ring-0 text-[#FF8032] rounded-[10px] text-[14px] font-bold bg-white w-[120px]"
+                  min="0"
+                  step="1"
+                  required
+                />
+              </div>
+              <span className="text-[16px] text-[#262424] font-semibold">-</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[16px] text-[#262424] font-semibold">₱</span>
+                <input
+                  type="number"
+                  name="salaryMax"
+                  placeholder="Maximum"
+                  value={form.salaryMax}
+                  onChange={handleChange}
+                  className="h-8 px-3 py-2 border-2 border-[#FF8032] focus:border-[#FF8032] focus:outline-none focus:ring-0 text-[#FF8032] rounded-[10px] text-[14px] font-bold bg-white w-[120px]"
+                  min="0"
+                  step="1"
+                  required
+                />
+              </div>
+              <span className="text-[16px] text-[#262424] font-semibold">monthly</span>
             </div>
+            {/* Validation message */}
+            {(form.salaryMin || form.salaryMax) && !isSalaryValid() && (
+              <p className="text-red-500 text-[12px] mt-1">
+                {parseInt(form.salaryMin) < 0 || parseInt(form.salaryMax) < 0
+                  ? "Salary cannot be negative"
+                  : parseInt(form.salaryMin) > parseInt(form.salaryMax) 
+                  ? "Minimum salary cannot be greater than maximum salary" 
+                  : "Please enter valid salary amounts"}
+              </p>
+            )}
           </div>
 
           <div className="flex flex-col gap-2">
@@ -347,10 +557,11 @@ const JobNewPost = ({ open, onClose, onSave }) => {
             </div>
           </div>
           
+          {/* Keep tag section exactly as is */}
           <div className="flex flex-col gap-2">
             <label className="font-semibold text-[16px] text-[#3C3B3B]">Tags</label>
             <div className="flex flex-wrap gap-2 mb-2">
-              {/* Show tags for selected category */}
+              {/* Show tags for the selected category */}
               {availableTags.length > 0 && availableTags.map((tag) => {
                 const isSelected = form.tags.includes(tag);
                 return (
@@ -404,9 +615,14 @@ const JobNewPost = ({ open, onClose, onSave }) => {
           <div className="flex justify-center mt-4">
             <button
               type="submit"
-              className="w-[243px] h-[48px] bg-[#FF8032] text-white font-bold rounded-lg hover:bg-[#E66F24] transition text-[16px]"
+              disabled={saving || contextLoading || !isSalaryValid()}
+              className={`w-[243px] h-[48px] font-bold rounded-lg transition text-[16px] ${
+                !saving && !contextLoading && isSalaryValid()
+                  ? 'bg-[#FF8032] text-white hover:bg-[#E66F24]' 
+                  : 'bg-[#979797] text-white cursor-not-allowed'
+              }`}
             >
-              Post Job
+              {saving || contextLoading ? 'Creating...' : 'Post Job'}
             </button>          
           </div>
         </form>

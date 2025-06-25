@@ -1,29 +1,35 @@
-// Category mapping
-export const getCategoryName = (categoryId) => {
-  const categories = {
-    1: "Web Development",
-    2: "Programming Languages", 
-    3: "Databases",
-    4: "AI/ML/Data Science",
-    5: "DevOps",
-    7: "Cybersecurity",
-    8: "Mobile Development",
-    9: "Soft Skills",
-    10: "Testing"
-  };
-  return categories[categoryId] || "No Category";
+// Fallback category mapping (in case database is not available)
+const FALLBACK_CATEGORIES = {
+  1: "Web Development",
+  2: "Programming Languages", 
+  3: "Databases",
+  4: "AI/ML/Data Science",
+  5: "DevOps",
+  7: "Cybersecurity",
+  8: "Mobile Development",
+  9: "Soft Skills"
 };
 
-// Proficiency mapping
+// Fallback proficiency mapping
+const FALLBACK_PROFICIENCY_LEVELS = {
+  1: "Level 1: Novice",
+  2: "Level 2: Advanced Beginner",
+  3: "Level 3: Competent", 
+  4: "Level 4: Proficient",
+  5: "Level 5: Expert"
+};
+
+// Category mapping with fallback
+export const getCategoryName = (categoryId, categoryMapping = null) => {
+  if (categoryMapping) {
+    return categoryMapping[categoryId] || "No Category";
+  }
+  return FALLBACK_CATEGORIES[categoryId] || "No Category";
+};
+
+// Proficiency mapping (static - assuming this doesn't change often)
 export const getProficiencyLevel = (proficiencyId) => {
-  const proficiencyLevels = {
-    1: "Level 1: Novice",
-    2: "Level 2: Advanced Beginner",
-    3: "Level 3: Competent", 
-    4: "Level 4: Proficient",
-    5: "Level 5: Expert"
-  };
-  return proficiencyLevels[proficiencyId] || "No Proficiency";
+  return FALLBACK_PROFICIENCY_LEVELS[proficiencyId] || "No Proficiency";
 };
 
 // Work setting mapping
@@ -49,34 +55,39 @@ export const getWorkType = (workType) => {
   return types[workType?.toLowerCase()] || workType || "Contractual";
 };
 
+// Helper functions for dropdown options using dynamic data
+export const getCategoryOptions = (categoryMapping = null) => {
+  const mapping = categoryMapping || FALLBACK_CATEGORIES;
+  return Object.entries(mapping)
+    .sort(([a], [b]) => parseInt(a) - parseInt(b))
+    .map(([id, name]) => ({
+      value: parseInt(id),
+      label: name
+    }));
+};
+
+export const getProficiencyOptions = () => {
+  return Object.entries(FALLBACK_PROFICIENCY_LEVELS)
+    .sort(([a], [b]) => parseInt(a) - parseInt(b))
+    .map(([id, level]) => ({
+      value: parseInt(id),
+      label: level
+    }));
+};
+
 // Export all mappings as an object for easier importing
 export const JobMappings = {
   getCategoryName,
   getProficiencyLevel,
   getWorkSetting,
-  getWorkType
+  getWorkType,
+  getCategoryOptions,
+  getProficiencyOptions
 };
 
-// Export constants for direct access to mapping objects
-export const CATEGORIES = {
-  1: "Web Development",
-  2: "Programming Languages", 
-  3: "Databases",
-  4: "AI/ML/Data Science",
-  5: "DevOps",
-  7: "Cybersecurity",
-  8: "Mobile Development",
-  9: "Soft Skills",
-  10: "Testing"
-};
-
-export const PROFICIENCY_LEVELS = {
-  1: "Level 1: Novice",
-  2: "Level 2: Advanced Beginner",
-  3: "Level 3: Competent", 
-  4: "Level 4: Proficient",
-  5: "Level 5: Expert"
-};
+// Export constants for backward compatibility (fallback values)
+export const CATEGORIES = FALLBACK_CATEGORIES;
+export const PROFICIENCY_LEVELS = FALLBACK_PROFICIENCY_LEVELS;
 
 export const WORK_SETTINGS = {
   "hybrid": "Hybrid",
