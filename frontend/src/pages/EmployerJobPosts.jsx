@@ -7,12 +7,7 @@ import JobNewPost from "../components/JobNewPost";
 import JobEditPost from "../components/JobEditPost";
 import Dropdown from "../components/Dropdown";
 import EmployerPostingDetails from "../components/EmployerPostingDetails";
-<<<<<<< HEAD
-import { useJobs } from "../context/JobsContext"; // This should work now
-import CompanyService from "../services/CompanyService";
-=======
 import { exampleJobPosts } from "../context/jobPostsData";
->>>>>>> frontend-employer
 
 // --- Dropdown options for custom content ---
 const sortOptions = [
@@ -51,90 +46,6 @@ const filterOptions = [
 
 const EmployerJobPosts = () => {
   const navigate = useNavigate();
-<<<<<<< HEAD
-  const { 
-    jobs: jobPosts, 
-    loading, 
-    error, 
-    createJob, 
-    fetchJobs, 
-    clearError 
-  } = useJobs();
-  
-  const [showModal, setShowModal] = useState(false);
-  const [selectedSort, setSelectedSort] = useState(sortOptions[0].value);
-  const [selectedModality, setSelectedModality] = useState(null);
-  const [selectedWorkType, setSelectedWorkType] = useState(null);
-  const [selectedStatus, setSelectedStatus] = useState(null);
-  const [postingDetailsOpen, setPostingDetailsOpen] = useState(false);
-  const [selectedJob, setSelectedJob] = useState(null);
-  
-  // Add company profile state
-  const [companyProfile, setCompanyProfile] = useState(null);
-  const [companyLoading, setCompanyLoading] = useState(false);
-  const [companyError, setCompanyError] = useState(null);
-
-  // Fetch company profile
-  const fetchCompanyProfile = async () => {
-    try {
-      setCompanyLoading(true);
-      setCompanyError(null);
-      const profile = await CompanyService.getProfile();
-      setCompanyProfile(profile);
-    } catch (error) {
-      console.error('Error fetching company profile:', error);
-      setCompanyError(error.message);
-    } finally {
-      setCompanyLoading(false);
-    }
-  };
-
-  // Fetch jobs for current company
-  const refreshCompanyJobs = async () => {
-    try {
-      // Use the existing fetchJobs from context
-      if (companyProfile?.company_id) {
-        await fetchJobs(companyProfile.company_id);
-      } else {
-        await fetchJobs(2); // Default company ID
-      }
-    } catch (error) {
-      console.error('Error fetching company jobs:', error);
-    }
-  };
-
-  // Handle errors
-  useEffect(() => {
-    if (error) {
-      console.error('Jobs error:', error);
-    }
-    if (companyError) {
-      console.error('Company profile error:', companyError);
-    }
-  }, [error, companyError]);
-
-  // Fetch data on component mount
-  useEffect(() => {
-    fetchCompanyProfile();
-  }, []);
-
-  // Fetch jobs when company profile is loaded
-  useEffect(() => {
-    if (companyProfile) {
-      refreshCompanyJobs();
-    }
-  }, [companyProfile]);
-
-  const handleAddJob = async (jobData) => {
-    try {
-      await createJob(jobData);
-      setShowModal(false);
-      // Refresh jobs after creation
-      await refreshCompanyJobs();
-    } catch (error) {
-      console.error('Failed to create job:', error);
-    }
-=======
   const [jobPosts, setJobPosts] = useState([]);
   const [showModal, setShowModal] = useState(false);  const [companyInfo, setCompanyInfo] = useState({
     name: 'Company Name',
@@ -171,17 +82,11 @@ const EmployerJobPosts = () => {
       ...jobPosts,
     ]);
     setShowModal(false);
->>>>>>> frontend-employer
   };
 
   const handleViewJobDetails = (jobData) => {
     setSelectedJob(jobData);
     setPostingDetailsOpen(true);
-<<<<<<< HEAD
-  };
-
-  const handleEditJob = () => {
-=======
   };  
   
   const handleEditJob = (jobData) => {
@@ -192,21 +97,16 @@ const EmployerJobPosts = () => {
     
     setJobToEdit(completeJobData || jobData);
     setShowEditModal(true);
->>>>>>> frontend-employer
     setPostingDetailsOpen(false);
     console.log('Edit job clicked', completeJobData || jobData);
   };
 
-  const handleViewApplicants = async () => {
-    try {
-      navigate('/employerapplicants', { 
-        state: { 
-          jobPosts: jobPosts
-        } 
-      });
-    } catch (error) {
-      console.error('Error navigating to applicants:', error);
-    }
+  const handleViewApplicants = () => {
+    navigate('/employerapplicants', { 
+      state: { 
+        jobPosts: jobPosts 
+      } 
+    });
   };
   const handleDropdownToggle = (jobId) => {
     setOpenDropdownId(openDropdownId === jobId ? null : jobId);
@@ -275,114 +175,119 @@ const EmployerJobPosts = () => {
     }
   };
 
-  // Filter and sort logic
   const getFilteredAndSortedJobs = () => {
-    let filtered = jobPosts;
+    let filteredJobs = jobPosts;
 
-    // Filter by modality
+    // Apply filters
     if (selectedModality) {
-      filtered = filtered.filter(job => 
-        job.type?.toLowerCase() === selectedModality.toLowerCase()
-      );
+      filteredJobs = filteredJobs.filter(job => {
+        const jobType = job.type.toLowerCase();
+        return jobType === selectedModality || 
+               (selectedModality === 'on-site' && jobType === 'on-site') ||
+               (selectedModality === 'hybrid' && jobType === 'hybrid') ||
+               (selectedModality === 'remote' && jobType === 'remote');
+      });
     }
 
-    // Filter by work type
     if (selectedWorkType) {
-      filtered = filtered.filter(job => 
-        job.employment?.toLowerCase() === selectedWorkType.toLowerCase()
-      );
+      filteredJobs = filteredJobs.filter(job => {
+        const jobEmployment = job.employment.toLowerCase();
+        return jobEmployment === selectedWorkType ||
+               (selectedWorkType === 'full-time' && jobEmployment === 'full-time') ||
+               (selectedWorkType === 'part-time' && jobEmployment === 'part-time') ||
+               (selectedWorkType === 'contractual' && jobEmployment === 'contractual') ||
+               (selectedWorkType === 'internship' && jobEmployment === 'internship');
+      });
     }
 
-    // Filter by status
     if (selectedStatus) {
-      filtered = filtered.filter(job => 
-        job.status?.toLowerCase() === selectedStatus.toLowerCase()
+      filteredJobs = filteredJobs.filter(job => 
+        job.status.toLowerCase() === selectedStatus
       );
     }
 
-    // Sort
-    const sorted = [...filtered].sort((a, b) => {
+    // Apply sorting
+    const sortedJobs = [...filteredJobs].sort((a, b) => {
       switch (selectedSort) {
-        case "az":
+        case 'az':
           return a.jobTitle.localeCompare(b.jobTitle);
-        case "za":
+        case 'za':
           return b.jobTitle.localeCompare(a.jobTitle);
-        case "newest":
-          return new Date(b.createdAt) - new Date(a.createdAt);
-        case "oldest":
-          return new Date(a.createdAt) - new Date(b.createdAt);
+        case 'newest':
+          return a.postedDaysAgo - b.postedDaysAgo;
+        case 'oldest':
+          return b.postedDaysAgo - a.postedDaysAgo;
         default:
           return 0;
       }
     });
 
-    return sorted;
+    return sortedJobs;
   };
 
-  // Custom sort content
   const sortContent = (
-    <div className="p-4">
-      <h3 className="font-semibold text-lg mb-3">Sort by</h3>
-      <div className="space-y-2">
-        {sortOptions.map((option) => (
-          <div key={option.value} className="flex items-center">
-            <input
-              type="radio"
-              id={option.value}
-              name="sort"
-              value={option.value}
-              checked={selectedSort === option.value}
-              onChange={(e) => setSelectedSort(e.target.value)}
-              className="mr-2"
-            />
-            <label htmlFor={option.value} className="text-sm">
-              {option.label}
-            </label>
-          </div>
-        ))}
-      </div>
+    <div className="flex flex-col">
+      {sortOptions.map(opt => (
+        <div
+          key={opt.value}
+          className={`p-2 cursor-pointer rounded transition-colors text-[14px] font-opensans ${
+            selectedSort === opt.value ? "bg-[#FF8032] text-white" : ""
+          }`}
+          onClick={() => setSelectedSort(opt.value)}
+        >
+          {opt.label}
+        </div>
+      ))}
     </div>
   );
 
-  // Custom filter content
+  const selectedOptionStyle = { backgroundColor: "#FF80321A", color: "#FF8032" };
+
+
   const filterContent = (
-    <div className="p-4">
-      <h3 className="font-semibold text-lg mb-3">Filter by</h3>
-      <div className="space-y-4">
-        {filterOptions.map((group) => (
-          <div key={group.group}>
-            <h4 className="font-medium text-md mb-2">{group.group}</h4>
-            <div className="space-y-2">
-              {group.options.map((option) => {
-                const isSelected = 
-                  (group.group === "By Modality" && selectedModality === option.value) ||
-                  (group.group === "By Work Type" && selectedWorkType === option.value) ||
-                  (group.group === "By Status" && selectedStatus === option.value);
-                
-                return (
-                  <div key={option.value} className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id={option.value}
-                      checked={isSelected}
-                      onChange={(e) => {
-                        if (group.group === "By Modality") {
-                          setSelectedModality(e.target.checked ? option.value : null);
-                        } else if (group.group === "By Work Type") {
-                          setSelectedWorkType(e.target.checked ? option.value : null);
-                        } else if (group.group === "By Status") {
-                          setSelectedStatus(e.target.checked ? option.value : null);
-                        }
-                      }}
-                      className="mr-2"
-                    />
-                    <label htmlFor={option.value} className="text-sm">
-                      {option.label}
-                    </label>
-                  </div>
-                );
-              })}
-            </div>
+    <div className="p-4 w-80 text-[14px] font-semibold grid grid-cols-2 gap-2">
+      <div className="flex flex-col gap-24 items-start">
+        <div className="font-semibold text-[#6B7280] mb-1 mt-2">By Modality</div>
+        <div className="font-semibold text-[#6B7280] mb-1 mt-0">By Work Type</div>
+        <div className="font-semibold text-[#6B7280] mb-1 mt-10">By Status</div>
+      </div>
+      <div className="flex flex-col gap-1 justify-start items-start">
+        {/* By Modality */}
+        {filterOptions[0].options.map(opt => (
+          <div
+            key={opt.value}
+            className="p-1 mt-1 rounded cursor-pointer transition-colors"
+            style={selectedModality === opt.value ? selectedOptionStyle : {}}
+            data-selected={selectedModality === opt.value}
+            onClick={() => setSelectedModality(selectedModality === opt.value ? null : opt.value)}
+          >
+            {opt.label}
+          </div>
+        ))}
+        <div className="h-2" />
+        {/* By Work Type */}
+        {filterOptions[1].options.map(opt => (
+          <div
+            key={opt.value}
+            className="p-1 mt-1 rounded cursor-pointer transition-colors"
+            style={selectedWorkType === opt.value ? selectedOptionStyle : {}}
+            data-selected={selectedWorkType === opt.value}
+            onClick={() => setSelectedWorkType(selectedWorkType === opt.value ? null : opt.value)}
+          >
+            {opt.label}
+          </div>
+        ))}
+        <div className="h-2" />
+        {/* By Status */}
+        {filterOptions[2].options.map(opt => (
+          <div
+            key={opt.value}
+            className="p-1 mt-1 rounded cursor-pointer transition-colors"
+            style={selectedStatus === opt.value ? selectedOptionStyle : {}}
+            data-selected={selectedStatus === opt.value}
+            onClick={() => setSelectedStatus(selectedStatus === opt.value ? null : opt.value)}
+          >
+            {opt.label}
           </div>
         ))}
       </div>
@@ -391,77 +296,17 @@ const EmployerJobPosts = () => {
 
   return (
     <div className="min-h-screen bg-[#FF8032] flex items-start overflow-hidden">
-<<<<<<< HEAD
-      <EmployerSideBar companyProfile={companyProfile} />
-      <div className="flex-1 h-screen bg-white rounded-tl-[40px] overflow-y-auto p-2 sm:p-4 md:p-6 shadow-md w-full max-w-full">
-        
-        {/* Loading states */}
-        {(loading || companyLoading) && (
-          <div className="flex justify-center items-center py-8">
-            <div className="text-[#FF8032] text-lg">
-              {loading && "Loading jobs..."}
-              {companyLoading && "Loading company profile..."}
-            </div>
-          </div>
-        )}
-
-        {/* Error states */}
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mx-[112px] mb-4">
-            <strong className="font-bold">Jobs Error: </strong>
-            <span className="block sm:inline">{error}</span>
-            <button 
-              onClick={clearError}
-              className="absolute top-0 bottom-0 right-0 px-4 py-3"
-            >
-              <span className="sr-only">Dismiss</span>
-              ×
-            </button>
-          </div>
-        )}
-
-        {companyError && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mx-[112px] mb-4">
-            <strong className="font-bold">Company Profile Error: </strong>
-            <span className="block sm:inline">{companyError}</span>
-            <button 
-              onClick={() => setCompanyError(null)}
-              className="absolute top-0 bottom-0 right-0 px-4 py-3"
-            >
-              <span className="sr-only">Dismiss</span>
-              ×
-            </button>
-          </div>
-        )}
-
-        {/* Header */}
-=======
       <EmployerSideBar />
       <div className="flex-1 h-screen bg-[#FEFEFF] rounded-tl-[40px] overflow-y-auto p-2 sm:p-4 md:p-6 shadow-md w-full max-w-full">
->>>>>>> frontend-employer
         <div className="flex justify-between items-center p-4 pl-[112px] pr-[118px]">
-          <div>
-            <h1 className="text-[48px] font-bold text-[#FF8032] -mb-1 mt-8">Job Posts</h1>
+          <div>            
+            <h1 className="text-[48px] font-bold text-[#FF8032] -mb-1 mt-8">Manage Postings</h1>
             <p className="text-[22px] text-[#FF8032] font-semibold">
               Jobs Posted: <span className="italic">{getFilteredAndSortedJobs().length}</span>
               {jobPosts.length !== getFilteredAndSortedJobs().length && (
                 <span> / {jobPosts.length}</span>
               )}
             </p>
-<<<<<<< HEAD
-          </div>
-          
-          {/* Right Section - Company Info */}
-          <div className="flex items-center gap-3">
-            <span className="w-10 h-10 rounded-full bg-[#FF8032]/20 block"></span>
-            <div className="flex items-center gap-2">
-              <div className="flex flex-col">
-                <span className="text-[#FF8032] font-bold text-[18px] leading-tight">
-                  {companyProfile?.company_name || "Company Name"}
-                </span>
-                <span className="text-[#FF8032] italic text-[13px] leading-tight">
-                  {companyProfile?.company_size || "Company/Business Type"}
-=======
           </div>          
           {/* Right Section */}           
           <div className="flex items-center gap-3 mt-12">
@@ -473,14 +318,12 @@ const EmployerJobPosts = () => {
                 <span className="text-[#FF8032] text-[12px] leading-tight flex items-center gap-1">
                   <i className="bi bi-geo-alt-fill text-[#FF8032] text-[14px]"></i>
                   {companyInfo.location}
->>>>>>> frontend-employer
                 </span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Search Bar */}
         <div className="px-[112px] mt-2 mb-2 flex gap-4 items-center">
           <div className="flex-1">
             <SearchBar
@@ -504,23 +347,15 @@ const EmployerJobPosts = () => {
             width="w-80"
             color="#FF8032"
           />
-        </div>
-
-        {/* Job Posts List */}
+        </div>          
         <div className="pl-[112px] pr-[118px] mt-10 mb-10 flex flex-col gap-[20px]">
-<<<<<<< HEAD
-          {!loading && !companyLoading && getFilteredAndSortedJobs().length > 0 ? (
-            getFilteredAndSortedJobs().map(job => (
-              <JobCard
-=======
           {getFilteredAndSortedJobs().length > 0 ? (            
             getFilteredAndSortedJobs().map(job => (                
             <JobCard
->>>>>>> frontend-employer
                 key={job.id}
                 id={job.id}
                 jobTitle={job.jobTitle}
-                companyName={companyProfile?.company_name || job.companyName}
+                companyName={job.companyName}
                 location={job.location}
                 type={job.type}
                 employment={job.employment}
@@ -534,11 +369,11 @@ const EmployerJobPosts = () => {
                 onAction={handleJobAction}
               />
             ))
-          ) : !loading && !companyLoading ? (
+          ) : (
             <div className="text-center text-[#6B7280] text-[16px] py-8">
-              {jobPosts.length === 0 ? 'No job posts available.' : 'No job posts match the selected filters.'}
+              No job posts match the selected filters.
             </div>
-          ) : null}
+          )}
         </div>
         
         {/* Floating Add Button */}
@@ -547,23 +382,13 @@ const EmployerJobPosts = () => {
           className="fixed bottom-8 right-8 w-16 h-16 bg-[#FF8032] rounded-full shadow-lg flex items-center justify-center cursor-pointer transition hover:bg-[#ff984d] focus:outline-none z-50"
         >
           <span className="text-white text-[32px] leading-none" style={{ fontWeight: 200 }}>+</span>
-<<<<<<< HEAD
-        </button>
-        
-        {/* Job Creation Modal */}
-=======
         </button>          
->>>>>>> frontend-employer
         <JobNewPost
           open={showModal}
           onClose={() => setShowModal(false)}
           onSave={handleAddJob}
-          companyProfile={companyProfile}
         />
         
-<<<<<<< HEAD
-        {/* Job Details Modal */}
-=======
         <JobEditPost
           open={showEditModal}
           onClose={handleEditModalClose}
@@ -572,7 +397,6 @@ const EmployerJobPosts = () => {
         />
         
         {/* Employer Posting Details Drawer */}
->>>>>>> frontend-employer
         <EmployerPostingDetails
           open={postingDetailsOpen}
           onClose={() => setPostingDetailsOpen(false)}

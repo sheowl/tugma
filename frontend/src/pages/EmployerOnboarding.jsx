@@ -4,12 +4,6 @@ import { useAuth } from '../context/AuthContext';
 
 const EmployerOnboarding = () => {
   const navigate = useNavigate();
-  const [registrationData, setRegistrationData] = useState({
-    companyName: '',
-    contactPerson: '',
-    password: '',
-    ConfirmPassword: ''
-  });
   const [formData, setFormData] = useState({
     location: '',
     description: '',
@@ -56,13 +50,6 @@ const EmployerOnboarding = () => {
       setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    const savedRegistrationData = localStorage.getItem('registrationData');
-    if (savedRegistrationData) {
-      setRegistrationData(JSON.parse(savedRegistrationData));
-    }
-  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -163,11 +150,12 @@ const EmployerOnboarding = () => {
       </div>      
       
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-44 mt-24">
-        {/* Title Section */}        <div className="text-center mb-12">
-          <h2 className="text-[28px] font-bold text-[#FF8032] mb-2">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Title Section */}
+        <div className="text-center mb-12">
+          <h1 className="text-[36px] font-bold text-[#FF8032] mb-2">
             Let's get you hiring
-          </h2>
+          </h1>
           <p className="text-[16px] text-[#3C3B3B] font-semibold">
             Answer a few questions to start posting jobs and finding the right candidates.
           </p>

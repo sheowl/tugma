@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import EmployerSideBar from "../components/EmployerSideBar";
 import SearchBar from "../components/SearchBar";
-<<<<<<< HEAD
 import { 
   BriefcaseIcon, 
   DocumentTextIcon, 
@@ -104,42 +103,6 @@ const EmployerHomePage = () => {
     } finally {
       setIsLoading(false);
     }
-=======
-import { Briefcase, FileText, CalendarArrowUp, Star, Eye } from "lucide-react";
-import recentApplicants from "../context/recentApplicants";
-
-const EmployerHomePage = () => {
-  const [companyInfo, setCompanyInfo] = useState({
-    name: 'Company Name',
-    type: 'Company/Business Type',
-    location: 'Company Location'
-  });
-
-  // Load company data when component mounts
-  useEffect(() => {
-    const savedCompanyData = localStorage.getItem('companyData');
-    if (savedCompanyData) {
-      const { companyData } = JSON.parse(savedCompanyData);
-      setCompanyInfo({
-        name: companyData.name || 'Company Name',
-        type: companyData.type || 'Company/Business Type',
-        location: companyData.location || 'Company Location'
-      });
-    }
-  }, []);
-  // Mock data for stats
-  const stats = {
-    activeJobs: 59,
-    totalApplications: 317,
-    pendingReviews: 18
-  };  
-  // Add state to control expanded/collapsed view
-  const [showAllApplicants, setShowAllApplicants] = useState(false);
-  // Get the 3 most recent applicants or all if expanded
-  const getRecentApplicants = () => {
-    const sorted = recentApplicants.sort((a, b) => b.appliedAt - a.appliedAt);
-    return showAllApplicants ? sorted : sorted.slice(0, 3);
->>>>>>> frontend-employer
   };
 
   const getMatchColor = (percentage) => {
@@ -204,7 +167,6 @@ const EmployerHomePage = () => {
         
         {/* Header with company info */}
         <div className="flex justify-between items-center p-4 pl-[112px] pr-[118px]">
-<<<<<<< HEAD
           <h1 className="text-[48px] font-bold text-[#FF8032] -mb-1 mt-8">Dashboard</h1>
           
           {/* Company Info - Right Section */}
@@ -223,20 +185,6 @@ const EmployerHomePage = () => {
                     📍 {companyInfo.location}
                   </span>
                 )}
-=======
-            <h1 className="text-[48px] font-bold text-[#FF8032] -mb-1 mt-8">Dashboard</h1>
-          {/* Right Section */}          
-          <div className="flex items-center gap-3 mt-12">
-            <span className="w-10 h-10 rounded-full bg-[#FF8032]/20 block"></span>
-            <div className="flex items-center gap-2">
-              <div className="flex flex-col">
-                <span className="text-[#FF8032] font-bold text-[18px] leading-tight">{companyInfo.name}</span>
-                <span className="text-[#FF8032] italic text-[13px] leading-tight">{companyInfo.type}</span>
-                <span className="text-[#FF8032] text-[12px] leading-tight flex items-center gap-1">
-                  <i className="bi bi-geo-alt-fill text-[#FF8032] text-[14px]"></i>
-                  {companyInfo.location}
-                </span>
->>>>>>> frontend-employer
               </div>
             </div>
           </div>
@@ -316,19 +264,11 @@ const EmployerHomePage = () => {
               <StarIcon className="text-[#FF8032] w-[25px] h-[25px]" strokeWidth={2} />
               <h2 className="text-[24px] font-bold text-[#3C3B3B]">Recent Applicants</h2>
             </div>
-<<<<<<< HEAD
             <button 
               onClick={handleViewAllApplicants}
               className="text-[#FF8032] hover:text-[#e6722d] font-semibold text-[16px] hover:underline transition-colors"
             >
               View All
-=======
-            <button
-              className="text-[#FF8032] hover:text-[#e6722d] font-semibold text-[16px] hover:underline transition-colors"
-              onClick={() => setShowAllApplicants((prev) => !prev)}
-            >
-              {showAllApplicants ? 'Show Less' : 'View All'}
->>>>>>> frontend-employer
             </button>
           </div>
 

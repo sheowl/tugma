@@ -1,11 +1,9 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import EmpHeader from "../components/EmpHeader";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import { useNavigate } from "react-router-dom";
 
 const EmpComReg = () => {
-  const navigate = useNavigate();
   const [companyName, setcompanyName] = useState("");
   const [password, setPassword] = useState("");
   const [ConfirmPassword, setConfirmPassword] = useState("");
@@ -70,11 +68,7 @@ const EmpComReg = () => {
             Complete the following steps to finish your registration
         </h1>
         <div className="h-2 sm:h-4 md:h-8" />
-<<<<<<< HEAD
         <form className="flex flex-col gap-6 sm:gap-8 items-center w-full max-w-2xl mx-auto" onSubmit={handleRegister}>
-=======
-        <form className="flex flex-col gap-4 sm:gap-4 items-center w-full max-w-2xl mx-auto">
->>>>>>> frontend-employer
           <div className="w-full">
             <label
               htmlFor="companyName"
@@ -188,21 +182,8 @@ const EmpComReg = () => {
           </div>
           <div className="h-6" />          
           <button
-<<<<<<< HEAD
             type="submit"
             disabled={loading}
-=======
-            type="button"
-            onClick={() => {
-              localStorage.setItem('registrationData', JSON.stringify({
-                companyName,
-                contactPerson,
-                password,
-                ConfirmPassword
-              }));
-              navigate("/employeronboarding");
-            }}
->>>>>>> frontend-employer
             className="max-w-md bg-[#FF8032] text-white rounded-2xl hover:bg-[#E66F24] transition mt-4 h-[44px] w-[225px] font-semibold text-sm"
           >
             {loading ? "Registering..." : "Register"}
