@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { getWorkSetting, getWorkType } from "../utils/jobMappings";
 
 const JobCard = (props) => {
   const {
@@ -63,20 +64,9 @@ const JobCard = (props) => {
   };
 
   const handleViewPostingDetails = () => {
-    const jobData = {
-      jobTitle,
-      companyName,
-      location,
-      type,
-      employment,
-      description,
-      status,
-      postedDaysAgo,
-    };
-    onViewDetails(jobData);  };
-  
-    status === "Archived"
-      ? "text-[#FACC15]"      : "text-[#16A34A]";
+    // Pass the entire props object which contains all mapped data
+    onViewDetails(props);
+  };
   
   return (
     <div className={`bg-white border rounded-[20px] shadow-all-around p-6 flex relative w-full max-w-full h-[288px] hover:scale-101 transition-transform duration-300 ${dropdownOpen ? 'z-50' : 'z-10'}`}>      <div className="absolute top-12 right-12">
@@ -97,15 +87,17 @@ const JobCard = (props) => {
         <div className="font-bold text-[24px] text-[#262424] -mb-1">{jobTitle}</div>        
         <div className="text-[14px] font-bold text-[#6B7280]">{companyName}</div>        
         <div className="text-[12px] font-semibold text-[#6B7280] mb-2">{location}</div>
-          {/* Tags */}
+        
+        {/* Tags - Use utility functions for proper formatting */}
         <div className="flex gap-3 mb-4">
           <span className="w-[100px] h-[20px] bg-[#FFEDD5] text-[#3C3B3B] px-3 py-2 rounded text-[11px] font-semibold flex items-center gap-2">
-            <i className="bi bi-geo-alt-fill text-[10px] text-[#FF8032]" /> {type}
+            <i className="bi bi-geo-alt-fill text-[10px] text-[#FF8032]" /> {getWorkSetting(type)}
           </span>
           <span className="w-[100px] h-[20px] bg-[#FFEDD5] text-[#3C3B3B] px-3 py-2 rounded text-[11px] font-semibold flex items-center gap-2">
-            <i className="bi bi-briefcase-fill text-[10px] text-[#FF8032]" /> {employment}
+            <i className="bi bi-briefcase-fill text-[10px] text-[#FF8032]" /> {getWorkType(employment)}
           </span>
         </div>
+        
         <div className="text-[#676767] text-[12px] mb-2 break-words max-w-[900px] whitespace-pre-line max-h-[40px] overflow-hidden text-ellipsis">
           {description.split(' ').slice(0, 36).join(' ')}{description.split(' ').length > 36 ? '...' : ''}
         </div>

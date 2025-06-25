@@ -9,6 +9,7 @@ import {
   EyeIcon 
 } from "@heroicons/react/24/outline";
 import { useAuth } from "../context/AuthContext";
+import { useCompany } from "../context/CompanyContext";
 import { useNavigate } from "react-router-dom";
 
 const EmployerHomePage = () => {
@@ -29,16 +30,23 @@ const EmployerHomePage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Get methods from AuthContext
+  // Get methods from AuthContext (authentication only)
   const { 
-    getDashboardStats, 
-    getRecentApplicants, 
     isEmployer, 
     isAuthenticated,
     user,
-    userType,
-    getCompanyProfile
+    userType
   } = useAuth();
+
+  // Get methods from CompanyContext (company operations)
+  const { 
+    getDashboardStats, 
+    getRecentApplicants, 
+    getCompanyProfile,
+    loading: companyLoading,
+    error: companyError,
+    clearError
+  } = useCompany();
 
   useEffect(() => {
     checkAuthAndLoadData();
@@ -71,6 +79,7 @@ const EmployerHomePage = () => {
     try {
       setIsLoading(true);
       setError("");
+      clearError(); // Clear any previous company errors
       
       // Load dashboard stats, recent applicants, and company profile in parallel
       const [statsResponse, applicantsResponse, profileResponse] = await Promise.all([
@@ -89,17 +98,17 @@ const EmployerHomePage = () => {
       // Update company info (from either dashboard stats or profile)
       const companyData = statsResponse.company_info || profileResponse;
       setCompanyInfo({
-        company_name: companyData.company_name || "Company Name",
+        company_name: companyData.company_name || companyData.name || "Company Name",
         company_size: companyData.company_size || "",
         location: companyData.location || ""
       });
 
       // Update recent applicants
-      setRecentApplicants(applicantsResponse.recent_applicants || []);
+      setRecentApplicants(applicantsResponse.recent_applicants || applicantsResponse || []);
 
     } catch (error) {
       console.error("Error loading dashboard data:", error);
-      setError("Failed to load dashboard data. Please try refreshing the page.");
+      setError(error.message || "Failed to load dashboard data. Please try refreshing the page.");
     } finally {
       setIsLoading(false);
     }
@@ -143,8 +152,14 @@ const EmployerHomePage = () => {
     // navigate(`/applicant/${applicantId}`);
   };
 
-  // Loading state
-  if (isLoading) {
+  const handleRetry = () => {
+    setError("");
+    clearError();
+    loadDashboardData();
+  };
+
+  // Loading state (combine both loading states)
+  if (isLoading || companyLoading) {
     return (
       <div className="min-h-screen bg-[#FF8032] flex items-start overflow-hidden">
         <EmployerSideBar />
@@ -159,6 +174,9 @@ const EmployerHomePage = () => {
       </div>
     );
   }
+
+  // Combine errors from both sources
+  const displayError = error || companyError;
 
   return (
     <div className="min-h-screen bg-[#FF8032] flex items-start overflow-hidden">
@@ -191,13 +209,13 @@ const EmployerHomePage = () => {
         </div>
 
         {/* Error Message */}
-        {error && (
+        {displayError && (
           <div className="mx-[112px] mb-4">
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
               <div className="flex items-center justify-between">
-                <span>{error}</span>
+                <span>{displayError}</span>
                 <button 
-                  onClick={loadDashboardData}
+                  onClick={handleRetry}
                   className="ml-4 px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors"
                 >
                   Retry

@@ -1,6 +1,6 @@
 ﻿# schemas/job.py
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 from datetime import date, datetime
 from decimal import Decimal
 from app.models.enums import WorkSettingEnum, WorkTypeEnum
@@ -29,4 +29,12 @@ class JobOut(JobBase):
     company_id: int
 
     model_config = {"from_attributes": True}
+
+class CompanyJobsResponse(BaseModel):
+    jobs: List[JobOut]
+    total: int
+    company_info: dict
+
+class Config:
+    from_attributes = True  # For Pydantic v2
 
