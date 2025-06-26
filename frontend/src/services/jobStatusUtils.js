@@ -21,8 +21,6 @@ export const getStatusDescription = (status) => {
   switch (status) {
     case "applied":
       return "Your application has been submitted and is currently awaiting review by the employer. You will be notified once it has been processed.";
-    case "rejected-at-applied":
-      return "Thank you for your interest in this position. After careful consideration, we regret to inform you that your application was not selected to move forward. We appreciate the time you took to apply and wish you the best in your job search.";
     case "interview":
       return "Your application has been reviewed, and the employer has scheduled you for an interview. Please review the provided details including date, time, location (or video link), and any additional remarks.";
     case "rejected-after-interview":

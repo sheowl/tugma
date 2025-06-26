@@ -44,7 +44,7 @@ function Card({
 
   return (
     <div className="bg-white shadow-all-around rounded-[20px] p-6 max-w-[304px] h-[330px] flex flex-col 
-    justify-between relative transition transform duration-300 ease-in-out hover:scale-105">
+    justify-between relative transition transform duration-300 ease-in-out hover:scale-102">
       
       {/* Save Button + Match Score */}
       <div className="flex justify-between items-center">

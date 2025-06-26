@@ -3,8 +3,6 @@ export default function ApplicationTimeline({ status, large = false }) {
     switch (status) {
       case "applied":
         return [{ label: "Applied", date: "02/12/25; 11:01 AM", color: "bg-[#5DADE2]" }];
-      case "rejected-at-applied":
-        return [{ label: "Rejected", date: "02/12/25; 11:01 AM", color: "bg-[#EA4335]" }];
       case "interview":
         return [
           { label: "Applied", date: "02/12/25; 11:01 AM", color: "bg-[#27AE60]" },
