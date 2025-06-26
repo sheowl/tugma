@@ -2,16 +2,27 @@ import React from "react";
 import SaveButton from "./SaveButton";
 import Tag from "./JobSkillTag";
 
-export default function CompanyDetails({ open, onClose, job, onApply }) {
+export default function CompanyDetails({ open, onClose, job, onApply, userType = "applicant" }) {
+  // Debug logging
+  console.log("CompanyDetails job data:", job);
+  console.log("CompanyDetails companyDescription:", job?.companyDescription);
+  
   let matchScoreColor = "text-[#27AE60]";
   if (job && job.matchScore < 50) {
     matchScoreColor = "text-[#E74C3C]";
   } else if (job && job.matchScore < 75) {
     matchScoreColor = "text-[#F5B041]";
   }
-
   return (
     <>
+      {/* Backdrop overlay */}
+      <div
+        className={`fixed inset-0 bg-black bg-opacity-40 transition-opacity duration-300 z-40 ${
+          open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        }`}
+        onClick={onClose}
+      />
+
       {/* Drawer Panel */}
       <div
         className={`fixed top-0 px-8 right-0 h-full w-[640px] bg-white shadow-2xl z-50 transform transition-transform duration-300 rounded-tl-[30px] rounded-bl-[30px] ${
@@ -63,41 +74,51 @@ export default function CompanyDetails({ open, onClose, job, onApply }) {
                     >
                       Logo
                     </text>
-                  </svg>
-
+                  </svg>                  
                   {/* Company Details */}
                   <div className="space-y-3">
                     <div className="text-5xl font-bold">{job.companyName}</div>
                     <div className="text-xl text-neutral-500">{job.location}</div>
-                    <div className="text-base text-neutral-700">Company Type</div>
-                  </div>
-
-                  {/* Company Description */}
+                    <div className="text-base text-neutral-700">{job.companyType || "Company Type"}</div>
+                  </div>{/* Company Description */}
                   <div className="space-y-6 mt-6">
-                    <div className="text-base text-stone-500">{job.companyDescription}</div>
+                    <div className="text-base text-stone-500">
+                      {job.companyDescription || "No company description available."}
+                    </div>
 
                     {/* Buttons Section */}
-                    <div className="flex justify-center pt-6"> {/* Center the buttons section */}
-                      <div
-                        className={`grid gap-4 ${
-                          job.socialLinks?.length <= 2 ? "grid-cols-2" : "grid-cols-3"
-                        }`}
-                      >
-                        {job.socialLinks?.map((link, index) => (
-                          <a
-                            key={index}
-                            href={link.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <button className="w-full h-11 px-4 py-2 bg-[#1E1E1E] text-white rounded-[30px] hover:bg-black 
-                            transition-colors flex items-center justify-center gap-2">
-                              <i className={`bi ${link.icon}`}></i> {link.label}
-                            </button>
-                          </a>
-                        ))}
+                    {job.socialLinks && job.socialLinks.length > 0 ? (
+                      <div className="flex justify-center pt-6">
+                        <div
+                          className={`grid gap-4 ${
+                            job.socialLinks.length <= 2 ? "grid-cols-2" : "grid-cols-3"
+                          }`}
+                        >
+                          {job.socialLinks.map((link, index) => (
+                            <a
+                              key={index}
+                              href={link.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <button 
+                                className={`w-full h-11 px-4 py-2 text-white rounded-[30px] transition-colors flex items-center justify-center gap-2 ${
+                                  userType === "employer" 
+                                    ? "bg-[#FF8032] hover:bg-[#E66F24]" 
+                                    : "bg-[#2A4D9B] hover:bg-[#16367D]"
+                                }`}
+                              >
+                                <i className={`bi ${link.icon}`}></i> {link.label}
+                              </button>
+                            </a>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="flex justify-center pt-6">
+                        <div className="text-gray-500 text-sm">No social links available</div>
+                      </div>
+                    )}
                   </div>
                 </>
               ) : (

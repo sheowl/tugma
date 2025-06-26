@@ -3,26 +3,33 @@ import { useNavigate, NavLink, useLocation } from 'react-router-dom';
 import TugmaLogoApplicant from '../assets/TugmaLogoEmployer.svg';
 
 const navItems = [
-    { icon: 'bi-house', label: 'Home Page', path: '/EmployerHomePage' },
-    { icon: 'bi-clipboard2', label: 'Job Posts', path: '/EmployerJobPosts' },
-    { icon: 'bi-building-gear', label: 'Company', path: '/EmployerOnboarding'},
+    { icon: 'bi-house', label: 'Home Page', path: '/EmployerHomePage', key: 'homepage' },
+    { icon: 'bi-clipboard2', label: 'Job Posts', path: '/EmployerJobPosts', key: 'jobposts' },
+    { icon: 'bi-building-gear', label: 'Company', path: '/CompanyPage', key: 'company' },
 ];
 
-const EmployerSideBar = () => {
+const EmployerSideBar = ({ activePage }) => {
     const navigate = useNavigate();
     const location = useLocation();
-    
-    // Simple function to determine which menu should be active
     const getActiveIndex = () => {
-        const currentPath = location.pathname;
-        
+        if (activePage) {
+            // Find by key
+            const foundByKey = navItems.findIndex(item => item.key === activePage);
+            if (foundByKey !== -1) return foundByKey;
+        }
+        const currentPath = location.pathname.toLowerCase();
         // If on employerapplicants page, highlight Job Posts
         if (currentPath === '/employerapplicants') {
             return 1; // Job Posts index
         }
         
-        // Find exact match
-        const foundIndex = navItems.findIndex(item => item.path === currentPath);
+        // If on edit-company-profile page, highlight Company (same as CompanyPage)
+        if (currentPath === '/edit-company-profile') {
+            return 2; // Company index
+        }
+        
+        // Find match by comparing lowercase paths
+        const foundIndex = navItems.findIndex(item => item.path.toLowerCase() === currentPath);
         return foundIndex !== -1 ? foundIndex : 0;
     };
 
@@ -45,7 +52,8 @@ const EmployerSideBar = () => {
 
                 {/* Navigation */}
                 <nav className="w-full px-6">
-                    <ul className="flex flex-col gap-[30px] font-bold items-center">                        {navItems.map((item, idx) => (
+                    <ul className="flex flex-col gap-[30px] font-bold items-center">                        
+                        {navItems.map((item, idx) => (
                             <li
                                 key={item.label}
                                 className={`flex items-center gap-3 px-6 py-3 w-[190px] h-[50px] rounded-[10px] text-base cursor-pointer transition-colors duration-150 ${

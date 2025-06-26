@@ -1,13 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const EmployerOnboarding = () => {
   const navigate = useNavigate();
+  const [registrationData, setRegistrationData] = useState({
+    companyName: '',
+    contactPerson: '',
+    password: '',
+    ConfirmPassword: ''
+  });
   const [formData, setFormData] = useState({
     location: '',
     description: '',
     companySize: ''
   });
+
+  useEffect(() => {
+    const savedRegistrationData = localStorage.getItem('registrationData');
+    if (savedRegistrationData) {
+      setRegistrationData(JSON.parse(savedRegistrationData));
+    }
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -23,10 +36,40 @@ const EmployerOnboarding = () => {
       companySize: value
     }));
   };
-
   const handleContinue = () => {
-    console.log('Form data:', formData);
-    navigate('/employer-sign-in');
+    const completeRegistrationData = {
+      ...registrationData,
+      ...formData
+    };
+    
+    console.log('Complete registration data:', completeRegistrationData);
+    
+    // Save complete data to localStorage for later use
+    localStorage.setItem('completeRegistrationData', JSON.stringify(completeRegistrationData));
+    
+    // Initialize company data for the company profile
+    localStorage.setItem('companyData', JSON.stringify({
+      companyData: {
+        name: registrationData.companyName,
+        location: formData.location,
+        type: formData.companySize,
+        description: formData.description,
+        logo: null
+      },
+      socialLinks: {
+        linkedin: '',
+        instagram: '',
+        facebook: '',
+        github: '',
+        telegram: '',
+        viber: ''
+      }
+    }));
+    
+    // Clean up temporary registration data
+    localStorage.removeItem('registrationData');
+    
+    navigate('/employer-sign-in'); 
   };
 
   const companySizeOptions = [
@@ -37,9 +80,8 @@ const EmployerOnboarding = () => {
     { value: 'large', label: 'Large Corporation' }
   ];
 
-  return (
-    <div className="min-h-screen bg-[#FEFEFF]">         
-      <div className="bg-[#F9F9F9] shadow-lg min-h-[128px]">
+  return (    <div className="min-h-screen bg-[#FEFEFF]">         
+      <div className="bg-[#F9F9F9] shadow-lg min-h-[128px] fixed top-0 left-0 right-0 z-50">
         <div className="w-full px-0">
           <div className="flex justify-start items-center">            
             <div className="flex items-center mt-10 ml-[112px]">
@@ -49,16 +91,15 @@ const EmployerOnboarding = () => {
         </div>
       </div>      
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Title Section */}
-        <div className="text-center mb-12">
-          <h1 className="text-[36px] font-bold text-[#FF8032] mb-2">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-44 mt-24">
+        {/* Title Section */}        <div className="text-center mb-12">
+          <h2 className="text-[28px] font-bold text-[#FF8032] mb-2">
             Let's get you hiring
-          </h1>
+          </h2>
           <p className="text-[16px] text-[#3C3B3B] font-semibold">
             Answer a few questions to start posting jobs and finding the right candidates.
           </p>
-        </div>              
+        </div>
         {/* Form Card */}
         <div className="bg-[#FEFEFF] rounded-[24px] shadow-2xl mx-auto border border-gray-100 w-[1152px] h-[438px]">
           <h2 className="text-[24px] font-bold text-[#FF8032] mb-8 mt-8 text-center">
@@ -140,7 +181,7 @@ const EmployerOnboarding = () => {
         </div>
       </div>
       
-      <div className="flex justify-end pr-[220px] mt-4">
+      <div className="flex justify-end pr-[220px] mt-4 mb-8">
         <button
           onClick={handleContinue}
           className="w-[192px] h-[44px] bg-[#FF8032] hover:bg-[#E66F24] text-white font-semibold px-8 py-3 rounded-[8px] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#FF8032] focus:ring-offset-2 text-[14px]"
