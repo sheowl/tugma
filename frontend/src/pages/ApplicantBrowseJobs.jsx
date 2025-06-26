@@ -5,7 +5,8 @@ import JobDetailsDrawer from '../components/JobDetailsDrawer';
 import SearchBar from '../components/SearchBar';
 import Dropdown from '../components/Dropdown';
 import ApplicantHeader from '../components/ApplicantHeader';
-
+import ApplicantNotification from '../components/ApplicantNotification';
+import { supabase } from "../services/supabaseClient";
 
 function ApplicantBrowseJobs() {
     const [drawerOpen, setDrawerOpen] = useState(false);
@@ -15,7 +16,7 @@ function ApplicantBrowseJobs() {
     const [selectedModality, setSelectedModality] = useState(null); // State for modality filter
     const [selectedWorkType, setSelectedWorkType] = useState(null); // State for work type filter
     const [firstName, setFirstName] = useState("User"); // State for user's first name
-
+    const [showNotifications, setShowNotifications] = useState(false);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
 
@@ -32,6 +33,31 @@ function ApplicantBrowseJobs() {
         };
 
         fetchFirstName();
+    }, []);
+
+    // Sync applicant data with the server
+    useEffect(() => {
+        const syncApplicant = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            const user = session?.user;
+            const accessToken = session?.access_token;
+
+            if (user && accessToken) {
+                await fetch("http://localhost:8000/api/v1/auth/applicant/oauth-register", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${accessToken}`,
+                    },
+                    body: JSON.stringify({
+                        email: user.email,
+                        first_name: user.user_metadata?.full_name?.split(" ")[0] || "",
+                        last_name: user.user_metadata?.full_name?.split(" ").slice(1).join(" ") || "",
+                    }),
+                });
+            }
+        };
+        syncApplicant();
     }, []);
 
     // Mock job data

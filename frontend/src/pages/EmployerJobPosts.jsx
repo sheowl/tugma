@@ -8,6 +8,8 @@ import JobEditPost from "../components/JobEditPost";
 import Dropdown from "../components/Dropdown";
 import EmployerPostingDetails from "../components/EmployerPostingDetails";
 import { exampleJobPosts } from "../context/jobPostsData";
+import { useJobs } from "../context/JobsContext"; // This should work now
+import CompanyService from "../services/CompanyService";
 
 // --- Dropdown options for custom content ---
 const sortOptions = [
@@ -46,67 +48,110 @@ const filterOptions = [
 
 const EmployerJobPosts = () => {
   const navigate = useNavigate();
-  const [jobPosts, setJobPosts] = useState([]);
-  const [showModal, setShowModal] = useState(false);  const [companyInfo, setCompanyInfo] = useState({
-    name: 'Company Name',
-    type: 'Company/Business Type',
-    location: 'Company Location'
-  });
+  const { 
+    jobs: jobPosts, 
+    loading, 
+    error, 
+    createJob, 
+    fetchJobs, 
+    clearError 
+  } = useJobs();
+  
+  const [showModal, setShowModal] = useState(false);
   const [selectedSort, setSelectedSort] = useState(sortOptions[0].value);
-  const [selectedModality, setSelectedModality] = useState(null);  const [selectedWorkType, setSelectedWorkType] = useState(null);
+  const [selectedModality, setSelectedModality] = useState(null);
+  const [selectedWorkType, setSelectedWorkType] = useState(null);
   const [selectedStatus, setSelectedStatus] = useState(null);
   const [postingDetailsOpen, setPostingDetailsOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
-  const [openDropdownId, setOpenDropdownId] = useState(null);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [jobToEdit, setJobToEdit] = useState(null);  useEffect(() => {
-    setJobPosts(exampleJobPosts);
-      // Load company data
-    const savedCompanyData = localStorage.getItem('companyData');
-    if (savedCompanyData) {
-      const { companyData } = JSON.parse(savedCompanyData);
-      setCompanyInfo({
-        name: companyData.name || 'Company Name',
-        type: companyData.type || 'Company/Business Type',
-        location: companyData.location || 'Company Location'
-      });
+  
+  // Add company profile state
+  const [companyProfile, setCompanyProfile] = useState(null);
+  const [companyLoading, setCompanyLoading] = useState(false);
+  const [companyError, setCompanyError] = useState(null);
+
+  // Fetch company profile
+  const fetchCompanyProfile = async () => {
+    try {
+      setCompanyLoading(true);
+      setCompanyError(null);
+      const profile = await CompanyService.getProfile();
+      setCompanyProfile(profile);
+    } catch (error) {
+      console.error('Error fetching company profile:', error);
+      setCompanyError(error.message);
+    } finally {
+      setCompanyLoading(false);
     }
-  }, []);const handleAddJob = (job) => {
-    setJobPosts([
-      {
-        ...job,
-        id: Date.now(),
-        status: "Active",
-        postedDaysAgo: 0,
-      },
-      ...jobPosts,
-    ]);
-    setShowModal(false);
+  };
+
+  // Fetch jobs for current company
+  const refreshCompanyJobs = async () => {
+    try {
+      // Use the existing fetchJobs from context
+      if (companyProfile?.company_id) {
+        await fetchJobs(companyProfile.company_id);
+      } else {
+        await fetchJobs(2); // Default company ID
+      }
+    } catch (error) {
+      console.error('Error fetching company jobs:', error);
+    }
+  };
+
+  // Handle errors
+  useEffect(() => {
+    if (error) {
+      console.error('Jobs error:', error);
+    }
+    if (companyError) {
+      console.error('Company profile error:', companyError);
+    }
+  }, [error, companyError]);
+
+  // Fetch data on component mount
+  useEffect(() => {
+    fetchCompanyProfile();
+  }, []);
+
+  // Fetch jobs when company profile is loaded
+  useEffect(() => {
+    if (companyProfile) {
+      refreshCompanyJobs();
+    }
+  }, [companyProfile]);
+
+  const handleAddJob = async (jobData) => {
+    try {
+      await createJob(jobData);
+      setShowModal(false);
+      // Refresh jobs after creation
+      await refreshCompanyJobs();
+    } catch (error) {
+      console.error('Failed to create job:', error);
+    }
   };
 
   const handleViewJobDetails = (jobData) => {
     setSelectedJob(jobData);
     setPostingDetailsOpen(true);
-  };  
-  
-  const handleEditJob = (jobData) => {
-    const completeJobData = jobPosts.find(job => 
-      job.id === jobData.id || 
-      (job.jobTitle === jobData.jobTitle && job.companyName === jobData.companyName)
-    );
-    
-    setJobToEdit(completeJobData || jobData);
-    setShowEditModal(true);
+  };
+
+  const handleEditJob = () => {
     setPostingDetailsOpen(false);
     console.log('Edit job clicked', completeJobData || jobData);
   };
 
-  const handleViewApplicants = () => {
-    navigate('/employerapplicants', { 
-      state: { 
-        jobPosts: jobPosts 
-      } 
-    });
+  const handleViewApplicants = async () => {
+    try {
+      navigate('/employerapplicants', { 
+        state: { 
+          jobPosts: jobPosts
+        } 
+      });
+    } catch (error) {
+      console.error('Error navigating to applicants:', error);
+    }
   };
   const handleDropdownToggle = (jobId) => {
     setOpenDropdownId(openDropdownId === jobId ? null : jobId);
@@ -175,119 +220,114 @@ const EmployerJobPosts = () => {
     }
   };
 
+  // Filter and sort logic
   const getFilteredAndSortedJobs = () => {
-    let filteredJobs = jobPosts;
+    let filtered = jobPosts;
 
-    // Apply filters
+    // Filter by modality
     if (selectedModality) {
-      filteredJobs = filteredJobs.filter(job => {
-        const jobType = job.type.toLowerCase();
-        return jobType === selectedModality || 
-               (selectedModality === 'on-site' && jobType === 'on-site') ||
-               (selectedModality === 'hybrid' && jobType === 'hybrid') ||
-               (selectedModality === 'remote' && jobType === 'remote');
-      });
-    }
-
-    if (selectedWorkType) {
-      filteredJobs = filteredJobs.filter(job => {
-        const jobEmployment = job.employment.toLowerCase();
-        return jobEmployment === selectedWorkType ||
-               (selectedWorkType === 'full-time' && jobEmployment === 'full-time') ||
-               (selectedWorkType === 'part-time' && jobEmployment === 'part-time') ||
-               (selectedWorkType === 'contractual' && jobEmployment === 'contractual') ||
-               (selectedWorkType === 'internship' && jobEmployment === 'internship');
-      });
-    }
-
-    if (selectedStatus) {
-      filteredJobs = filteredJobs.filter(job => 
-        job.status.toLowerCase() === selectedStatus
+      filtered = filtered.filter(job => 
+        job.type?.toLowerCase() === selectedModality.toLowerCase()
       );
     }
 
-    // Apply sorting
-    const sortedJobs = [...filteredJobs].sort((a, b) => {
+    // Filter by work type
+    if (selectedWorkType) {
+      filtered = filtered.filter(job => 
+        job.employment?.toLowerCase() === selectedWorkType.toLowerCase()
+      );
+    }
+
+    // Filter by status
+    if (selectedStatus) {
+      filtered = filtered.filter(job => 
+        job.status?.toLowerCase() === selectedStatus.toLowerCase()
+      );
+    }
+
+    // Sort
+    const sorted = [...filtered].sort((a, b) => {
       switch (selectedSort) {
-        case 'az':
+        case "az":
           return a.jobTitle.localeCompare(b.jobTitle);
-        case 'za':
+        case "za":
           return b.jobTitle.localeCompare(a.jobTitle);
-        case 'newest':
-          return a.postedDaysAgo - b.postedDaysAgo;
-        case 'oldest':
-          return b.postedDaysAgo - a.postedDaysAgo;
+        case "newest":
+          return new Date(b.createdAt) - new Date(a.createdAt);
+        case "oldest":
+          return new Date(a.createdAt) - new Date(b.createdAt);
         default:
           return 0;
       }
     });
 
-    return sortedJobs;
+    return sorted;
   };
 
+  // Custom sort content
   const sortContent = (
-    <div className="flex flex-col">
-      {sortOptions.map(opt => (
-        <div
-          key={opt.value}
-          className={`p-2 cursor-pointer rounded transition-colors text-[14px] font-opensans ${
-            selectedSort === opt.value ? "bg-[#FF8032] text-white" : ""
-          }`}
-          onClick={() => setSelectedSort(opt.value)}
-        >
-          {opt.label}
-        </div>
-      ))}
+    <div className="p-4">
+      <h3 className="font-semibold text-lg mb-3">Sort by</h3>
+      <div className="space-y-2">
+        {sortOptions.map((option) => (
+          <div key={option.value} className="flex items-center">
+            <input
+              type="radio"
+              id={option.value}
+              name="sort"
+              value={option.value}
+              checked={selectedSort === option.value}
+              onChange={(e) => setSelectedSort(e.target.value)}
+              className="mr-2"
+            />
+            <label htmlFor={option.value} className="text-sm">
+              {option.label}
+            </label>
+          </div>
+        ))}
+      </div>
     </div>
   );
 
-  const selectedOptionStyle = { backgroundColor: "#FF80321A", color: "#FF8032" };
-
-
+  // Custom filter content
   const filterContent = (
-    <div className="p-4 w-80 text-[14px] font-semibold grid grid-cols-2 gap-2">
-      <div className="flex flex-col gap-24 items-start">
-        <div className="font-semibold text-[#6B7280] mb-1 mt-2">By Modality</div>
-        <div className="font-semibold text-[#6B7280] mb-1 mt-0">By Work Type</div>
-        <div className="font-semibold text-[#6B7280] mb-1 mt-10">By Status</div>
-      </div>
-      <div className="flex flex-col gap-1 justify-start items-start">
-        {/* By Modality */}
-        {filterOptions[0].options.map(opt => (
-          <div
-            key={opt.value}
-            className="p-1 mt-1 rounded cursor-pointer transition-colors"
-            style={selectedModality === opt.value ? selectedOptionStyle : {}}
-            data-selected={selectedModality === opt.value}
-            onClick={() => setSelectedModality(selectedModality === opt.value ? null : opt.value)}
-          >
-            {opt.label}
-          </div>
-        ))}
-        <div className="h-2" />
-        {/* By Work Type */}
-        {filterOptions[1].options.map(opt => (
-          <div
-            key={opt.value}
-            className="p-1 mt-1 rounded cursor-pointer transition-colors"
-            style={selectedWorkType === opt.value ? selectedOptionStyle : {}}
-            data-selected={selectedWorkType === opt.value}
-            onClick={() => setSelectedWorkType(selectedWorkType === opt.value ? null : opt.value)}
-          >
-            {opt.label}
-          </div>
-        ))}
-        <div className="h-2" />
-        {/* By Status */}
-        {filterOptions[2].options.map(opt => (
-          <div
-            key={opt.value}
-            className="p-1 mt-1 rounded cursor-pointer transition-colors"
-            style={selectedStatus === opt.value ? selectedOptionStyle : {}}
-            data-selected={selectedStatus === opt.value}
-            onClick={() => setSelectedStatus(selectedStatus === opt.value ? null : opt.value)}
-          >
-            {opt.label}
+    <div className="p-4">
+      <h3 className="font-semibold text-lg mb-3">Filter by</h3>
+      <div className="space-y-4">
+        {filterOptions.map((group) => (
+          <div key={group.group}>
+            <h4 className="font-medium text-md mb-2">{group.group}</h4>
+            <div className="space-y-2">
+              {group.options.map((option) => {
+                const isSelected = 
+                  (group.group === "By Modality" && selectedModality === option.value) ||
+                  (group.group === "By Work Type" && selectedWorkType === option.value) ||
+                  (group.group === "By Status" && selectedStatus === option.value);
+                
+                return (
+                  <div key={option.value} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id={option.value}
+                      checked={isSelected}
+                      onChange={(e) => {
+                        if (group.group === "By Modality") {
+                          setSelectedModality(e.target.checked ? option.value : null);
+                        } else if (group.group === "By Work Type") {
+                          setSelectedWorkType(e.target.checked ? option.value : null);
+                        } else if (group.group === "By Status") {
+                          setSelectedStatus(e.target.checked ? option.value : null);
+                        }
+                      }}
+                      className="mr-2"
+                    />
+                    <label htmlFor={option.value} className="text-sm">
+                      {option.label}
+                    </label>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         ))}
       </div>
@@ -296,34 +336,77 @@ const EmployerJobPosts = () => {
 
   return (
     <div className="min-h-screen bg-[#FF8032] flex items-start overflow-hidden">
-      <EmployerSideBar />
-      <div className="flex-1 h-screen bg-[#FEFEFF] rounded-tl-[40px] overflow-y-auto p-2 sm:p-4 md:p-6 shadow-md w-full max-w-full">
+      <EmployerSideBar companyProfile={companyProfile} />
+      <div className="flex-1 h-screen bg-white rounded-tl-[40px] overflow-y-auto p-2 sm:p-4 md:p-6 shadow-md w-full max-w-full">
+        
+        {/* Loading states */}
+        {(loading || companyLoading) && (
+          <div className="flex justify-center items-center py-8">
+            <div className="text-[#FF8032] text-lg">
+              {loading && "Loading jobs..."}
+              {companyLoading && "Loading company profile..."}
+            </div>
+          </div>
+        )}
+
+        {/* Error states */}
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mx-[112px] mb-4">
+            <strong className="font-bold">Jobs Error: </strong>
+            <span className="block sm:inline">{error}</span>
+            <button 
+              onClick={clearError}
+              className="absolute top-0 bottom-0 right-0 px-4 py-3"
+            >
+              <span className="sr-only">Dismiss</span>
+              ×
+            </button>
+          </div>
+        )}
+
+        {companyError && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mx-[112px] mb-4">
+            <strong className="font-bold">Company Profile Error: </strong>
+            <span className="block sm:inline">{companyError}</span>
+            <button 
+              onClick={() => setCompanyError(null)}
+              className="absolute top-0 bottom-0 right-0 px-4 py-3"
+            >
+              <span className="sr-only">Dismiss</span>
+              ×
+            </button>
+          </div>
+        )}
+
+        {/* Header */}
         <div className="flex justify-between items-center p-4 pl-[112px] pr-[118px]">
-          <div>            
-            <h1 className="text-[48px] font-bold text-[#FF8032] -mb-1 mt-8">Manage Postings</h1>
+          <div>
+            <h1 className="text-[48px] font-bold text-[#FF8032] -mb-1 mt-8">Job Posts</h1>
             <p className="text-[22px] text-[#FF8032] font-semibold">
               Jobs Posted: <span className="italic">{getFilteredAndSortedJobs().length}</span>
               {jobPosts.length !== getFilteredAndSortedJobs().length && (
                 <span> / {jobPosts.length}</span>
               )}
             </p>
-          </div>          
-          {/* Right Section */}           
-          <div className="flex items-center gap-3 mt-12">
+          </div>
+          
+          {/* Right Section - Company Info */}
+          <div className="flex items-center gap-3">
             <span className="w-10 h-10 rounded-full bg-[#FF8032]/20 block"></span>
             <div className="flex items-center gap-2">
               <div className="flex flex-col">
-                <span className="text-[#FF8032] font-bold text-[18px] leading-tight">{companyInfo.name}</span>
-                <span className="text-[#FF8032] italic text-[13px] leading-tight">{companyInfo.type}</span>
-                <span className="text-[#FF8032] text-[12px] leading-tight flex items-center gap-1">
-                  <i className="bi bi-geo-alt-fill text-[#FF8032] text-[14px]"></i>
-                  {companyInfo.location}
+                <span className="text-[#FF8032] font-bold text-[18px] leading-tight">
+                  {companyProfile?.company_name || "Company Name"}
+                </span>
+                <span className="text-[#FF8032] italic text-[13px] leading-tight">
+                  {companyProfile?.company_size || "Company/Business Type"}
                 </span>
               </div>
             </div>
           </div>
         </div>
 
+        {/* Search Bar */}
         <div className="px-[112px] mt-2 mb-2 flex gap-4 items-center">
           <div className="flex-1">
             <SearchBar
@@ -347,15 +430,17 @@ const EmployerJobPosts = () => {
             width="w-80"
             color="#FF8032"
           />
-        </div>          
+        </div>
+
+        {/* Job Posts List */}
         <div className="pl-[112px] pr-[118px] mt-10 mb-10 flex flex-col gap-[20px]">
-          {getFilteredAndSortedJobs().length > 0 ? (            
-            getFilteredAndSortedJobs().map(job => (                
-            <JobCard
+          {!loading && !companyLoading && getFilteredAndSortedJobs().length > 0 ? (
+            getFilteredAndSortedJobs().map(job => (
+              <JobCard
                 key={job.id}
                 id={job.id}
                 jobTitle={job.jobTitle}
-                companyName={job.companyName}
+                companyName={companyProfile?.company_name || job.companyName}
                 location={job.location}
                 type={job.type}
                 employment={job.employment}
@@ -369,11 +454,11 @@ const EmployerJobPosts = () => {
                 onAction={handleJobAction}
               />
             ))
-          ) : (
+          ) : !loading && !companyLoading ? (
             <div className="text-center text-[#6B7280] text-[16px] py-8">
-              No job posts match the selected filters.
+              {jobPosts.length === 0 ? 'No job posts available.' : 'No job posts match the selected filters.'}
             </div>
-          )}
+          ) : null}
         </div>
         
         {/* Floating Add Button */}
@@ -382,11 +467,14 @@ const EmployerJobPosts = () => {
           className="fixed bottom-8 right-8 w-16 h-16 bg-[#FF8032] rounded-full shadow-lg flex items-center justify-center cursor-pointer transition hover:bg-[#ff984d] focus:outline-none z-50"
         >
           <span className="text-white text-[32px] leading-none" style={{ fontWeight: 200 }}>+</span>
-        </button>          
+        </button>
+        
+        {/* Job Creation Modal */}
         <JobNewPost
           open={showModal}
           onClose={() => setShowModal(false)}
           onSave={handleAddJob}
+          companyProfile={companyProfile}
         />
         
         <JobEditPost
@@ -397,6 +485,7 @@ const EmployerJobPosts = () => {
         />
         
         {/* Employer Posting Details Drawer */}
+        {/* Job Details Modal */}
         <EmployerPostingDetails
           open={postingDetailsOpen}
           onClose={() => setPostingDetailsOpen(false)}

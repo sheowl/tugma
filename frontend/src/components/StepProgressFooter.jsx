@@ -11,7 +11,7 @@ export default function StepProgressFooter({ step, segment, onContinue, onSkip }
   };
 
   return (
-    <div className="flex justify-between items-center w-full mt-12 px-[112px]">
+    <div className="fixed bottom-0 left-0 w-full z-50 bg-gray-50 flex justify-between items-center px-[112px] py-6 pb-[24px]">
       <div>
         <p className="text-sm font-medium text-gray-700 mb-1">
           Step {step} of 2
@@ -28,7 +28,7 @@ export default function StepProgressFooter({ step, segment, onContinue, onSkip }
         </div>
       </div>
       <div className="flex gap-4">
-        {step === 2 && (
+        {(step === 1 || step == 2) && (
           <button
             onClick={onSkip}
             className="w-[192px] px-6 py-3 text-[#2A4D9B] font-bold rounded-md hover:bg-[#E9EDF8]"

@@ -1,6 +1,11 @@
 import ApplicantSideBar from "../components/ApplicantSideBar";
 import { useState } from "react";
 import ApplicantHeader from "../components/ApplicantHeader";
+import React, { useEffect, useState } from "react";
+import ApplicantSideBar from "../components/ApplicantSideBar";
+import ApplicantDashLogo from "../assets/ApplicantDashLogo.svg";
+import { supabase } from "../services/supabaseClient";
+
 
 function ApplicantProfile() {
   const [isEditMode, setIsEditMode] = useState(false);
@@ -98,6 +103,7 @@ const handleRemoveImage = () => {
       </div>
     );
   };
+};
 
 const CertificateCard = ({ image, title, description, onClick }) => {
   return (
@@ -121,69 +127,69 @@ const CertificateCard = ({ image, title, description, onClick }) => {
   );
 };
 
+function ApplicantProfile() {
+  const [profile, setProfile] = useState(null);
+  const [experiences, setExperiences] = useState([]);
+  const [certificates, setCertificates] = useState([]);
+  const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    const fetchAll = async () => {
+      setLoading(true);
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) return setLoading(false);
 
+      // 1. Fetch profile
+      const res = await fetch("http://localhost:8000/api/v1/auth/me", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const userData = await res.json();
+      const applicant = userData.database_user;
+      setProfile(applicant);
 
-  {/* HARD CODED INFORMATION STARTS HERE */}
-  const contactInfo = [
-    { label: "Full Name", value: "Kyle Desmond Co" },
-    { label: "Location", value: "Silang, Cavite" },
-    { label: "Contact Number", value: "0992 356 7294" },
-    { label: "Email", value: "nasapusokoanglove14@gmail.com" },
-  ];
+      // 2. Fetch experiences
+      if (applicant?.applicant_id) {
+        const expRes = await fetch(
+          `http://localhost:8000/api/v1/applicants/${applicant.applicant_id}/experience`,
+          {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          }
+        );
+        setExperiences(await expRes.json());
+
+        // 3. Fetch certificates
+        const certRes = await fetch(
+          `http://localhost:8000/api/v1/applicants/${applicant.applicant_id}/certificates`,
+          {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          }
+        );
+        setCertificates(await certRes.json());
+      }
+      setLoading(false);
+    };
+    fetchAll();
+  }, []);
+
+  if (loading) return <div>Loading...</div>;
+  if (!profile) return <div>Profile not found.</div>;
 
   const personalInfoLeft = [
-    { label: "Name", value: "Kyle Desmond ni Jianna" },
-    { label: "Mobile Number", value: "0992 356 7294" },
-    { label: "University", value: "Polytechnic University of the Philippines" },
-    { label: "Year Graduated", value: "2027" },
+    { label: "Name", value: `${profile.first_name} ${profile.last_name}` },
+    { label: "Mobile Number", value: profile.contact_number || "N/A" },
+    { label: "University", value: profile.university || "N/A" },
+    { label: "Year Graduated", value: profile.year_graduated || "N/A" },
   ];
 
   const personalInfoRight = [
-    { label: "Address", value: "#1 Kurt St. Brgy. Mapagmahal Silang, Cavite" },
-    { label: "Telephone Number", value: "8153-4137" },
-    { label: "Degree", value: "Bachelor of Science in Computer Science" },
-    { label: "Field", value: "Software Cybersecurity" },
+    { label: "Address", value: profile.current_address || "N/A" },
+    { label: "Telephone Number", value: profile.telephone_number || "N/A" },
+    { label: "Degree", value: profile.degree || "N/A" },
+    { label: "Field", value: profile.field || "N/A" },
   ];
-
-  const experienceData = [
-    {
-      title: "Senior Graphic Designer",
-      company: "Canva Philippines",
-      date: "JANUARY 2024 - MAY 2025",
-      responsibilities: [
-        "Ano kanina pa ako nakababad dito oh? Baka pwede mo namang...huy ano raw?",
-        "Ganto pala tong laro na to? naka...ay may hamaliway...",
-        "Kyle huwag naman tayong ganito oh...pag-usapan naman natin to pls...",
-      ],
-    },
-  ];
-
-  const technicalSkills = [
-    { label: "Programming Languages", level: "novice", tags: ["JavaScript", "Python", "Java"] },
-    { label: "Web Development", level: "Advanced beginner", tags: ["HTML", "CSS", "React"] },
-    { label: "AI/ML/Data Science", level: "competent", tags: ["TensorFlow", "PyTorch", "Pandas"] },
-    { label: "Database", level: "proficient", tags: ["MySQL", "MongoDB", "PostgreSQL"] },
-    { label: "DevOps", level: "expert", tags: ["Docker", "Kubernetes", "CI/CD"] },
-    { label: "Cybersecurity", level: "expert", tags: ["Network Security", "Penetration Testing", "Cryptography"] },
-    { label: "Mobile Development", level: "novice", tags: ["Flutter", "React Native", "Dart"] },
-  ];
-
-  const softSkills = [
-    { label: "Communication"},
-    { label: "Teamwork" },
-    { label: "Problem Solving" }, 
-  ];
-
-  const certificates = [
-  {
-    title: "Title of Certificate",
-    description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,",
-    image: "", // Add a URL to certificate image if available
-  },
-];
-  {/* HARD CODED INFORMATION ENDS HERE */}
 
   return (
     <div className="min-h-screen bg-[#2A4D9B] flex items-start overflow-hidden">
@@ -277,22 +283,19 @@ const CertificateCard = ({ image, title, description, onClick }) => {
 
             {/* Profile Info */}
             <div className="flex flex-col justify-center flex-grow">
-              <h2 className="text-2xl font-bold">{contactInfo[0].value}</h2>
-              {contactInfo.slice(1).map((info, index) => (
-                <div key={index} className="text-gray-600 flex items-center gap-2 mt-1">
-                  <i
-                    className={`bi ${
-                      info.label === "Location"
-                        ? "bi-geo-alt"
-                        : info.label === "Contact Number"
-                        ? "bi-telephone"
-                        : "bi-envelope"
-                    }`}
-                  ></i>
-                  {info.value}
-                </div>
-              ))}
-
+              <h2 className="text-2xl font-bold">
+                {profile.first_name} {profile.last_name}
+              </h2>
+              <div className="text-gray-600 flex items-center gap-2 mt-1">
+                <i className="bi bi-geo-alt"></i> {profile.current_address || "N/A"}
+              </div>
+              <div className="text-gray-600 flex items-center gap-2 mt-1">
+                <i className="bi bi-telephone"></i> {profile.contact_number || "N/A"}
+              </div>
+              <div className="text-gray-600 flex items-center gap-2 mt-1">
+                <i className="bi bi-envelope"></i>{" "}
+                {profile.applicant_email || "N/A"}
+              </div>
 
               {/* Buttons */}
               <div className="flex gap-4 mt-4">
@@ -386,76 +389,46 @@ const CertificateCard = ({ image, title, description, onClick }) => {
                 Experience
               </div>
 
-              {experienceData.map((exp, index) => (
-                <div key={index} className="border-l-1 border-[#2A4D9B] pl-6 mb-6">
-                  <div className="flex flex-row justify-between">
-                    <div className="text-base text-neutral-700 font-semibold">
-                      {exp.title}
+              {experiences.length === 0 ? (
+                <div className="text-gray-500">No work experience yet.</div>
+              ) : (
+                experiences.map((exp, idx) => (
+                  <div key={idx} className="mb-2">
+                    <div className="font-semibold">
+                      {exp.title} at {exp.company}
                     </div>
-                    <div className="text-gray-500 text-sm font-semibold">
-                      {exp.date}
+                    <div className="text-sm text-gray-500">
+                      {exp.start_date} - {exp.end_date || "Present"}
                     </div>
+                    <div className="text-sm">{exp.description}</div>
                   </div>
-                  <div className="text-gray-500 text-sm font-semibold">
-                    {exp.company}
-                  </div>
-                  <ul className="text-gray-500 text-xs list-disc pl-6">
-                    {exp.responsibilities.map((item, idx) => (
-                      <li key={idx}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
+                ))
+              )}
 
               <hr className="border-t border-gray-300 my-4" />
 
-              <div className="text-xl font-semibold text-neutral-700">Technical Skills</div>
-                <div className="mt-4 space-y-4">
-                  {technicalSkills.map((skill, index) => (
-                    <ProgressBar
-                      key={index}
-                      label={skill.label}
-                      level={skill.level}
-                      tags={skill.tags || []}
-                    />
-                  ))}
-                </div>
-
-              <hr className="border-t border-gray-300 my-4" />
-
-              <div className="text-xl font-semibold text-neutral-700">Soft Skills</div>
-                <div className="flex flex-wrap gap-2 mt-2">
-                {softSkills.map((skill, index) => (
-                  <span
-                    key={index}
-                    className="text-xs text-neutral-700 font-semibold bg-[#EFEEEE] py-1 px-3 rounded-full"
-                  >
-                    {skill.label}
-                  </span>
-                ))}
-                </div>
+              <div className="text-xl font-semibold text-neutral-700">
+                Certifications
+              </div>
+              {certificates.length === 0 ? (
+                <div className="text-gray-500">No certifications yet.</div>
+              ) : (
+                certificates.map((cert, idx) => (
+                  <div key={idx} className="mb-2">
+                    <div className="font-semibold">{cert.name}</div>
+                    <div className="text-sm text-gray-500">
+                      {cert.issuer} ({cert.year})
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
-
-          <div className="w-full max-w-[976px] h-auto rounded-[20px] shadow-all-around bg-white p-10 overflow-visible">
-            <div className="text-2xl font-bold text-neutral-700 mb-8">Certifications</div>
-            <div className="flex flex-row gap-6 justify-start overflow-x-auto overflow-visible relative">
-              {certificates.map((cert, idx) => (
-              <CertificateCard
-                key={idx}
-                title={cert.title}
-                description={cert.description}
-                image={cert.image}
-                onClick={() => setZoomedCertificate(cert)}
-              />
-            ))}
-            </div>
-          </div>
-
+        </div>
       </div>
     </div>
     
-    {isModalOpen && (
+    ); {isModalOpen && (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
         <div className="bg-white rounded-xl p-6 w-[400px] shadow-lg">
           <h2 className="text-lg font-semibold mb-4">

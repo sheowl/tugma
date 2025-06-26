@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import EmpHeader from "../components/EmpHeader";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
+import { useNavigate } from "react-router-dom";
 
 const EmpComReg = () => {
   const navigate = useNavigate();
@@ -11,6 +12,54 @@ const EmpComReg = () => {
   const [agreed, setAgreed] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    const email = localStorage.getItem("pending_company_email");
+
+    if (!companyName || !password || !ConfirmPassword) {
+      setError("Please fill in all fields.");
+      setLoading(false);
+      return;
+    }
+    if (password !== ConfirmPassword) {
+      setError("Passwords do not match.");
+      setLoading(false);
+      return;
+    }
+    if (!agreed) {
+      setError("You must agree to the terms.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const res = await fetch("http://localhost:8000/api/v1/auth/company/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          company_email: email,
+          password,
+          company_name: companyName,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        // Registration successful, redirect to employer sign-in
+        navigate("/employeronboarding");
+      } else {
+        setError(data.detail || "Registration failed.");
+      }
+    } catch (err) {
+      setError("Network error. Please try again.");
+    }
+    setLoading(false);
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#FEFEFF] font-montserrat pt-32 pb-20 px-4 sm:pt-44 sm:pb-32 sm:px-12 md:pt-[180px] md:pb-[120px] md:px-[240px]">
@@ -20,7 +69,7 @@ const EmpComReg = () => {
             Complete the following steps to finish your registration
         </h1>
         <div className="h-2 sm:h-4 md:h-8" />
-        <form className="flex flex-col gap-4 sm:gap-4 items-center w-full max-w-2xl mx-auto">
+        <form className="flex flex-col gap-6 sm:gap-8 items-center w-full max-w-2xl mx-auto" onSubmit={handleRegister}>
           <div className="w-full">
             <label
               htmlFor="companyName"
@@ -134,20 +183,15 @@ const EmpComReg = () => {
           </div>
           <div className="h-6" />          
           <button
-            type="button"
-            onClick={() => {
-              localStorage.setItem('registrationData', JSON.stringify({
-                companyName,
-                contactPerson,
-                password,
-                ConfirmPassword
-              }));
-              navigate("/employeronboarding");
-            }}
+            type="submit"
+            disabled={loading}
             className="max-w-md bg-[#FF8032] text-white rounded-2xl hover:bg-[#E66F24] transition mt-4 h-[44px] w-[225px] font-semibold text-sm"
           >
-            Register
+            {loading ? "Registering..." : "Register"}
           </button>
+          {error && (
+            <div className="text-red-500 text-sm mb-2">{error}</div>
+          )}
         </form>
 
         <p className="text-center text-sm text-[#6B7280] font-semibold mt-2">
