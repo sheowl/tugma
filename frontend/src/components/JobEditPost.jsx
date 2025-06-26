@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useJobs } from "../context/JobsContext";
-import TAGS from "./Tags";
+import { useTags } from "../context/TagsContext";
 import { getCategoryName, getProficiencyLevel, CATEGORIES, PROFICIENCY_LEVELS } from "../utils/jobMappings";
 
 // Dropdown options (keep these as is)
@@ -64,7 +64,7 @@ const CustomDropdown = ({
   return (
     <div className="relative">        
       <button
-        className="h-8 px-6 py-2 border-2 border-[#FF8032] focus:border-[#FF8032] hover:bg-[#FF8032]/10 text-[#FF8032] rounded-[10px] text-[14px] font-bold bg-white flex items-center gap-2 transition-colors focus:outline-none focus:ring-0"
+        className="h-8 px-6 py-2 border-2 border-[#FF8032] focus:border-[#FF8032] hover:bg-[#FF8032]/10 text-[#FF8032] rounded-[10px] text-[14px] font-bold bg-white flex items-center gap-2 transition-colors focus:outline-none focus:ring-0 w-[219px] justify-center whitespace-nowrap"
         onClick={handleActionClick}
         type="button"
       >
@@ -89,8 +89,9 @@ const CustomDropdown = ({
   );
 };
 
-const JobEditPost = ({ open, onClose, onSave, jobData }) => {
+const JobEditPost = ({ open, onClose, onSave, jobData, availableTags = [] }) => {
   const { updateJob, loading: contextLoading, error: contextError, clearError } = useJobs();
+  const { flatTagMapping } = useTags();
   
   // Use refs to store persistent data that won't be affected by re-renders
   const jobDataRef = useRef(null);
@@ -106,14 +107,12 @@ const JobEditPost = ({ open, onClose, onSave, jobData }) => {
     workType: "",
     description: "",
     availablePositions: "",
-    tags: [],
+    selectedTags: [], // Array of tag IDs
     category: "",
     proficiency: ""
   });
 
   const [originalForm, setOriginalForm] = useState({});
-  const [tagInput, setTagInput] = useState("");
-  const [showTagInput, setShowTagInput] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null);
   const [saving, setSaving] = useState(false);
   const [initialized, setInitialized] = useState(false);
@@ -136,7 +135,7 @@ const JobEditPost = ({ open, onClose, onSave, jobData }) => {
         workType: jobData.employment || jobData.work_type || "",
         description: jobData.description || "",
         availablePositions: jobData.availablePositions || jobData.position_count || "",
-        tags: jobData.tags || [],
+        selectedTags: jobData.job_tags || jobData.selectedTags || [], // Array of tag IDs
         category: jobData.category || jobData.requiredCategoryId || "",
         proficiency: jobData.proficiency || jobData.requiredProficiency || ""
       };
@@ -164,7 +163,7 @@ const JobEditPost = ({ open, onClose, onSave, jobData }) => {
         workType: "",
         description: "",
         availablePositions: "",
-        tags: [],
+        selectedTags: [],
         category: "",
         proficiency: ""
       });
@@ -197,15 +196,8 @@ const JobEditPost = ({ open, onClose, onSave, jobData }) => {
     onClose();
   };
 
-  const handleTagAdd = () => {
-    if (tagInput.trim() && !form.tags.includes(tagInput.trim())) {
-      setForm({ ...form, tags: [...form.tags, tagInput.trim()] });
-      setTagInput("");
-    }
-  };
-
-  const handleTagRemove = (tag) => {
-    setForm({ ...form, tags: form.tags.filter((t) => t !== tag) });
+  const handleTagRemove = (tagId) => {
+    setForm({ ...form, selectedTags: form.selectedTags.filter((id) => id !== tagId) });
   };
 
   const handleSubmit = async (e) => {
@@ -250,7 +242,7 @@ const JobEditPost = ({ open, onClose, onSave, jobData }) => {
         positions: parseInt(form.availablePositions) || 1,
         requiredCategoryId: parseInt(form.category) || null,
         requiredProficiency: parseInt(form.proficiency) || null,
-        tags: form.tags,
+        job_tags: form.selectedTags, // Send tag IDs to backend
         companyId: storedJobData.companyId || storedJobData.company_id || 2,
         status: storedJobData.status || 'Active',
         dateAdded: storedJobData.dateAdded || storedJobData.date_added || null,
@@ -479,7 +471,7 @@ const JobEditPost = ({ open, onClose, onSave, jobData }) => {
                 <CustomDropdown
                   options={categoryOptions}
                   selected={form.category}
-                  onSelect={(value) => setForm({ ...form, category: value, tags: [] })}
+                  onSelect={(value) => setForm({ ...form, category: value, selectedTags: [] })}
                   placeholder={form.category ? getCategoryName(form.category) : "Select Category"}
                   openDropdown={openDropdown}
                   setOpenDropdown={setOpenDropdown}
@@ -504,47 +496,67 @@ const JobEditPost = ({ open, onClose, onSave, jobData }) => {
 
             <div className="flex flex-col gap-2">
               <label className="font-semibold text-[16px] text-[#3C3B3B]">Tags</label>
+              
+              {/* Selected Tags Display */}
               <div className="flex flex-wrap gap-2 mb-2">
-                {form.tags.map((tag) => (
+                {form.selectedTags.map((tagId) => (
                   <span
-                    key={tag}
-                    className="bg-transparent text-[#FF8032] font-semibold border-2 border-[#FF8032] px-3 py-1 rounded-full text-[12px] flex items-center gap-1"
+                    key={tagId}
+                    className="bg-[#FF8032] text-white font-semibold px-3 py-1 rounded-full text-[12px] flex items-center gap-1"
                   >
-                    {tag}
+                    {flatTagMapping[tagId] || `Tag ${tagId}`}
                     <button
                       type="button"
-                      className="ml-1 text-[12px] text-[#FF8032] hover:text-red-500"
-                      onClick={() => handleTagRemove(tag)}
+                      className="ml-1 text-[12px] text-white hover:text-red-200"
+                      onClick={() => handleTagRemove(tagId)}
                     >
                       &times;
                     </button>
                   </span>
                 ))}
-                {showTagInput ? (
-                  <input
-                    className="border-2 focus:border-[#FF8032] focus:outline-none focus:ring-0 rounded px-2 py-1 text-[12px] w-24"
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    onBlur={() => setShowTagInput(false)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        handleTagAdd();
-                        setShowTagInput(false);
-                      }
-                    }}
-                    autoFocus
-                  />
-                ) : (
-                  <button
-                    type="button"
-                    className="w-[53px] px-2 py-1 bg-[#FF8032] text-white rounded-full text-[12px] font-semibold hover:bg-[#E66F24] transition"
-                    onClick={() => setShowTagInput(true)}
-                  >
-                    + Tag
-                  </button>
-                )}            
               </div>
+
+              {/* Tag Selection Grid */}
+              {form.category && availableTags.length > 0 && (
+                <div className="border-2 border-gray-200 rounded-lg p-4 max-h-48 overflow-y-auto">
+                  <div className="grid grid-cols-2 gap-2">
+                    {availableTags
+                      .filter(tag => tag.category === parseInt(form.category))
+                      .map((tag) => (
+                        <label
+                          key={tag.id}
+                          className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={form.selectedTags.includes(tag.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setForm({
+                                  ...form,
+                                  selectedTags: [...form.selectedTags, tag.id]
+                                });
+                              } else {
+                                setForm({
+                                  ...form,
+                                  selectedTags: form.selectedTags.filter(id => id !== tag.id)
+                                });
+                              }
+                            }}
+                            className="rounded border-gray-300 text-[#FF8032] focus:ring-[#FF8032]"
+                          />
+                          <span className="text-sm font-medium text-gray-700">
+                            {tag.name}
+                          </span>
+                        </label>
+                      ))}
+                  </div>
+                </div>
+              )}
+              
+              {!form.category && (
+                <p className="text-gray-500 text-sm">Select a category first to choose tags</p>
+              )}
             </div>            
             
             <div className="flex justify-center items-center gap-4 mt-6">

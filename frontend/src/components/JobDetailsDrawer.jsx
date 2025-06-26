@@ -1,9 +1,11 @@
 import React, { useState } from "react";
+import { useTags } from "../context/TagsContext";
 import SaveButton from "./SaveButton";
 import Tag from "./JobSkillTag";
 import CompanyDetails from "./CompanyDetails";
 
 export default function JobDetailsDrawer({ open, onClose, job, onApply }) {
+  const { flatTagMapping } = useTags();
   const [companyDetailsOpen, setCompanyDetailsOpen] = useState(false); // State for CompanyDetails drawer
 
   let matchScoreColor = "text-[#27AE60]";
@@ -95,9 +97,23 @@ export default function JobDetailsDrawer({ open, onClose, job, onApply }) {
                     <div className="mb-6">
                       <h4 className="text-base font-bold mb-2 text-neutral-700">Tag Matches</h4>
                       <div className="flex gap-2 flex-wrap">
-                        {job.tags.map((tag, index) => (
-                          <Tag key={index} label={tag.label} matched={tag.matched} />
-                        ))}
+                        {(() => {
+                          // Handle both legacy tag format (with label/matched) and new format (just IDs)
+                          let jobTags = job?.tags || [];
+                          
+                          if (jobTags.length === 0) {
+                            // Try to get tags from job_tags (array of IDs) and create tag objects
+                            const tagIds = job?.job_tags || job?.selectedTags || [];
+                            jobTags = tagIds.map(tagId => ({
+                              label: flatTagMapping[tagId] || `Tag ${tagId}`,
+                              matched: false // Default to not matched for now
+                            }));
+                          }
+                          
+                          return jobTags.map((tag, index) => (
+                            <Tag key={index} label={tag.label} matched={tag.matched} />
+                          ));
+                        })()}
                       </div>
                     </div>
                     {/* Apply Button */}

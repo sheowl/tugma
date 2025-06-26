@@ -163,13 +163,31 @@ export const CompanyProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
-      const newJob = await CompanyService.createJob(jobData);
-      // Refresh jobs list
-      await getCompanyJobs();
-      return newJob;
-    } catch (err) {
-      setError(err.message);
-      throw err;
+      // Transform frontend data to backend format
+      const backendJobData = {
+        job_title: jobData.jobTitle,
+        salary_min: parseInt(jobData.salaryMin) || 0,
+        salary_max: parseInt(jobData.salaryMax) || 0,
+        setting: jobData.type,
+        work_type: jobData.employment,
+        description: jobData.description,
+        position_count: parseInt(jobData.availablePositions) || 1,
+        required_category_id: jobData.category ? parseInt(jobData.category) : null,
+        required_proficiency: jobData.proficiency ? parseInt(jobData.proficiency) : null,
+        job_tags: jobData.selectedTags || [] // NEW: Send tag IDs as array
+      };
+
+      console.log('CompanyContext: Creating job with data:', backendJobData);
+      
+      const response = await CompanyService.createJob(backendJobData);
+      
+      console.log('CompanyContext: Job created successfully:', response);
+      
+      return response;
+    } catch (error) {
+      console.error('CompanyContext: Error creating job:', error);
+      setError(error.message || 'Failed to create job');
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -183,13 +201,31 @@ export const CompanyProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
-      const updatedJob = await CompanyService.updateJob(jobId, jobData);
-      // Refresh jobs list
-      await getCompanyJobs();
-      return updatedJob;
-    } catch (err) {
-      setError(err.message);
-      throw err;
+      // Transform frontend data to backend format
+      const backendJobData = {
+        job_title: jobData.jobTitle,
+        salary_min: parseInt(jobData.salaryMin) || 0,
+        salary_max: parseInt(jobData.salaryMax) || 0,
+        setting: jobData.type,
+        work_type: jobData.employment,
+        description: jobData.description,
+        position_count: parseInt(jobData.availablePositions) || 1,
+        required_category_id: jobData.category ? parseInt(jobData.category) : null,
+        required_proficiency: jobData.proficiency ? parseInt(jobData.proficiency) : null,
+        job_tags: jobData.selectedTags || [] // NEW: Send tag IDs as array
+      };
+
+      console.log('CompanyContext: Updating job with data:', backendJobData);
+      
+      const response = await CompanyService.updateJob(jobId, backendJobData);
+      
+      console.log('CompanyContext: Job updated successfully:', response);
+      
+      return response;
+    } catch (error) {
+      console.error('CompanyContext: Error updating job:', error);
+      setError(error.message || 'Failed to update job');
+      throw error;
     } finally {
       setLoading(false);
     }

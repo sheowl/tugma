@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useJobs } from "../context/JobsContext";
 import { useAuth } from "../context/AuthContext";
-import TAGS from "./Tags"
 import { getProficiencyLevel, getProficiencyOptions } from "../utils/jobMappings";
 
 // Dropdown options - Update values to match backend
@@ -70,7 +69,7 @@ const CustomDropdown = ({
   return (
     <div className="relative">
       <button
-        className={`h-8 px-6 py-2 border-2 border-[#FF8032] focus:border-[#FF8032] hover:bg-[#FF8032]/10 text-[#FF8032] rounded-full text-[14px] font-bold bg-white flex items-center gap-2 transition-colors focus:outline-none focus:ring-0 ${dropdownKey === 'category' || dropdownKey === 'proficiency' ? 'w-[220px] justify-center' : ''}`}
+        className={`h-8 px-6 py-2 border-2 border-[#FF8032] focus:border-[#FF8032] hover:bg-[#FF8032]/10 text-[#FF8032] rounded-[10px] text-[14px] font-bold bg-white flex items-center gap-2 transition-colors focus:outline-none focus:ring-0 w-[219px] justify-center whitespace-nowrap`}
         onClick={handleActionClick}
         type="button"
       >
@@ -78,7 +77,7 @@ const CustomDropdown = ({
         {!hideCaret && <i className="bi bi-caret-down-fill text-xs" />}
       </button>
       {isOpen && (
-        <div className={`absolute left-0 mt-2 ${dropdownKey === 'category' || dropdownKey === 'proficiency' ? 'w-80' : 'w-44'} bg-white border border-gray-200 rounded shadow z-40 max-h-60 overflow-y-auto`}>
+        <div className="absolute left-0 mt-2 w-44 bg-white border border-gray-200 rounded shadow z-40 max-h-60 overflow-y-auto">
           {options.map((option) => (
             <div
               key={option.value}
@@ -97,7 +96,7 @@ const CustomDropdown = ({
 };
 
 //POST New Jobs
-const JobNewPost = ({ open, onClose, onSave, companyData, userData }) => {
+const JobNewPost = ({ open, onClose, onSave, companyData, userData, availableTags = [] }) => {
   // Use AuthContext and props for data
   const { user, isAuthenticated } = useAuth();
   const { createJob, loading: contextLoading, error: contextError, clearError } = useJobs();
@@ -106,7 +105,7 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData }) => {
   const company = companyData || {};
   const currentUser = userData || user;
 
-  // Update form state to include salary min/max
+  // Update form state to include selected tag IDs instead of tag strings
   const [form, setForm] = useState({
     jobTitle: "",
     companyName: "",
@@ -114,11 +113,9 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData }) => {
     salaryMin: "",
     salaryMax: "",
     description: "",
-    tags: [],
+    selectedTags: [], // Changed: now stores tag IDs
   });
 
-  const [tagInput, setTagInput] = useState("");
-  const [showTagInput, setShowTagInput] = useState(false);
   const [selectedModality, setSelectedModality] = useState(null);
   const [selectedWorkType, setSelectedWorkType] = useState(null);
   const [availablePositions, setAvailablePositions] = useState(null);
@@ -139,15 +136,14 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData }) => {
     }
   };
 
-  const handleTagAdd = () => {
-    if (tagInput.trim() && !form.tags.includes(tagInput.trim())) {
-      setForm({ ...form, tags: [...form.tags, tagInput.trim()] });
-      setTagInput("");
-    }
-  };
-
-  const handleTagRemove = (tag) => {
-    setForm({ ...form, tags: form.tags.filter((t) => t !== tag) });
+  // Updated tag handling functions
+  const handleTagToggle = (tagId) => {
+    setForm(prev => ({
+      ...prev,
+      selectedTags: prev.selectedTags.includes(tagId)
+        ? prev.selectedTags.filter(id => id !== tagId)
+        : [...prev.selectedTags, tagId]
+    }));
   };
 
   // Add salary validation
@@ -213,18 +209,16 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData }) => {
       
       // Transform data to match backend expected format exactly
       const jobData = {
-        job_title: form.jobTitle.trim(),
-        salary_min: parseInt(form.salaryMin),
-        salary_max: parseInt(form.salaryMax),
-        setting: selectedModality,
-        work_type: selectedWorkType,
+        jobTitle: form.jobTitle.trim(), // Frontend format for CompanyContext
+        salaryMin: parseInt(form.salaryMin),
+        salaryMax: parseInt(form.salaryMax),
+        type: selectedModality,
+        employment: selectedWorkType,
         description: form.description.trim(),
-        date_added: new Date().toISOString().split('T')[0],
-        created_at: new Date().toISOString(),
-        position_count: parseInt(availablePositions),
-        required_category_id: selectedCategory ? (categoryMapping[selectedCategory] || 0) : 0,
-        required_proficiency: parseInt(selectedProficiency) || 0,
-        company_id: parseInt(company.company_id)
+        availablePositions: parseInt(availablePositions),
+        category: selectedCategory ? (categoryMapping[selectedCategory] || null) : null,
+        proficiency: parseInt(selectedProficiency) || null,
+        selectedTags: form.selectedTags // Include selected tag IDs
       };
       
       // Final validation with detailed error messages
@@ -278,7 +272,6 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData }) => {
       setAvailablePositions(null);
       setSelectedCategory(null);
       setSelectedProficiency(null);
-      setShowTagInput(false);
       
       onClose();
       
@@ -293,9 +286,6 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData }) => {
       setSaving(false);
     }
   };
-
-  // Get tags for the selected category (keep exactly as is)
-  const availableTags = selectedCategory ? TAGS[selectedCategory] || [] : [];
 
   // Check authentication
   if (!isAuthenticated) {
@@ -557,59 +547,53 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData }) => {
             </div>
           </div>
           
-          {/* Keep tag section exactly as is */}
+          {/* Updated Tags section with backend tags */}
           <div className="flex flex-col gap-2">
-            <label className="font-semibold text-[16px] text-[#3C3B3B]">Tags</label>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {/* Show tags for the selected category */}
-              {availableTags.length > 0 && availableTags.map((tag) => {
-                const isSelected = form.tags.includes(tag);
-                return (
-                  <button
-                    key={tag}
-                    type="button"
-                    className={`px-3 py-1 rounded-full text-[12px] font-semibold border-2 transition-colors flex items-center gap-1 ${
-                      isSelected
-                        ? 'bg-[#FF8032] text-white border-[#FF8032]'
-                        : 'bg-white text-[#FF8032] border-[#FF8032] hover:bg-[#FF8032]/10'
-                    }`}
-                    onClick={() => {
-                      if (isSelected) {
-                        setForm({ ...form, tags: form.tags.filter((t) => t !== tag) });
-                      } else {
-                        setForm({ ...form, tags: [...form.tags, tag] });
-                      }
-                    }}
-                  >
-                    + {tag}
-                  </button>
-                );
-              })}
-              {showTagInput ? (
-                <input
-                  className="border-2 focus:border-[#FF8032] focus:outline-none focus:ring-0 rounded px-2 py-1 text-[12px] w-24"
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onBlur={() => setShowTagInput(false)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleTagAdd();
-                      setShowTagInput(false);
-                    }
-                  }}
-                  autoFocus
-                />
-              ) : (
-                <button
-                  type="button"
-                  className="w-[53px] px-2 py-1 bg-[#FF8032] text-white rounded-full text-[12px] font-semibold hover:bg-[#E66F24] transition"
-                  onClick={() => setShowTagInput(true)}
-                >
-                  Tag +
-                </button>
-              )}
+            <label className="font-semibold text-[16px] text-[#3C3B3B]">
+              Required Skills/Tags
+            </label>
+            
+            {/* Tag selection grid */}
+            <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto border rounded-lg p-3">
+              {availableTags.map(tag => (
+                <label key={tag.tag_id} className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.selectedTags.includes(tag.tag_id)}
+                    onChange={() => handleTagToggle(tag.tag_id)}
+                    className="rounded border-gray-300 text-[#FF8032] focus:ring-[#FF8032]"
+                  />
+                  <span className="text-sm text-gray-700">{tag.tag_name}</span>
+                </label>
+              ))}
             </div>
+            
+            {/* Display selected tags */}
+            {form.selectedTags.length > 0 && (
+              <div className="mt-2">
+                <p className="text-sm text-gray-600">Selected tags:</p>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {form.selectedTags.map(tagId => {
+                    const tag = availableTags.find(t => t.tag_id === tagId);
+                    return (
+                      <span
+                        key={tagId}
+                        className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[#FF8032] text-white"
+                      >
+                        {tag ? tag.tag_name : `Tag ${tagId}`}
+                        <button
+                          type="button"
+                          onClick={() => handleTagToggle(tagId)}
+                          className="ml-1 text-white hover:text-gray-200"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>  
 
           <div className="flex justify-center mt-4">

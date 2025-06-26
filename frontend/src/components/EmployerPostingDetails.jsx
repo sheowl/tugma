@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTags } from "../context/TagsContext";
 import ActiveSaveIcon from "../assets/ActiveSaveIcon.svg";
 import CompanyDetails from "./CompanyDetails";
 import { companyData } from "../context/companyData";
@@ -8,6 +9,7 @@ import { getCategoryName, getProficiencyLevel, getWorkSetting, getWorkType } fro
 
 export default function EmployerPostingDetails({ open, onClose, job, onEdit }) {
   const navigate = useNavigate();
+  const { flatTagMapping } = useTags();
   const [showCompanyDetails, setShowCompanyDetails] = useState(false);
 
   const handleCompanyDetailsClick = () => {
@@ -137,27 +139,38 @@ export default function EmployerPostingDetails({ open, onClose, job, onEdit }) {
                       <h4 className="text-[16px] font-semibold mb-3 text-[#3C3B3B]">Tags</h4>
                       <div className="flex gap-2 flex-wrap mb-4">                        
                         {(() => {
-                          if (!fullJobData?.tags || !Array.isArray(fullJobData.tags) || fullJobData.tags.length === 0) {
+                          // Handle both tag names (legacy) and tag IDs (new format)
+                          const jobTags = fullJobData?.job_tags || fullJobData?.selectedTags || fullJobData?.tags || [];
+                          
+                          if (!Array.isArray(jobTags) || jobTags.length === 0) {
                             return <div className="text-gray-500 text-sm">No tags available</div>;
                           }
                           
                           const maxDisplayTags = 8;
-                          const tagsToShow = fullJobData.tags.slice(0, maxDisplayTags);
-                          const hasMoreTags = fullJobData.tags.length > maxDisplayTags;
+                          const tagsToShow = jobTags.slice(0, maxDisplayTags);
+                          const hasMoreTags = jobTags.length > maxDisplayTags;
                           
                           return (
                             <>
-                              {tagsToShow.map((tag, index) => (
-                                <span 
-                                  key={index} 
-                                  className="px-3 py-1 text-[#FF8032] border-2 border-[#FF8032] rounded-full text-[12px] font-semibold hover:bg-[#FF8032]/10 transition whitespace-nowrap"
-                                >
-                                  {tag}
-                                </span>
-                              ))}
+                              {tagsToShow.map((tag, index) => {
+                                // If tag is a number (ID), resolve name using flatTagMapping
+                                // If tag is a string (legacy name), use as-is
+                                const tagName = typeof tag === 'number' 
+                                  ? (flatTagMapping[tag] || `Tag ${tag}`)
+                                  : tag;
+                                  
+                                return (
+                                  <span 
+                                    key={index} 
+                                    className="px-3 py-1 text-[#FF8032] border-2 border-[#FF8032] rounded-full text-[12px] font-semibold hover:bg-[#FF8032]/10 transition whitespace-nowrap"
+                                  >
+                                    {tagName}
+                                  </span>
+                                );
+                              })}
                               {hasMoreTags && (
                                 <span className="px-3 py-1 bg-[#FF8032] text-white rounded-full text-[12px] font-semibold whitespace-nowrap">
-                                  +{fullJobData.tags.length - maxDisplayTags} More
+                                  +{jobTags.length - maxDisplayTags} More
                                 </span>
                               )}
                             </>
