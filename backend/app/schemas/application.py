@@ -30,6 +30,9 @@ class JobMatchingCreate(JobMatchingBase):
     applicant_id: int
     job_id: int
 
+class JobMatchingUpdate(BaseModel):
+    match_score: Optional[float] = None
+
 class JobMatchingOut(JobMatchingBase):
     applicant_id: int
     job_id: int
