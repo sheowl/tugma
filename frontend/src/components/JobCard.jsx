@@ -12,15 +12,32 @@ const JobCard = (props) => {
     employment = "Full-Time",
     description = "",
     status = "Active",
-    postedDaysAgo = 0,
+    createdAt = "", // <-- make sure this is passed in
     onAction = () => {},
     actionLabel = "Action",
     onViewDetails = () => {},
     onViewApplicants = () => {},
     dropdownOpen = false,
-    onDropdownToggle = () => {} } = props;
+    onDropdownToggle = () => {},
+  } = props;
 
   const navigate = useNavigate();
+
+  // Helper to calculate "time ago"
+  const getTimeAgo = (dateString) => {
+    if (!dateString) return "Unknown time";
+    const created = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - created;
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffMins < 1) return "Just now";
+    if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? "s" : ""} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+    return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
+  };
 
   const actionOptions = status === "Active" 
     ? [
@@ -54,7 +71,7 @@ const JobCard = (props) => {
       employment,
       description,
       status,
-      postedDaysAgo,
+      createdAt,
     };
     navigate('/employerapplicants', {
       state: {
@@ -83,7 +100,7 @@ const JobCard = (props) => {
       <div className="flex-1 flex flex-col justify-start ml-8 mt-4">
         {/* Posted time */}
         <div className="text-[10px] text-[#6B7280]">
-          {postedDaysAgo === 0 ? "1 minute ago" : `${postedDaysAgo} minute${postedDaysAgo > 1 ? 's' : ''} ago`}
+          {getTimeAgo(createdAt)}
         </div>
         <div className="font-bold text-[24px] text-[#262424] -mb-1">{jobTitle}</div>        
         <div className="text-[14px] font-bold text-[#6B7280]">{companyName}</div>        
