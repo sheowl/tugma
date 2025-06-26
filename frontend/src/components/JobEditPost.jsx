@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useJobs } from "../context/JobsContext";
 import { useTags } from "../context/TagsContext";
+import TagPopup from "./TagPopup";
 import { getCategoryName, getProficiencyLevel, CATEGORIES, PROFICIENCY_LEVELS } from "../utils/jobMappings";
 
 // Dropdown options (keep these as is)
@@ -116,6 +117,7 @@ const JobEditPost = ({ open, onClose, onSave, jobData, availableTags = [] }) => 
   const [openDropdown, setOpenDropdown] = useState(null);
   const [saving, setSaving] = useState(false);
   const [initialized, setInitialized] = useState(false);
+  const [showTagPopup, setShowTagPopup] = useState(false);
 
   // Store job data when modal opens and only update if it's genuinely new data
   useEffect(() => {
@@ -516,47 +518,14 @@ const JobEditPost = ({ open, onClose, onSave, jobData, availableTags = [] }) => 
                 ))}
               </div>
 
-              {/* Tag Selection Grid */}
-              {form.category && availableTags.length > 0 && (
-                <div className="border-2 border-gray-200 rounded-lg p-4 max-h-48 overflow-y-auto">
-                  <div className="grid grid-cols-2 gap-2">
-                    {availableTags
-                      .filter(tag => tag.category === parseInt(form.category))
-                      .map((tag) => (
-                        <label
-                          key={tag.id}
-                          className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 cursor-pointer"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={form.selectedTags.includes(tag.id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setForm({
-                                  ...form,
-                                  selectedTags: [...form.selectedTags, tag.id]
-                                });
-                              } else {
-                                setForm({
-                                  ...form,
-                                  selectedTags: form.selectedTags.filter(id => id !== tag.id)
-                                });
-                              }
-                            }}
-                            className="rounded border-gray-300 text-[#FF8032] focus:ring-[#FF8032]"
-                          />
-                          <span className="text-sm font-medium text-gray-700">
-                            {tag.name}
-                          </span>
-                        </label>
-                      ))}
-                  </div>
-                </div>
-              )}
-              
-              {!form.category && (
-                <p className="text-gray-500 text-sm">Select a category first to choose tags</p>
-              )}
+              {/* Add Tag Button */}
+              <button
+                type="button"
+                className="w-[219px] px-2 py-1 bg-transparent text-[#FF8032] border-2 border-[#FF8032] rounded-xl text-[12px] font-semibold hover:bg-[#FF8032] hover:text-white transition"
+                onClick={() => setShowTagPopup(true)}
+              >
+                + Tag
+              </button>
             </div>            
             
             <div className="flex justify-center items-center gap-4 mt-6">
@@ -581,6 +550,24 @@ const JobEditPost = ({ open, onClose, onSave, jobData, availableTags = [] }) => 
               </button>
             </div>
           </form>
+          
+          <TagPopup
+            open={showTagPopup}
+            onClose={() => setShowTagPopup(false)}
+            currentTags={form.selectedTags.map(tagId => flatTagMapping[tagId] || `Tag ${tagId}`)}
+            onSave={(selectedTagNames) => {
+              // Convert tag names back to IDs
+              const tagIds = [];
+              selectedTagNames.forEach(tagName => {
+                // Find the tag ID for this tag name
+                const tagId = Object.keys(flatTagMapping).find(id => flatTagMapping[id] === tagName);
+                if (tagId) {
+                  tagIds.push(parseInt(tagId));
+                }
+              });
+              setForm({ ...form, selectedTags: tagIds });
+            }}
+          />
         </div>
       </div>
     </>

@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useJobs } from "../context/JobsContext";
 import { useAuth } from "../context/AuthContext";
+import { useTags } from "../context/TagsContext";
+import TagPopup from "./TagPopup";
 import { getProficiencyLevel, getProficiencyOptions } from "../utils/jobMappings";
 
 // Dropdown options - Update values to match backend
@@ -100,6 +102,7 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData, availableTag
   // Use AuthContext and props for data
   const { user, isAuthenticated } = useAuth();
   const { createJob, loading: contextLoading, error: contextError, clearError } = useJobs();
+  const { flatTagMapping } = useTags();
   
   // Use company data from props (companyProfile from CompanyContext)
   const company = companyData || {};
@@ -123,6 +126,7 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData, availableTag
   const [selectedProficiency, setSelectedProficiency] = useState(null);
   const [openDropdown, setOpenDropdown] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [showTagPopup, setShowTagPopup] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -265,13 +269,14 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData, availableTag
         salaryMin: "",
         salaryMax: "",
         description: "",
-        tags: [],
+        selectedTags: [], // Fixed: use selectedTags instead of tags
       });
       setSelectedModality(null);
       setSelectedWorkType(null);
       setAvailablePositions(null);
       setSelectedCategory(null);
       setSelectedProficiency(null);
+      setShowTagPopup(false);
       
       onClose();
       
@@ -547,53 +552,37 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData, availableTag
             </div>
           </div>
           
-          {/* Updated Tags section with backend tags */}
+          {/* Updated Tags section with TagPopup */}
           <div className="flex flex-col gap-2">
             <label className="font-semibold text-[16px] text-[#3C3B3B]">
               Required Skills/Tags
             </label>
             
-            {/* Tag selection grid */}
-            <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto border rounded-lg p-3">
-              {availableTags.map(tag => (
-                <label key={tag.tag_id} className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={form.selectedTags.includes(tag.tag_id)}
-                    onChange={() => handleTagToggle(tag.tag_id)}
-                    className="rounded border-gray-300 text-[#FF8032] focus:ring-[#FF8032]"
-                  />
-                  <span className="text-sm text-gray-700">{tag.tag_name}</span>
-                </label>
-              ))}
-            </div>
-            
             {/* Display selected tags */}
-            {form.selectedTags.length > 0 && (
-              <div className="mt-2">
-                <p className="text-sm text-gray-600">Selected tags:</p>
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {form.selectedTags.map(tagId => {
-                    const tag = availableTags.find(t => t.tag_id === tagId);
-                    return (
-                      <span
-                        key={tagId}
-                        className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[#FF8032] text-white"
-                      >
-                        {tag ? tag.tag_name : `Tag ${tagId}`}
-                        <button
-                          type="button"
-                          onClick={() => handleTagToggle(tagId)}
-                          className="ml-1 text-white hover:text-gray-200"
-                        >
-                          ×
-                        </button>
-                      </span>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+            <div className="flex flex-wrap gap-2 mb-2">
+              {form.selectedTags.map(tagId => (
+                <span
+                  key={tagId}
+                  className="bg-[#FF8032] text-white font-semibold px-3 py-1 rounded-full text-[12px] flex items-center gap-1"
+                >
+                  {flatTagMapping[tagId] || `Tag ${tagId}`}
+                  <button
+                    type="button"
+                    className="ml-1 text-[12px] text-white hover:text-red-200"
+                    onClick={() => handleTagToggle(tagId)}
+                  >
+                    &times;
+                  </button>
+                </span>
+              ))}
+              <button
+                type="button"
+                className="w-[219px] px-2 py-1 bg-transparent text-[#FF8032] border-2 border-[#FF8032] rounded-xl text-[12px] font-semibold hover:bg-[#FF8032] hover:text-white transition"
+                onClick={() => setShowTagPopup(true)}
+              >
+                + Tag
+              </button>
+            </div>
           </div>  
 
           <div className="flex justify-center mt-4">
@@ -610,6 +599,24 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData, availableTag
             </button>          
           </div>
         </form>
+        
+        <TagPopup
+          open={showTagPopup}
+          onClose={() => setShowTagPopup(false)}
+          currentTags={form.selectedTags.map(tagId => flatTagMapping[tagId] || `Tag ${tagId}`)}
+          onSave={(selectedTagNames) => {
+            // Convert tag names back to IDs
+            const tagIds = [];
+            selectedTagNames.forEach(tagName => {
+              // Find the tag ID for this tag name
+              const tagId = Object.keys(flatTagMapping).find(id => flatTagMapping[id] === tagName);
+              if (tagId) {
+                tagIds.push(parseInt(tagId));
+              }
+            });
+            setForm({ ...form, selectedTags: tagIds });
+          }}
+        />
         </div>
       </div>
     </>
