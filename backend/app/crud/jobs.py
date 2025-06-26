@@ -182,39 +182,63 @@ async def get_applicants_by_job(db: AsyncSession, job_id: int):
 
 # Add these functions to your CRUD file
 
-async def get_applicant_tags(db: AsyncSession, applicant_id: int) -> List[int]:
-    """Get tags for a specific applicant (returns array of tag IDs)"""
+async def get_match_score(db: AsyncSession, applicant_id: int, job_id: int) -> Optional[float]:
+    """Get match score from JobMatching table"""
     try:
-        from app.models.applicants import ApplicantTag  # Adjust import based on your model location
+        from app.models.application import JobMatching
         
-        stmt = select(ApplicantTag.tag_id).where(ApplicantTag.applicant_id == applicant_id)
+        print(f"🔍 DEBUG: Getting match score from JobMatching table for applicant_id: {applicant_id}, job_id: {job_id}")
+        
+        # Query the JobMatching table for existing match score
+        stmt = select(JobMatching.match_score).where(
+            JobMatching.applicant_id == applicant_id,
+            JobMatching.job_id == job_id
+        )
         result = await db.execute(stmt)
-        tag_ids = result.scalars().all()
+        match_score = result.scalar_one_or_none()
         
-        print(f"🔍 DEBUG: Found {len(tag_ids)} tags for applicant {applicant_id}")
+        if match_score is not None:
+            print(f"✅ DEBUG: Found match score in database: {match_score}")
+            return float(match_score)
+        else:
+            print(f"⚠️ DEBUG: No match score found in JobMatching table for applicant {applicant_id}, job {job_id}")
+            return 0.0
+        
+    except Exception as e:
+        print(f"❌ DEBUG: Error getting match score from JobMatching table: {e}")
+        import traceback
+        traceback.print_exc()
+        return 0.0
+
+async def get_applicant_tags(db: AsyncSession, applicant_id: int) -> List[int]:
+    """Get tags for a specific applicant from user_tags table"""
+    try:
+        from app.models.users import UserTag  # Adjust import based on your model
+        from app.models.applicants import Applicant  # Adjust import based on your model
+        
+        print(f"🔍 DEBUG: Getting tags for applicant_id: {applicant_id}")
+        
+        # First, get the user_id associated with this applicant
+        applicant_stmt = select(Applicant.user_id).where(Applicant.applicant_id == applicant_id)
+        applicant_result = await db.execute(applicant_stmt)
+        user_id = applicant_result.scalar_one_or_none()
+        
+        if not user_id:
+            print(f"❌ DEBUG: No user_id found for applicant_id {applicant_id}")
+            return []
+        
+        print(f"🔍 DEBUG: Found user_id {user_id} for applicant_id {applicant_id}")
+        
+        # Get user tags for this user
+        tags_stmt = select(UserTag.tag_id).where(UserTag.user_id == user_id)
+        tags_result = await db.execute(tags_stmt)
+        tag_ids = tags_result.scalars().all()
+        
+        print(f"🔍 DEBUG: Found {len(tag_ids)} tags for applicant {applicant_id}: {list(tag_ids)}")
         return list(tag_ids)
         
     except Exception as e:
-        print(f"❌ DEBUG: Error getting applicant tags: {e}")
+        print(f"❌ DEBUG: Error getting applicant tags for {applicant_id}: {e}")
+        import traceback
+        traceback.print_exc()
         return []
-
-async def get_match_score(db: AsyncSession, applicant_id: int, job_id: int) -> Optional[float]:
-    """Get match score between applicant and job"""
-    try:
-        # Check if you have a match_scores table
-        from app.models.applicants import MatchScore  # Adjust import based on your model
-        
-        stmt = select(MatchScore.score).where(
-            MatchScore.applicant_id == applicant_id,
-            MatchScore.job_id == job_id
-        )
-        result = await db.execute(stmt)
-        score = result.scalar_one_or_none()
-        
-        print(f"🔍 DEBUG: Match score for applicant {applicant_id} and job {job_id}: {score}")
-        return score
-        
-    except Exception as e:
-        print(f"❌ DEBUG: Error getting match score: {e}")
-        # If no match_scores table exists, you could calculate on the fly or return 0
-        return None
