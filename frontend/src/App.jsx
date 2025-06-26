@@ -25,6 +25,7 @@ import CompanyPage from "./pages/CompanyPage.jsx";
 import EditCompanyPage from "./components/EditCompanyPage.jsx";
 import ApplicantResume from "./components/ApplicantResume.jsx";
 import TugmaLandingPage from "./pages/TugmaLandingPage.jsx";
+import ApplicantInbox from "./pages/ApplicantInbox.jsx";
 // Remove CompanyOnboarding import for now
 
 function App() {

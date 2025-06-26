@@ -64,6 +64,9 @@ const EmployerJobPosts = () => {
   const [selectedStatus, setSelectedStatus] = useState(null);
   const [postingDetailsOpen, setPostingDetailsOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [jobToEdit, setJobToEdit] = useState(null);
+  const [openDropdownId, setOpenDropdownId] = useState(null);
   
   // Add company profile state
   const [companyProfile, setCompanyProfile] = useState(null);

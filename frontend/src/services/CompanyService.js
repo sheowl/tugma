@@ -63,7 +63,7 @@ class CompanyService {
     // Job operations
     async getJobs() {
         const response = await AuthService.makeAuthenticatedRequest(
-            `${API_BASE_URL}/v1/jobs/company/jobs`,
+            `${API_BASE_URL}/v1/jobs/company/${company_id}`,
             { method: "GET" }
         );
         return response.json();

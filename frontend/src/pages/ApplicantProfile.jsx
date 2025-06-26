@@ -1,27 +1,8 @@
 import ApplicantSideBar from "../components/ApplicantSideBar";
-import { useState } from "react";
 import ApplicantHeader from "../components/ApplicantHeader";
 import React, { useEffect, useState } from "react";
-import ApplicantSideBar from "../components/ApplicantSideBar";
 import ApplicantDashLogo from "../assets/ApplicantDashLogo.svg";
 import { supabase } from "../services/supabaseClient";
-
-
-function ApplicantProfile() {
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [zoomedCertificate, setZoomedCertificate] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [activeField, setActiveField] = useState(""); // "github" | "linkedin" | "portfolio"
-  
-  const [linkValues, setLinkValues] = useState({
-    github: "",
-    linkedin: "",
-    portfolio: "",
-  });
-
-  const [profileImage, setProfileImage] = useState(
-  localStorage.getItem("profileImage") || null
-);
 
 const handleProfileImageChange = (e) => {
   const file = e.target.files[0];
@@ -40,18 +21,7 @@ const handleRemoveImage = () => {
   localStorage.removeItem("profileImage");
 };
 
-
-  const getButtonClass = (field) => {
-  const isFilled = linkValues[field];
-  return `${
-    isFilled
-      ? "bg-[#2A4D9B] text-white border border-[#2A4D9B]"
-      : "bg-white text-[#2A4D9B] border border-dashed border-[#2A4D9B]"
-  } transition-all duration-300 ease-in-out`;
-};
-
-
-  const truncate = (text, maxLength) => {
+const truncate = (text, maxLength) => {
   if (!text) return "";
   return text.length > maxLength ? text.slice(0, maxLength) + "..." : text;
 };
@@ -103,7 +73,6 @@ const handleRemoveImage = () => {
       </div>
     );
   };
-};
 
 const CertificateCard = ({ image, title, description, onClick }) => {
   return (
@@ -132,6 +101,31 @@ function ApplicantProfile() {
   const [experiences, setExperiences] = useState([]);
   const [certificates, setCertificates] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [zoomedCertificate, setZoomedCertificate] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeField, setActiveField] = useState(""); // "github" | "linkedin" | "portfolio"
+  
+  const [linkValues, setLinkValues] = useState({
+    github: "",
+    linkedin: "",
+    portfolio: "",
+  });
+
+  const [profileImage, setProfileImage] = useState(
+  localStorage.getItem("profileImage") || null
+);
+
+const getButtonClass = (field) => {
+  const isFilled = linkValues[field];
+  return `${
+    isFilled
+      ? "bg-[#2A4D9B] text-white border border-[#2A4D9B]"
+      : "bg-white text-[#2A4D9B] border border-dashed border-[#2A4D9B]"
+  } transition-all duration-300 ease-in-out`;
+};
+
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -463,8 +457,6 @@ function ApplicantProfile() {
         </div>
       </div>
     )}
-  </div>
-  );
 }
 
 export default ApplicantProfile;

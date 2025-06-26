@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import EmpHeader from "../components/EmpHeader";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
-import { useNavigate } from "react-router-dom";
 
 const EmpComReg = () => {
   const navigate = useNavigate();

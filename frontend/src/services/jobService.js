@@ -23,7 +23,7 @@ class JobService {
 
   async getJobsByCompany(companyId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/jobs/jobs/company/${companyId}`, {
+      const response = await fetch(`${API_BASE_URL}/jobs/company/${companyId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -124,13 +124,9 @@ class JobService {
   }
 
   // Updated method to fetch jobs for a specific company
-  async getCompanyJobs(companyId = 2) { // Default to company ID 2
-    try {
-      return await this.getJobsByCompany(companyId);
-    } catch (error) {
-      console.error('Error fetching company jobs:', error);
-      throw error;
-    }
+  async getCompanyJobs(companyId) {
+    const id = companyId || 2; // fallback to 2 if undefined/null/0
+    return await this.getJobsByCompany(id);
   }
 
   // Transform backend data to frontend format

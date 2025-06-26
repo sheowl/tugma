@@ -73,9 +73,12 @@ export function JobsProvider({ children }) {
 
   // Simplified fetch jobs (backend already includes applicant counts)
   const fetchJobs = async (companyId = 2) => {
+    if (!companyId || companyId === "undefined" || isNaN(Number(companyId))) {
+      companyId = 2; // fallback to default
+    }
     dispatch({ type: JOBS_ACTIONS.SET_LOADING, payload: true });
     try {
-      const backendJobs = await jobService.getCompanyJobs(companyId);
+      const backendJobs = await jobService.getCompanyJobs(Number(companyId));
       console.log('Raw backend jobs:', backendJobs); // Debug log
       
       // Transform jobs (applicant_count already included from backend)
@@ -162,11 +165,11 @@ export function JobsProvider({ children }) {
 
   // Auto-fetch company jobs on mount
   useEffect(() => {
-    // Only fetch if logged in and company_id exists
     const accessToken = localStorage.getItem("access_token");
-    const companyId = localStorage.getItem("company_id");
-    if (accessToken && companyId) {
-      fetchJobs(companyId);
+    let companyId = localStorage.getItem("company_id");
+    // Defensive: skip if not set or is the string "undefined"
+    if (accessToken && companyId && companyId !== "undefined" && !isNaN(Number(companyId))) {
+      fetchJobs(Number(companyId));
     }
   }, []);
 
