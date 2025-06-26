@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useJobs } from "../context/JobsContext";
 import { useAuth } from "../context/AuthContext";
 import TAGS from "./Tags"
+import TagPopup from "./TagPopup";
 import { getProficiencyLevel, getProficiencyOptions } from "../utils/jobMappings";
 
 // Dropdown options - Update values to match backend
@@ -70,7 +71,7 @@ const CustomDropdown = ({
   return (
     <div className="relative">
       <button
-        className={`h-8 px-6 py-2 border-2 border-[#FF8032] focus:border-[#FF8032] hover:bg-[#FF8032]/10 text-[#FF8032] rounded-full text-[14px] font-bold bg-white flex items-center gap-2 transition-colors focus:outline-none focus:ring-0 ${dropdownKey === 'category' || dropdownKey === 'proficiency' ? 'w-[220px] justify-center' : ''}`}
+        className={`h-8 px-6 py-2 border-2 border-[#FF8032] focus:border-[#FF8032] hover:bg-[#FF8032]/10 text-[#FF8032] rounded-[10px] text-[14px] font-bold bg-white flex items-center gap-2 transition-colors focus:outline-none focus:ring-0 w-[219px] justify-center whitespace-nowrap`}
         onClick={handleActionClick}
         type="button"
       >
@@ -78,7 +79,7 @@ const CustomDropdown = ({
         {!hideCaret && <i className="bi bi-caret-down-fill text-xs" />}
       </button>
       {isOpen && (
-        <div className={`absolute left-0 mt-2 ${dropdownKey === 'category' || dropdownKey === 'proficiency' ? 'w-80' : 'w-44'} bg-white border border-gray-200 rounded shadow z-40 max-h-60 overflow-y-auto`}>
+        <div className="absolute left-0 mt-2 w-44 bg-white border border-gray-200 rounded shadow z-40 max-h-60 overflow-y-auto">
           {options.map((option) => (
             <div
               key={option.value}
@@ -119,6 +120,7 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData }) => {
 
   const [tagInput, setTagInput] = useState("");
   const [showTagInput, setShowTagInput] = useState(false);
+  const [showTagPopup, setShowTagPopup] = useState(false);
   const [selectedModality, setSelectedModality] = useState(null);
   const [selectedWorkType, setSelectedWorkType] = useState(null);
   const [availablePositions, setAvailablePositions] = useState(null);
@@ -279,6 +281,7 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData }) => {
       setSelectedCategory(null);
       setSelectedProficiency(null);
       setShowTagInput(false);
+      setShowTagPopup(false);
       
       onClose();
       
@@ -293,9 +296,6 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData }) => {
       setSaving(false);
     }
   };
-
-  // Get tags for the selected category (keep exactly as is)
-  const availableTags = selectedCategory ? TAGS[selectedCategory] || [] : [];
 
   // Check authentication
   if (!isAuthenticated) {
@@ -561,54 +561,29 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData }) => {
           <div className="flex flex-col gap-2">
             <label className="font-semibold text-[16px] text-[#3C3B3B]">Tags</label>
             <div className="flex flex-wrap gap-2 mb-2">
-              {/* Show tags for the selected category */}
-              {availableTags.length > 0 && availableTags.map((tag) => {
-                const isSelected = form.tags.includes(tag);
-                return (
-                  <button
-                    key={tag}
-                    type="button"
-                    className={`px-3 py-1 rounded-full text-[12px] font-semibold border-2 transition-colors flex items-center gap-1 ${
-                      isSelected
-                        ? 'bg-[#FF8032] text-white border-[#FF8032]'
-                        : 'bg-white text-[#FF8032] border-[#FF8032] hover:bg-[#FF8032]/10'
-                    }`}
-                    onClick={() => {
-                      if (isSelected) {
-                        setForm({ ...form, tags: form.tags.filter((t) => t !== tag) });
-                      } else {
-                        setForm({ ...form, tags: [...form.tags, tag] });
-                      }
-                    }}
-                  >
-                    + {tag}
-                  </button>
-                );
-              })}
-              {showTagInput ? (
-                <input
-                  className="border-2 focus:border-[#FF8032] focus:outline-none focus:ring-0 rounded px-2 py-1 text-[12px] w-24"
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onBlur={() => setShowTagInput(false)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleTagAdd();
-                      setShowTagInput(false);
-                    }
-                  }}
-                  autoFocus
-                />
-              ) : (
-                <button
-                  type="button"
-                  className="w-[53px] px-2 py-1 bg-[#FF8032] text-white rounded-full text-[12px] font-semibold hover:bg-[#E66F24] transition"
-                  onClick={() => setShowTagInput(true)}
+              {/* Show selected tags */}
+              {form.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="bg-[#FF8032] text-white font-semibold px-3 py-1 rounded-full text-[12px] flex items-center gap-1"
                 >
-                  Tag +
-                </button>
-              )}
+                  {tag}
+                  <button
+                    type="button"
+                    className="ml-1 text-[12px] text-white hover:text-red-200"
+                    onClick={() => handleTagRemove(tag)}
+                  >
+                    &times;
+                  </button>
+                </span>
+              ))}
+              <button
+                type="button"
+                className="w-[219px] px-2 py-1 bg-transparent text-[#FF8032] border-2 border-[#FF8032] rounded-xl text-[12px] font-semibold hover:bg-[#FF8032] hover:text-white transition"
+                onClick={() => setShowTagPopup(true)}
+              >
+                + Tag
+              </button>
             </div>
           </div>  
 
@@ -626,6 +601,20 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData }) => {
             </button>          
           </div>
         </form>
+        
+        <TagPopup
+          open={showTagPopup}
+          onClose={() => setShowTagPopup(false)}
+          currentTags={form.tags}
+          onTagSelect={(tag) => {
+            if (!form.tags.includes(tag)) {
+              setForm({ ...form, tags: [...form.tags, tag] });
+            }
+          }}
+          onSave={(selectedTags) => {
+            setForm({ ...form, tags: selectedTags });
+          }}
+        />
         </div>
       </div>
     </>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useJobs } from "../context/JobsContext";
 import TAGS from "./Tags";
+import TagPopup from "./TagPopup";
 import { getCategoryName, getProficiencyLevel, CATEGORIES, PROFICIENCY_LEVELS } from "../utils/jobMappings";
 
 // Dropdown options (keep these as is)
@@ -64,7 +65,7 @@ const CustomDropdown = ({
   return (
     <div className="relative">        
       <button
-        className="h-8 px-6 py-2 border-2 border-[#FF8032] focus:border-[#FF8032] hover:bg-[#FF8032]/10 text-[#FF8032] rounded-[10px] text-[14px] font-bold bg-white flex items-center gap-2 transition-colors focus:outline-none focus:ring-0"
+        className="h-8 px-6 py-2 border-2 border-[#FF8032] focus:border-[#FF8032] hover:bg-[#FF8032]/10 text-[#FF8032] rounded-[10px] text-[14px] font-bold bg-white flex items-center gap-2 transition-colors focus:outline-none focus:ring-0 w-[219px] justify-center whitespace-nowrap"
         onClick={handleActionClick}
         type="button"
       >
@@ -112,8 +113,7 @@ const JobEditPost = ({ open, onClose, onSave, jobData }) => {
   });
 
   const [originalForm, setOriginalForm] = useState({});
-  const [tagInput, setTagInput] = useState("");
-  const [showTagInput, setShowTagInput] = useState(false);
+  const [showTagPopup, setShowTagPopup] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null);
   const [saving, setSaving] = useState(false);
   const [initialized, setInitialized] = useState(false);
@@ -195,13 +195,6 @@ const JobEditPost = ({ open, onClose, onSave, jobData }) => {
   const handleCancel = () => {
     setForm(originalForm);
     onClose();
-  };
-
-  const handleTagAdd = () => {
-    if (tagInput.trim() && !form.tags.includes(tagInput.trim())) {
-      setForm({ ...form, tags: [...form.tags, tagInput.trim()] });
-      setTagInput("");
-    }
   };
 
   const handleTagRemove = (tag) => {
@@ -508,42 +501,25 @@ const JobEditPost = ({ open, onClose, onSave, jobData }) => {
                 {form.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="bg-transparent text-[#FF8032] font-semibold border-2 border-[#FF8032] px-3 py-1 rounded-full text-[12px] flex items-center gap-1"
+                    className="bg-[#FF8032] text-white font-semibold px-3 py-1 rounded-full text-[12px] flex items-center gap-1"
                   >
                     {tag}
                     <button
                       type="button"
-                      className="ml-1 text-[12px] text-[#FF8032] hover:text-red-500"
+                      className="ml-1 text-[12px] text-white hover:text-red-200"
                       onClick={() => handleTagRemove(tag)}
                     >
                       &times;
                     </button>
                   </span>
                 ))}
-                {showTagInput ? (
-                  <input
-                    className="border-2 focus:border-[#FF8032] focus:outline-none focus:ring-0 rounded px-2 py-1 text-[12px] w-24"
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    onBlur={() => setShowTagInput(false)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        handleTagAdd();
-                        setShowTagInput(false);
-                      }
-                    }}
-                    autoFocus
-                  />
-                ) : (
-                  <button
-                    type="button"
-                    className="w-[53px] px-2 py-1 bg-[#FF8032] text-white rounded-full text-[12px] font-semibold hover:bg-[#E66F24] transition"
-                    onClick={() => setShowTagInput(true)}
-                  >
-                    + Tag
-                  </button>
-                )}            
+                <button
+                  type="button"
+                  className="w-[219px] px-2 py-1 bg-transparent text-[#FF8032] border-2 border-[#FF8032] rounded-xl text-[12px] font-semibold hover:bg-[#FF8032] hover:text-white transition"
+                  onClick={() => setShowTagPopup(true)}
+                >
+                  + Tag
+                </button>
               </div>
             </div>            
             
@@ -569,6 +545,20 @@ const JobEditPost = ({ open, onClose, onSave, jobData }) => {
               </button>
             </div>
           </form>
+          
+          <TagPopup
+            open={showTagPopup}
+            onClose={() => setShowTagPopup(false)}
+            currentTags={form.tags}
+            onTagSelect={(tag) => {
+              if (!form.tags.includes(tag)) {
+                setForm({ ...form, tags: [...form.tags, tag] });
+              }
+            }}
+            onSave={(selectedTags) => {
+              setForm({ ...form, tags: selectedTags });
+            }}
+          />
         </div>
       </div>
     </>
