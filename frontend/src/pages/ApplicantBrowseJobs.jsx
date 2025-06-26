@@ -6,6 +6,8 @@ import JobDetailsDrawer from '../components/JobDetailsDrawer';
 import SearchBar from '../components/SearchBar';
 import Dropdown from '../components/Dropdown';
 import ApplicantNotification from '../components/ApplicantNotification';
+import ApplicantHeader from '../components/ApplicantHeader';
+
 
 function ApplicantBrowseJobs() {
     const [drawerOpen, setDrawerOpen] = useState(false);
@@ -16,14 +18,7 @@ function ApplicantBrowseJobs() {
     const [selectedWorkType, setSelectedWorkType] = useState(null); // State for work type filter
     const [firstName, setFirstName] = useState("User"); // State for user's first name
     const [showNotifications, setShowNotifications] = useState(false);
-    
-
-     const sampleData = [
-  { title: "Some Job Here", company: "Company Name Here", status: "Accepted", timeAgo: "3 hours ago" },
-  { title: "Junior Web Developer", company: "Kim Satrjt PH", status: "Rejected", timeAgo: "8 hours ago" },
-  { title: "Job Title", company: "Company Name", status: "Waitlisted", timeAgo: "3 hours ago" },
-  
-];
+    const hasNotifications = true; // or from state: useState(true)
 
     // Simulate fetching first name from a database
     useEffect(() => {
@@ -197,50 +192,12 @@ function ApplicantBrowseJobs() {
             {/* Main Content */}
             <div className="flex-1 h-screen bg-white rounded-tl-[40px] overflow-y-auto p-6 shadow-md font-montserrat">
                 {/* Header */}
-                <div className="flex justify-between w-full px-9 mb-0">
-                    <div className="flex items-center gap-[15px] m-9">
-                        <img
-                            src={ApplicantDashLogo}
-                            alt="Tugma Logo"
-                            className="max-w-[136px] h-auto"
-                        />
-                        <div>
-                            <div className="font-[Montserrat] text-4xl font-bold text-[#2A4D9B]">
-                                Welcome Back, {firstName}!
-                            </div>
-                            <div className="font-semibold italic text-orange-400 text-xl">
-                                Ready to make meets end?
-                            </div>
-                        </div>
-                    </div>
-
-                     <div className="flex items-center gap-4">
-                        <i className="bi bi-person-circle text-4xl text-gray-400"></i>
-                        <div className="leading-tight pl-3">
-                            <div className="font-semibold text-black text-sm">{firstName}</div>
-                        </div>
-                       <i
-                        className="bi bi-bell text-2xl text-[#2A4D9B] ml-6 cursor-pointer position-relative"
-                        onClick={() => setShowNotifications((prev) => !prev)}
-                        ></i>
-
-                    </div>
-                </div>
-                
-                {showNotifications && (
-                    <div className="absolute top-[120px] right-[50px] z-50">
-                        <ApplicantNotification
-                        open={showNotifications}
-                        onClose={() => setShowNotifications(false)}
-                        notification={sampleData}
-                        onViewDetails={(notif) => {
-                            console.log("View notif details:", notif);
-                            setShowNotifications(false);
-                        }}
-                        />
-                    </div>
-                    )}
-                
+                <ApplicantHeader
+                title={`Welcome Back, ${firstName}!`}
+                subtitle="Ready to make meets end?"
+                firstName={firstName}
+                showProfile={true}
+                />
 
                 {/* Search Bar and Dropdowns */}
                 <div className="px-[112px] mt-0 mb-5 flex justify-between items-center">

@@ -90,7 +90,7 @@ export default function CompanyDetails({ open, onClose, job, onApply }) {
                             target="_blank"
                             rel="noopener noreferrer"
                           >
-                            <button className="w-full h-11 px-4 py-2 bg-[#2A4D9B] text-white rounded-[30px] hover:bg-[#1f3c7b] transition-colors flex items-center justify-center gap-2">
+                            <button className="w-full h-11 px-4 py-2 bg-[#1E1E1E] text-white rounded-[30px] hover:bg-black transition-colors flex items-center justify-center gap-2">
                               <i className={`bi ${link.icon}`}></i> {link.label}
                             </button>
                           </a>
