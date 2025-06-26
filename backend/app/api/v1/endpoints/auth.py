@@ -1,12 +1,14 @@
-﻿from fastapi import APIRouter, HTTPException, Depends, Request
+﻿from fastapi import APIRouter, HTTPException, Depends, Request, Header
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.middleware.auth import supabase
+from app.middleware.auth import supabase, get_current_user
 from app.core.database import get_db
 from app.crud import applicant as applicant_crud
 from app.crud import company as company_crud
 from app.core.auth import get_password_hash
 from app.core.email import send_otp_email
+from app.schemas.applicant import ApplicantCreate, ApplicantSignUp, ApplicantLogin
+from app.schemas.company import CompanySignup, CompanyCreate, CompanyLogin
 import random
 import time
 
@@ -15,27 +17,6 @@ router = APIRouter()
 # In-memory OTP store (for demo/dev only)
 applicant_otp_store = {}
 company_otp_store = {}
-
-# === APPLICANT AUTH SCHEMAS ===
-class ApplicantSignUp(BaseModel):
-    email: EmailStr
-    password: str
-    first_name: str
-    last_name: str
-
-class ApplicantLogin(BaseModel):
-    email: EmailStr
-    password: str
-
-# === COMPANY AUTH SCHEMAS ===
-class CompanySignUp(BaseModel):
-    company_email: EmailStr
-    password: str
-    company_name: str
-
-class CompanyLogin(BaseModel):
-    company_email: EmailStr
-    password: str
 
 # === APPLICANT ENDPOINTS ===
 @router.post("/applicant/signup")
@@ -56,8 +37,6 @@ async def applicant_signup(user_data: ApplicantSignUp, db: AsyncSession = Depend
         })
         
         if result.user:
-            # Also create in your database for relational data
-            from app.schemas.applicant import ApplicantCreate
             applicant_data = ApplicantCreate(
                 email=user_data.email,
                 password=user_data.password,  # Will be hashed in CRUD
@@ -103,8 +82,6 @@ async def applicant_login(credentials: ApplicantLogin):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
 # === COMPANY ENDPOINTS ===
-from app.schemas.company import CompanySignup, CompanyCreate
-
 # Remove the old CompanySignUp class and use the new one
 @router.post("/company/signup")
 async def company_signup(company_data: CompanySignup, db: AsyncSession = Depends(get_db)):
@@ -189,11 +166,16 @@ async def logout():
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/me")
-async def get_current_user_info(db: AsyncSession = Depends(get_db)):
+async def get_current_user_info(
+    db: AsyncSession = Depends(get_db),
+    authorization: str = Header(None)
+):
     """Get current user information"""
     try:
-        # Get current user from Supabase
-        user = supabase.auth.get_user()
+        if not authorization or not authorization.startswith("Bearer "):
+            raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
+        access_token = authorization.split(" ", 1)[1]
+        user = supabase.auth.get_user(access_token)
         if not user.user:
             raise HTTPException(status_code=401, detail="Not authenticated")
         
@@ -302,3 +284,29 @@ async def verify_company_otp(request: Request):
         return {"message": "OTP verified"}
     else:
         raise HTTPException(status_code=400, detail="The code you entered is incorrect. Please try again or resend a new code.")
+
+@router.post("/applicant/oauth-register")
+async def applicant_oauth_register(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    data = await request.json()
+    email = data.get("email")
+    first_name = data.get("first_name")
+    last_name = data.get("last_name")
+
+    # Check if applicant already exists
+    applicant = await applicant_crud.get_applicant_by_email(db, email)
+    if applicant:
+        return {"message": "Applicant already exists"}
+
+    # Create new applicant
+    applicant_data = ApplicantCreate(
+        email=email,
+        first_name=first_name,
+        last_name=last_name,
+        password="",  # Leave blank for OAuth users
+    )
+    new_applicant = await applicant_crud.create_applicant(db, applicant_data)
+    return {"message": "Applicant created", "applicant_id": new_applicant.applicant_id}

@@ -5,29 +5,32 @@ from supabase import create_client, Client
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.database import get_db
+from jose import jwt, JWTError
 
 # Initialize Supabase client
 supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_ANON_KEY)
 security = HTTPBearer()
 
 def verify_supabase_token(token: str) -> Optional[Dict[str, Any]]:
-    """Verify Supabase JWT token"""
+    """Verify Supabase JWT token directly using the project's JWT secret."""
     try:
-        user = supabase.auth.get_user(token)
-        if user.user:
-            return {
-                "user_id": user.user.id,
-                "email": user.user.email,
-                "user_metadata": user.user.user_metadata,
-                "app_metadata": user.user.app_metadata
-            }
-        return None
-    except Exception:
+        payload = jwt.decode(
+            token,
+            settings.SUPABASE_JWT_SECRET,
+            algorithms=["HS256"],
+            audience="authenticated"
+        )
+        print(f"Token payload: {payload}")  # Debugging line to log the payload
+        return payload
+    except JWTError as e:
+        print("JWTError: ", e)
+        print("Token received for verification:", token)  # Debugging line to log the received token
         return None
 
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> Dict[str, Any]:
     """Get current authenticated user"""
     user_data = verify_supabase_token(credentials.credentials)
+    print(f"User data from token: {user_data}")  # Debugging line to log user data
     if not user_data:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

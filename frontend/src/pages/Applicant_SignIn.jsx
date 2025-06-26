@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import { useAuth } from "../context/AuthContext";
+import { supabase } from "../services/supabaseClient";
 import TugmaLogo from "../assets/TugmaLogo.svg";
 
 const Applicant_SignIn = () => {
@@ -12,6 +13,24 @@ const Applicant_SignIn = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { applicantLogin } = useAuth();
   const navigate = useNavigate();
+
+  const handleGoogleSignIn = async () => {
+    setError("");
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin + "/applicantonboarding", // or your desired page
+        },
+      });
+      if (error) setError("Google sign-in failed: " + error.message);
+    } catch (err) {
+      setError("Google sign-in error: " + err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#FEFEFF] font-montserrat pt-24 pb-12 px-2 sm:pt-32 sm:pb-20 sm:px-6 md:pt-[120px] md:pb-[80px] md:px-[120px]">
@@ -43,13 +62,20 @@ const Applicant_SignIn = () => {
             }
 
             try {
-              const result = await applicantLogin(username, password);
-              if (result.success) {
-                navigate("/applicantbrowsejobs");
-              } else {
-                setError(result.error || "Login failed");
+              const { data, error } = await supabase.auth.signInWithPassword({
+                email: username,
+                password,
+              });
+              if (error) {
+                setError(error.message || "Login failed");
+                setIsLoading(false);
+                return;
               }
+              // Optionally, sync with your backend if you need to create a DB row
+              navigate("/applicantonboarding");
+              setIsLoading(false);
             } catch (error) {
+              console.error("Login error:", error);
               setError("Network error. Please check your connection.");
             } finally {
               setIsLoading(false);
@@ -105,7 +131,9 @@ const Applicant_SignIn = () => {
             <div className="h-[24px]" />
             <button
               type="button"
+              onClick={handleGoogleSignIn}
               className="flex items-center justify-center gap-2 border border-[#6B7280] hover:border-2 rounded-full bg-[#FEFEFF] hover:bg-gray-50 transition w-full max-w-md h-[44px] mx-auto"
+              disabled={isLoading}
             >
               <img
                 src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg"

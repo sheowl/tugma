@@ -46,7 +46,7 @@ async def create_applicant(db: AsyncSession, applicant_in: ApplicantCreate) -> A
 
 
 async def get_applicant_by_email(db: AsyncSession, email: str) -> Optional[Applicant]:
-    result = await db.execute(select(Applicant).where(Applicant.email == email))
+    result = await db.execute(select(Applicant).where(Applicant.applicant_email == email))
     return result.scalars().first()
 
 
