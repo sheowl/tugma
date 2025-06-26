@@ -27,6 +27,7 @@ class JobUpdate(JobBase):
 class JobOut(JobBase):
     job_id: int
     company_id: int
+    applicant_count: Optional[int] = 0  # Add this field
 
     model_config = {"from_attributes": True}
 

@@ -158,6 +158,9 @@ const EmployerJobPosts = () => {
           // Position mapping
           availablePositions: parseInt(job.position_count, 10) || 0, // Parse position_count
 
+          // Add applicant count from backend
+          applicantCount: parseInt(job.applicant_count, 10) || 0, // Backend: applicant_count → Frontend: applicantCount
+
           // Category and proficiency mapping
           category: parseInt(job.required_category_id, 10) || "Not specified", // Parse required_category_id
           proficiency: parseInt(job.required_proficiency, 10) || "Not specified", // Parse required_proficiency
@@ -305,11 +308,50 @@ const EmployerJobPosts = () => {
     setSelectedJob(null); // Also clear selectedJob
   };
 
-  const handleViewApplicants = () => {
+  const handleViewApplicants = (jobData = null) => {
+    console.log('🔍 EmployerJobPosts: handleViewApplicants called with:', jobData);
+    
+    // If jobData is passed, navigate to specific job's applicants
+    // Otherwise, navigate to general applicants page with all jobs
+    const navigationState = {
+      jobPosts: jobPosts, // This should only contain serializable data
+    };
+
+    // If specific job is selected, add it to the state
+    if (jobData && jobData.id) {
+      console.log('🔍 EmployerJobPosts: Job ID being passed:', jobData.id);
+      
+      // Make sure to only pass serializable data (no functions)
+      const serializableJobData = {
+        id: jobData.id,
+        jobTitle: jobData.jobTitle,
+        companyName: jobData.companyName,
+        location: jobData.location,
+        type: jobData.type,
+        employment: jobData.employment,
+        description: jobData.description,
+        status: jobData.status,
+        salaryMin: jobData.salaryMin,
+        salaryMax: jobData.salaryMax,
+        salaryRange: jobData.salaryRange,
+        availablePositions: jobData.availablePositions,
+        applicantCount: jobData.applicantCount,
+        category: jobData.category,
+        proficiency: jobData.proficiency,
+        dateAdded: jobData.dateAdded,
+        createdAt: jobData.createdAt,
+        postedDaysAgo: jobData.postedDaysAgo,
+        company_id: jobData.company_id,
+      };
+      
+      navigationState.selectedJob = serializableJobData;
+      navigationState.selectedJobId = jobData.id;
+      
+      console.log('🔍 EmployerJobPosts: Navigation state:', navigationState);
+    }
+
     navigate('/employerapplicants', { 
-      state: { 
-        jobPosts: jobPosts 
-      } 
+      state: navigationState
     });
   };
 
@@ -607,7 +649,7 @@ const EmployerJobPosts = () => {
             getFilteredAndSortedJobs().map(job => (                
             <JobCard
                 key={job.id}
-                {...job} // Pass all job properties
+                {...job} // Pass all job properties including applicantCount
                 onViewDetails={handleViewJobDetails}
                 onViewApplicants={handleViewApplicants}
                 dropdownOpen={openDropdownId === job.id}
@@ -662,7 +704,7 @@ const EmployerJobPosts = () => {
         <EmployerPostingDetails
           open={postingDetailsOpen}
           onClose={() => setPostingDetailsOpen(false)}
-          job={selectedJob}
+          job={selectedJob} // This now includes applicantCount
           onEdit={handleEditJob}
         />
       </div>

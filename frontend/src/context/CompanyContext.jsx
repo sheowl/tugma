@@ -12,6 +12,7 @@ export const CompanyProvider = ({ children }) => {
   const [dashboardStats, setDashboardStats] = useState(null);
   const [recentApplicants, setRecentApplicants] = useState([]);
   const [companyJobs, setCompanyJobs] = useState([]);
+  const [jobApplicants, setJobApplicants] = useState([]); // Add this state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -234,6 +235,34 @@ export const CompanyProvider = ({ children }) => {
     }
   };
 
+  // Add new method for job-specific applicants
+  const getJobApplicants = async (jobId) => {
+    if (!isEmployer()) {
+      throw new Error('Only employers can access job applicants');
+    }
+    
+    if (!jobId) {
+      throw new Error('Job ID is required');
+    }
+    
+    setLoading(true);
+    setError(null);
+    try {
+      console.log(`🔍 Fetching applicants for job ID: ${jobId}`);
+      const response = await CompanyService.getJobApplicants(jobId);
+      console.log('📋 Job applicants response:', response);
+      
+      setJobApplicants(response.applicants || []);
+      return response;
+    } catch (err) {
+      console.error('❌ Error fetching job applicants:', err);
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Clear error
   const clearError = () => {
     setError(null);
@@ -245,6 +274,7 @@ export const CompanyProvider = ({ children }) => {
     dashboardStats,
     recentApplicants,
     companyJobs,
+    jobApplicants, // Add this to the context value
     loading,
     error,
     
@@ -268,6 +298,7 @@ export const CompanyProvider = ({ children }) => {
     
     // Applicant operations
     getApplicants,
+    getJobApplicants, // Add this to the context value
     
     // Utility
     clearError,

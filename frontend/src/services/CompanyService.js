@@ -117,7 +117,14 @@ class CompanyService {
         return response.json();
     }
 
-    
+    // Add new method for job applicants using the correct endpoint
+    async getJobApplicants(jobId) {
+        const response = await AuthService.makeAuthenticatedRequest(
+            `${API_BASE_URL}/v1/jobs/my-jobs/${jobId}/applicants`,
+            { method: "GET" }
+        );
+        return response.json();
+    }
 }
 
 export default new CompanyService();

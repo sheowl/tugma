@@ -19,7 +19,7 @@ async def get_my_company_jobs_with_total(
     current_company: dict = Depends(get_current_company),
     db: AsyncSession = Depends(get_db)
 ):
-    """Get all jobs posted by the current authenticated company with total count"""
+    """Get all jobs posted by the current authenticated company with total count and applicant counts"""
     try:
         company_id = current_company["db_user"].company_id
         
@@ -29,8 +29,33 @@ async def get_my_company_jobs_with_total(
         
         print(f"🔍 DEBUG: Found {len(jobs)} jobs")
         
-        # Convert to JobOut objects (Pydantic will handle serialization)
-        jobs_out = [JobOut.model_validate(job) for job in jobs]
+        # Convert to JobOut objects with explicit salary conversion and applicant counts
+        jobs_out = []
+        for job in jobs:
+            # Get applicant count for this job
+            applicant_count = await crud.get_applicant_count_by_job(db, job.job_id)
+            
+            # Ensure salary values are proper integers
+            job_dict = {
+                "job_id": job.job_id,
+                "job_title": job.job_title,
+                "company_id": job.company_id,
+                "salary_min": int(job.salary_min) if job.salary_min else 0,
+                "salary_max": int(job.salary_max) if job.salary_max else 0,
+                "setting": job.setting,
+                "work_type": job.work_type,
+                "description": job.description,
+                "date_added": job.date_added,
+                "created_at": job.created_at,
+                "position_count": int(job.position_count) if job.position_count else 1,
+                "required_category_id": int(job.required_category_id) if job.required_category_id else None,
+                "required_proficiency": int(job.required_proficiency) if job.required_proficiency else None,
+                "applicant_count": applicant_count  # Add applicant count
+            }
+            
+            print(f"🔍 DEBUG: Processing job {job.job_id} - salary_min: {job_dict['salary_min']}, salary_max: {job_dict['salary_max']}, applicants: {applicant_count}")
+            
+            jobs_out.append(JobOut(**job_dict))
         
         return CompanyJobsResponse(
             jobs=jobs_out,
@@ -61,16 +86,24 @@ async def create_my_job(
         company_id = current_company["db_user"].company_id
         
         print(f"🔍 DEBUG: Creating job for company_id: {company_id}")
+        print(f"🔍 DEBUG: Input salary_min: {job_in.salary_min}, salary_max: {job_in.salary_max}")
         
-        # Set the company_id in the job data
+        # Set the company_id in the job data and ensure proper integer conversion
         job_data = job_in.dict()
         job_data["company_id"] = company_id
+        
+        # Explicitly convert salary values to integers
+        job_data["salary_min"] = int(job_data["salary_min"]) if job_data.get("salary_min") else 0
+        job_data["salary_max"] = int(job_data["salary_max"]) if job_data.get("salary_max") else 0
+        
+        print(f"🔍 DEBUG: Processed salary_min: {job_data['salary_min']}, salary_max: {job_data['salary_max']}")
         
         # Create the job with the modified data
         job_create = JobCreate(**job_data)
         new_job = await crud.create_job(db, job_create)
         
         print(f"🔍 DEBUG: Job created successfully: {new_job.job_id}")
+        print(f"🔍 DEBUG: Created job salary_min: {new_job.salary_min}, salary_max: {new_job.salary_max}")
         
         return new_job
         
@@ -228,4 +261,60 @@ async def delete_job(job_id: int, db: AsyncSession = Depends(get_db)):
     if not success:
         raise HTTPException(status_code=404, detail="Job not found")
     return {"message": "Job deleted successfully"}
+
+# Get applicants for a specific job posted by the current authenticated company
+@router.get("/my-jobs/{job_id}/applicants")
+async def get_my_job_applicants(
+    job_id: int,
+    current_company: dict = Depends(get_current_company),
+    db: AsyncSession = Depends(get_db)
+):
+    """Get all applicants for a specific job posted by the current authenticated company"""
+    try:
+        company_id = current_company["db_user"].company_id
+        
+        print(f"🔍 DEBUG: Getting applicants for job {job_id} from company_id: {company_id}")
+        
+        # First verify that this job belongs to the current company
+        job = await crud.get_job_by_id(db, job_id)
+        if not job:
+            raise HTTPException(status_code=404, detail="Job not found")
+        
+        if job.company_id != company_id:
+            raise HTTPException(status_code=403, detail="Access denied. This job doesn't belong to your company")
+        
+        # Get applicants for this job
+        applicants = await crud.get_applicants_by_job(db, job_id)
+        
+        print(f"🔍 DEBUG: Found {len(applicants)} applicants for job {job_id}")
+        
+        # Format applicant data
+        applicants_data = []
+        for applicant in applicants:
+            applicant_info = {
+                "applicant_id": applicant.applicant_id,
+                "job_id": applicant.job_id,
+                "name": f"{applicant.first_name} {applicant.last_name}",
+                "email": applicant.email,
+                "phone_number": applicant.phone_number,
+                "location": applicant.location,
+                "application_created_at": applicant.application_created_at,
+                "status": applicant.status if applicant.status else "pending"
+            }
+            applicants_data.append(applicant_info)
+        
+        return {
+            "job_id": job_id,
+            "job_title": job.job_title,
+            "total_applicants": len(applicants_data),
+            "applicants": applicants_data
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ DEBUG: Error in get_my_job_applicants: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=400, detail=str(e))
 
