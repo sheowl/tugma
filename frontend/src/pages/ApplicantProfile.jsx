@@ -3,10 +3,11 @@ import { useState } from "react";
 import ApplicantHeader from "../components/ApplicantHeader";
 
 function ApplicantProfile() {
-  
+  const [isEditMode, setIsEditMode] = useState(false);
   const [zoomedCertificate, setZoomedCertificate] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeField, setActiveField] = useState(""); // "github" | "linkedin" | "portfolio"
+  
   const [linkValues, setLinkValues] = useState({
     github: "",
     linkedin: "",
@@ -199,10 +200,66 @@ const CertificateCard = ({ image, title, description, onClick }) => {
 
         {/* Profile Content */}
         <div className="flex flex-col space-y-7 justify-center items-center w-full">
-          <div className="w-full max-w-[976px] h-[220px] rounded-[20px] shadow-all-around flex items-center gap-8 bg-white p-10">
+          <div className="relative w-full max-w-[976px] h-[220px] rounded-[20px] shadow-all-around flex items-center gap-8 bg-white p-10">
+          {/* Edit Icon */}
+          <div className="absolute top-4 right-4 flex items-center gap-2">
+            {isEditMode && (
+              <span className="text-sm font-semibold text-gray-500]">
+                In Edit Mode
+              </span>
+            )}
+            <button
+              onClick={() => setIsEditMode(!isEditMode)}
+              className="text-gray-500 hover:text-[#2A4D9B]"
+              title={isEditMode ? "Exit Edit Mode" : "Edit Profile"}
+            >
+              <i className="bi bi-pencil-square text-xl" />
+            </button>
+          </div>
+
             {/* Profile Picture */}
             <div className="relative flex-shrink-0">
-            <label htmlFor="profile-upload" className="cursor-pointer block">
+            {isEditMode ? (
+              <>
+              <label className="cursor-pointer relative block">
+                <div className="w-[150px] h-[150px] rounded-full border border-gray-600 overflow-hidden flex items-center justify-center bg-white">
+                  {profileImage ? (
+                    <img
+                      src={profileImage}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <i className="bi bi-person-fill text-7xl text-gray-500"></i>
+                  )}
+                </div>
+
+                {/* Upload icon */}
+                <div className="absolute bottom-0 right-2 w-8 h-8 bg-white border border-[#2A4D9B] rounded-full flex items-center justify-center text-[#2A4D9B] text-xl">
+                  <i className="bi bi-plus"></i>
+                </div>
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProfileImageChange}
+                  className="hidden"
+                />
+              </label>
+
+               {/* Delete button (only if image exists) */}
+              {profileImage && (
+                <button
+                  onClick={handleRemoveImage}
+                  title="Remove Photo"
+                  className="absolute top-2 right-2 bg-red-500 border border-red-500 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm hover:bg-red-100"
+                >
+                  <i className="bi bi-x" />
+                </button>
+              )}
+
+              </>
+            ) : (
               <div className="w-[150px] h-[150px] rounded-full border border-gray-600 overflow-hidden flex items-center justify-center bg-white">
                 {profileImage ? (
                   <img
@@ -214,31 +271,8 @@ const CertificateCard = ({ image, title, description, onClick }) => {
                   <i className="bi bi-person-fill text-7xl text-gray-500"></i>
                 )}
               </div>
-
-              {/* Upload icon */}
-              <div className="absolute bottom-0 right-2 w-8 h-8 bg-white border border-[#2A4D9B] rounded-full flex items-center justify-center text-[#2A4D9B] text-xl">
-                <i className="bi bi-plus"></i>
-              </div>
-            </label>
-
-            <input
-              id="profile-upload"
-              type="file"
-              accept="image/*"
-              onChange={handleProfileImageChange}
-              className="hidden"
-            />
-
-            {/* Remove icon if image exists */}
-            {profileImage && (
-              <button
-                onClick={handleRemoveImage}
-                className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md hover:bg-red-600"
-                title="Remove Photo"
-              >
-                <i className="bi bi-x-lg text-xs"></i>
-              </button>
             )}
+
           </div>
 
             {/* Profile Info */}
@@ -265,18 +299,29 @@ const CertificateCard = ({ image, title, description, onClick }) => {
                 <button
                   className={`${getButtonClass("github")} px-4 py-2 rounded-md flex items-center gap-2`}
                   onClick={() => {
-                    setActiveField("github");
-                    setIsModalOpen(true);
+                    if (isEditMode) {
+                      setActiveField("github"); // or "linkedin", "portfolio"
+                      setIsModalOpen(true);
+                    } else {
+                      const url = linkValues.github;
+                      if (url) window.open(url.startsWith("http") ? url : `https://${url}`, "_blank");
+                    }
                   }}
                 >
                   <i className="bi bi-github"></i> GitHub
                 </button>
 
+
                 <button
                   className={`${getButtonClass("linkedin")} px-4 py-2 rounded-md flex items-center gap-2`}
                   onClick={() => {
-                    setActiveField("linkedin");
-                    setIsModalOpen(true);
+                    if (isEditMode) {
+                      setActiveField("linkedin"); // or "linkedin", "portfolio"
+                      setIsModalOpen(true);
+                    } else {
+                      const url = linkValues.linkedin;
+                      if (url) window.open(url.startsWith("http") ? url : `https://${url}`, "_blank");
+                    }
                   }}
                 >
                   <i className="bi bi-linkedin"></i> LinkedIn
@@ -285,8 +330,13 @@ const CertificateCard = ({ image, title, description, onClick }) => {
                 <button
                   className={`${getButtonClass("portfolio")} px-4 py-2 rounded-md flex items-center gap-2`}
                   onClick={() => {
-                    setActiveField("portfolio");
-                    setIsModalOpen(true);
+                    if (isEditMode) {
+                      setActiveField("portfolio"); // or "linkedin", "portfolio"
+                      setIsModalOpen(true);
+                    } else {
+                      const url = linkValues.portfolio;
+                      if (url) window.open(url.startsWith("http") ? url : `https://${url}`, "_blank");
+                    }
                   }}
                 >
                   <i className="bi bi-globe"></i> Portfolio
