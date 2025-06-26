@@ -9,6 +9,12 @@ import JobNewPost from "../components/JobNewPost";
 import JobEditPost from "../components/JobEditPost";
 import Dropdown from "../components/Dropdown";
 import EmployerPostingDetails from "../components/EmployerPostingDetails";
+<<<<<<<<< Temporary merge branch 1
+import { useJobs } from "../context/JobsContext"; // This should work now
+import CompanyService from "../services/CompanyService";
+=========
+import { exampleJobPosts } from "../context/jobPostsData";
+>>>>>>>>> Temporary merge branch 2
 
 // --- Dropdown options for custom content ---
 const sortOptions = [
@@ -47,10 +53,16 @@ const filterOptions = [
 
 const EmployerJobPosts = () => {
   const navigate = useNavigate();
+<<<<<<<<< Temporary merge branch 1
+  const { 
+    jobs: jobPosts, 
+    loading, 
+    error, 
+    createJob, 
+    fetchJobs, 
+    clearError 
+  } = useJobs();
   
-  // Local state
-  const [jobPosts, setJobPosts] = useState([]);
-  const [totalJobs, setTotalJobs] = useState(0);
   const [showModal, setShowModal] = useState(false);
   const [companyInfo, setCompanyInfo] = useState({
     name: 'Company Name',
@@ -63,18 +75,11 @@ const EmployerJobPosts = () => {
   const [selectedStatus, setSelectedStatus] = useState(null);
   const [postingDetailsOpen, setPostingDetailsOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
-  const [openDropdownId, setOpenDropdownId] = useState(null);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [jobToEdit, setJobToEdit] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  // Use AuthContext for authentication
-  const { 
-    isEmployer, 
-    isAuthenticated, 
-    user 
-  } = useAuth();
+  
+  // Add company profile state
+  const [companyProfile, setCompanyProfile] = useState(null);
+  const [companyLoading, setCompanyLoading] = useState(false);
+  const [companyError, setCompanyError] = useState(null);
 
   // Use CompanyContext for company operations
   const { 
@@ -244,58 +249,78 @@ const EmployerJobPosts = () => {
       await loadJobsAndCompanyData();
       
     } catch (error) {
-      console.error("Error creating job:", error);
-      setError(error.message || "Failed to create job. Please try again.");
+      console.error('Failed to create job:', error);
     }
+=========
+  const [jobPosts, setJobPosts] = useState([]);
+  const [showModal, setShowModal] = useState(false);  const [companyInfo, setCompanyInfo] = useState({
+    name: 'Company Name',
+    type: 'Company/Business Type',
+    location: 'Company Location'
+  });
+  const [selectedSort, setSelectedSort] = useState(sortOptions[0].value);
+  const [selectedModality, setSelectedModality] = useState(null);  const [selectedWorkType, setSelectedWorkType] = useState(null);
+  const [selectedStatus, setSelectedStatus] = useState(null);
+  const [postingDetailsOpen, setPostingDetailsOpen] = useState(false);
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [openDropdownId, setOpenDropdownId] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [jobToEdit, setJobToEdit] = useState(null);  useEffect(() => {
+    setJobPosts(exampleJobPosts);
+      // Load company data
+    const savedCompanyData = localStorage.getItem('companyData');
+    if (savedCompanyData) {
+      const { companyData } = JSON.parse(savedCompanyData);
+      setCompanyInfo({
+        name: companyData.name || 'Company Name',
+        type: companyData.type || 'Company/Business Type',
+        location: companyData.location || 'Company Location'
+      });
+    }
+  }, []);const handleAddJob = (job) => {
+    setJobPosts([
+      {
+        ...job,
+        id: Date.now(),
+        status: "Active",
+        postedDaysAgo: 0,
+      },
+      ...jobPosts,
+    ]);
+    setShowModal(false);
+>>>>>>>>> Temporary merge branch 2
   };
 
   const handleViewJobDetails = (jobData) => {
     setSelectedJob(jobData);
     setPostingDetailsOpen(true);
+<<<<<<<<< Temporary merge branch 1
+  };
+
+  const handleEditJob = () => {
+=========
   };  
   
   const handleEditJob = (jobData) => {
-    console.log('Editing job:', jobData); // Debug log
-    setJobToEdit(jobData); // Set both for consistency
-    setSelectedJob(jobData); // Pass the complete job object
+    const completeJobData = jobPosts.find(job => 
+      job.id === jobData.id || 
+      (job.jobTitle === jobData.jobTitle && job.companyName === jobData.companyName)
+    );
+    
+    setJobToEdit(completeJobData || jobData);
     setShowEditModal(true);
+>>>>>>>>> Temporary merge branch 2
+    setPostingDetailsOpen(false);
+    console.log('Edit job clicked', completeJobData || jobData);
   };
 
-  const handleEditJobSave = async (updatedJobData) => {
+  const handleViewApplicants = async () => {
     try {
-      setError("");
-      clearError();
-
-      // Use selectedJob instead of jobToEdit, and add null check
-      if (!selectedJob || !selectedJob.id) {
-        console.error('No job selected for editing:', selectedJob);
-        setError("No job selected for editing");
-        return;
-      }
-
-      console.log('Updating job with ID:', selectedJob.id);
-      console.log('Update data:', updatedJobData);
-      
-      // Update job using CompanyContext
-      const updatedJob = await updateJob(selectedJob.id, updatedJobData);
-      
-      console.log('Job updated successfully:', updatedJob);
-      
-      // Close modal and clear edit data FIRST
-      setShowEditModal(false);
-      setJobToEdit(null);
-      setSelectedJob(null);
-      
-      // THEN reload jobs after a small delay to prevent interference
-      setTimeout(async () => {
-        try {
-          await loadJobsAndCompanyData();
-          console.log('Job list refreshed after update');
-        } catch (error) {
-          console.error('Error refreshing job list:', error);
-        }
-      }, 100);
-      
+      navigate('/employerapplicants', { 
+        state: { 
+          jobPosts: jobPosts
+        } 
+      });
     } catch (error) {
       console.error("Error updating job:", error);
       setError(error.message || "Failed to update job. Please try again.");
@@ -524,55 +549,56 @@ const EmployerJobPosts = () => {
     </div>
   );
 
-  // Show loading while company data is being fetched
-  if (companyLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-[#FF8032] font-semibold text-lg">
-          Loading company data...
-        </div>
-      </div>
-    );
-  }
-
-  // Show error if not authenticated
-  if (!isAuthenticated) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-red-500 font-semibold text-lg text-center">
-          Please log in to access this page.
-        </div>
-      </div>
-    );
-  }
-
-  // Show error if company data failed to load
-  if (companyError) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-red-500 font-semibold text-lg text-center">
-          Error loading company data: {companyError}
-          <br />
-          <button 
-            onClick={() => getCompanyProfile()}
-            className="mt-4 bg-[#FF8032] text-white px-4 py-2 rounded-lg hover:bg-[#E66F24] transition"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Debug: Show what company profile contains
-  console.log('Company profile in EmployerJobPosts:', companyProfile);
-
   return (
     <div className="min-h-screen bg-[#FF8032] flex items-start overflow-hidden">
+<<<<<<<<< Temporary merge branch 1
+      <EmployerSideBar companyProfile={companyProfile} />
+      <div className="flex-1 h-screen bg-white rounded-tl-[40px] overflow-y-auto p-2 sm:p-4 md:p-6 shadow-md w-full max-w-full">
+        
+        {/* Loading states */}
+        {(loading || companyLoading) && (
+          <div className="flex justify-center items-center py-8">
+            <div className="text-[#FF8032] text-lg">
+              {loading && "Loading jobs..."}
+              {companyLoading && "Loading company profile..."}
+            </div>
+          </div>
+        )}
+
+        {/* Error states */}
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mx-[112px] mb-4">
+            <strong className="font-bold">Jobs Error: </strong>
+            <span className="block sm:inline">{error}</span>
+            <button 
+              onClick={clearError}
+              className="absolute top-0 bottom-0 right-0 px-4 py-3"
+            >
+              <span className="sr-only">Dismiss</span>
+              ×
+            </button>
+          </div>
+        )}
+
+        {companyError && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mx-[112px] mb-4">
+            <strong className="font-bold">Company Profile Error: </strong>
+            <span className="block sm:inline">{companyError}</span>
+            <button 
+              onClick={() => setCompanyError(null)}
+              className="absolute top-0 bottom-0 right-0 px-4 py-3"
+            >
+              <span className="sr-only">Dismiss</span>
+              ×
+            </button>
+          </div>
+        )}
+
+        {/* Header */}
+=========
       <EmployerSideBar />
       <div className="flex-1 h-screen bg-[#FEFEFF] rounded-tl-[40px] overflow-y-auto p-2 sm:p-4 md:p-6 shadow-md w-full max-w-full">
-        
-        {/* Header with company info */}
+>>>>>>>>> Temporary merge branch 2
         <div className="flex justify-between items-center p-4 pl-[112px] pr-[118px]">
           <div>            
             <h1 className="text-[48px] font-bold text-[#FF8032] -mb-1 mt-8">Manage Postings</h1>
@@ -582,9 +608,22 @@ const EmployerJobPosts = () => {
                 <span> / {totalJobs}</span>
               )}
             </p>
-          </div>          
+<<<<<<<<< Temporary merge branch 1
+          </div>
           
-          {/* Company Info - Right Section */}           
+          {/* Right Section - Company Info */}
+          <div className="flex items-center gap-3">
+            <span className="w-10 h-10 rounded-full bg-[#FF8032]/20 block"></span>
+            <div className="flex items-center gap-2">
+              <div className="flex flex-col">
+                <span className="text-[#FF8032] font-bold text-[18px] leading-tight">
+                  {companyProfile?.company_name || "Company Name"}
+                </span>
+                <span className="text-[#FF8032] italic text-[13px] leading-tight">
+                  {companyProfile?.company_size || "Company/Business Type"}
+=========
+          </div>          
+          {/* Right Section */}           
           <div className="flex items-center gap-3 mt-12">
             <span className="w-10 h-10 rounded-full bg-[#FF8032]/20 block"></span>
             <div className="flex items-center gap-2">
@@ -594,6 +633,7 @@ const EmployerJobPosts = () => {
                 <span className="text-[#FF8032] text-[12px] leading-tight flex items-center gap-1">
                   <i className="bi bi-geo-alt-fill text-[#FF8032] text-[14px]"></i>
                   {companyInfo.location}
+>>>>>>>>> Temporary merge branch 2
                 </span>
               </div>
             </div>
@@ -645,9 +685,15 @@ const EmployerJobPosts = () => {
 
         {/* Job Posts List */}
         <div className="pl-[112px] pr-[118px] mt-10 mb-10 flex flex-col gap-[20px]">
+<<<<<<<<< Temporary merge branch 1
+          {!loading && !companyLoading && getFilteredAndSortedJobs().length > 0 ? (
+            getFilteredAndSortedJobs().map(job => (
+              <JobCard
+=========
           {getFilteredAndSortedJobs().length > 0 ? (            
             getFilteredAndSortedJobs().map(job => (                
             <JobCard
+>>>>>>>>> Temporary merge branch 2
                 key={job.id}
                 {...job} // Pass all job properties including applicantCount
                 onViewDetails={handleViewJobDetails}
@@ -683,8 +729,11 @@ const EmployerJobPosts = () => {
         >
           <span className="text-white text-[32px] leading-none" style={{ fontWeight: 200 }}>+</span>
         </button>
-
-        {/* Modals and Drawers */}          
+        
+        {/* Job Creation Modal */}
+=========
+        </button>          
+>>>>>>>>> Temporary merge branch 2
         <JobNewPost
           open={showModal}
           onClose={() => setShowModal(false)}
@@ -701,6 +750,7 @@ const EmployerJobPosts = () => {
         />
         
         {/* Employer Posting Details Drawer */}
+>>>>>>>>> Temporary merge branch 2
         <EmployerPostingDetails
           open={postingDetailsOpen}
           onClose={() => setPostingDetailsOpen(false)}

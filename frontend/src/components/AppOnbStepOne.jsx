@@ -8,32 +8,25 @@ import AIML from '../assets/AIML.png';
 import ApplicantWorkExpPopup from './ApplicantWorkExpPopup';
 import ApplicantWorkExpCard from './ApplicantWorkExpCard';
 import TextField from './TextField'; // Import the new TextField component
+import StepProgressFooter from './StepProgressFooter'; // Import the StepProgressFooter component
+import { flattenUserDetails } from '../utils/userUtils';
 
 function AppOnbStepOne({
   step,
   segment,
   onNext,
   onBack,
+  onSkip, // <-- Add onSkip prop
+  userDetails,
+  setUserDetails, // Function to update userDetails state
   fetchUserDetails, // Injected fetch function
   saveUserDetails,  // Injected save function
 }) {
   const [selectedField, setSelectedField] = useState(null);
   const [showWorkExpPopup, setShowWorkExpPopup] = useState(false);
-  const [userDetails, setUserDetails] = useState({
-    contactDetails: {
-      currentAddress: "",
-      contactNumber: "",
-      telephoneNumber: "",
-    },
-    educationDetails: {
-      university: "",
-      degree: "",
-      yearGraduated: "",
-    },
-    workExperiences: [], // Store work experiences here
-    field: "", // Store the selected field here
-  });
   const [errors, setErrors] = useState({});
+  const [preferredWorkSetting, setPreferredWorkSetting] = useState("");
+  const [preferredWorkType, setPreferredWorkType] = useState("");
   const popupRef = useRef(null);
 
   // Close popup on click outside
@@ -85,21 +78,24 @@ function AppOnbStepOne({
   };
 
   const handleContinue = async () => {
-    if (segment === 1) {
-      // Validate fields for Step 1, Segment 1
-      if (validateFields()) {
-        await saveUserDetails(userDetails); // Save data to mock or real source
-        onNext(); // Proceed to the next segment
+    if (segment === 9) {
+      // Validate selection
+      if (!preferredWorkSetting || !preferredWorkType) {
+        alert("Please select both work setting and work type.");
+        return;
       }
-    } else if (segment === 2) {
-      // Validate the selected field for Step 1, Segment 2
-      if (userDetails.field) {
-        console.log("Selected Field:", userDetails.field); // Debugging log
-        await saveUserDetails(userDetails); // Save data to mock or real source
-        onNext(); // Proceed to the next step
-      } else {
-        alert("Please select a field before continuing.");
-      }
+      // Update userDetails (or whatever state you use)
+      setUserDetails(prev => ({
+        ...prev,
+        preferred_worksetting: preferredWorkSetting,
+        preferred_worktype: preferredWorkType,
+      }));
+      // Optionally save to backend here
+      await saveUserDetails(flattenUserDetails(userDetails));
+      onNext();
+    } else {
+      // ...handle other segments
+      onNext();
     }
   };
 
@@ -135,6 +131,7 @@ function AppOnbStepOne({
     { title: "Cybersecurity", image: CyberSec, value: "Cybersecurity" },
     { title: "UI/UX", image: UIUX, value: "UI/UX" },
   ];
+
 
   return (
     <div className="w-full h-screen font-montserrat overflow-hidden relative">
@@ -312,6 +309,14 @@ function AppOnbStepOne({
           </div>
         </div>
       )}
+
+      {/* Step Progress Footer */}
+      <StepProgressFooter
+        step={step}
+        segment={segment}
+        onContinue={handleContinue} // <-- this calls saveUserDetails and then onNext
+        onSkip={onSkip}
+      />
     </div>
   );
 }

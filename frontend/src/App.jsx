@@ -16,7 +16,6 @@ import AppVerification from "./pages/AppVerification.jsx";
 import EmpVerification from "./pages/EmpVerification.jsx";
 import ApplicantBrowseJobs from "./pages/ApplicantBrowseJobs.jsx";
 import ApplicantApplications from "./pages/ApplicantApplications.jsx";
-import ApplicantInbox from "./pages/ApplicantInbox.jsx";
 import ApplicantProfile from "./pages/ApplicantProfile.jsx";
 import EmployerApplicants from "./pages/EmployerApplicants.jsx";
 import EmployerHomePage from "./pages/EmployerHomePage.jsx";

@@ -1,9 +1,5 @@
 import React, { useState } from "react";
-import { useJobs } from "../context/JobsContext";
-import { useAuth } from "../context/AuthContext";
-import TAGS from "./Tags"
-import TagPopup from "./TagPopup";
-import { getProficiencyLevel, getProficiencyOptions } from "../utils/jobMappings";
+import TAGS from "./Tags";
 
 // Dropdown options - Update values to match backend
 const modalityOptions = [
@@ -24,16 +20,23 @@ const positionOptions = Array.from({ length: 100 }, (_, i) => ({
   value: i + 1,
 }));
 
-// Fix the categoryOptions to match your TAGS object keys exactly
+const salaryOptions = [
+  { label: "₱10,000 - ₱15,000", value: "10k-15k" },
+  { label: "₱15,001 - ₱20,000", value: "15k-20k" },
+  { label: "₱20,001 - ₱30,000", value: "20k-30k" },
+  { label: "₱30,001 - ₱50,000", value: "30k-50k" },
+  { label: "₱50,001+", value: "50k-up" },
+];
+
 const categoryOptions = [
-  { label: <span className="text-[#FF8032] font-bold">Web Development</span>, value: "Web Development" },
-  { label: <span className="text-[#FF8032] font-bold">Programming Languages</span>, value: "Programming Languages" },
-  { label: <span className="text-[#FF8032] font-bold">AI/ML/Data Science</span>, value: "AI/ML/Data Science" },
-  { label: <span className="text-[#FF8032] font-bold">Databases</span>, value: "Databases" },
-  { label: <span className="text-[#FF8032] font-bold">DevOps</span>, value: "DevOps" },
-  { label: <span className="text-[#FF8032] font-bold">Cybersecurity</span>, value: "Cybersecurity" },
-  { label: <span className="text-[#FF8032] font-bold">Mobile Development</span>, value: "Mobile Development" },
-  { label: <span className="text-[#FF8032] font-bold">Soft Skills</span>, value: "Soft Skills" },
+  { label: <span className="text-[#FF8032] font-bold">Web Development</span>, value: "web-development" },
+  { label: <span className="text-[#FF8032] font-bold">Programming Languages</span>, value: "programming-languages" },
+  { label: <span className="text-[#FF8032] font-bold">AI/ML/Data Science</span>, value: "ai-ml-data-science" },
+  { label: <span className="text-[#FF8032] font-bold">Databases</span>, value: "databases" },
+  { label: <span className="text-[#FF8032] font-bold">DevOps</span>, value: "devops" },
+  { label: <span className="text-[#FF8032] font-bold">Cybersecurity</span>, value: "cybersecurity" },
+  { label: <span className="text-[#FF8032] font-bold">Mobile Development</span>, value: "mobile-development" },
+  { label: <span className="text-[#FF8032] font-bold">Soft Skills</span>, value: "soft-skills" },
 ];
 
 // Also fix proficiencyOptions to use numeric values for backend
@@ -43,6 +46,17 @@ const proficiencyOptions = [
   { label: <span className="text-[#FF8032]">Level 3: <span className="font-bold">Competent</span></span>, value: 3 },
   { label: <span className="text-[#FF8032]">Level 4: <span className="font-bold">Proficient</span></span>, value: 4 },
   { label: <span className="text-[#FF8032]">Level 5: <span className="font-bold">Expert</span></span>, value: 5 },
+];
+
+const categoryOptions = [
+  { label: <span className="text-[#FF8032] font-bold">Web Development</span>, value: "Web Development" },
+  { label: <span className="text-[#FF8032] font-bold">Programming Languages</span>, value: "Programming Languages" },
+  { label: <span className="text-[#FF8032] font-bold">AI/ML/Data Science</span>, value: "AI/ML/Data Science" },
+  { label: <span className="text-[#FF8032] font-bold">Databases</span>, value: "Databases" },
+  { label: <span className="text-[#FF8032] font-bold">DevOps</span>, value: "DevOps" },
+  { label: <span className="text-[#FF8032] font-bold">Cybersecurity</span>, value: "Cybersecurity" },
+  { label: <span className="text-[#FF8032] font-bold">Mobile Development</span>, value: "Mobile Development" },
+  { label: <span className="text-[#FF8032] font-bold">Soft Skills</span>, value: "Soft Skills" },
 ];
 
 // Reusable Dropdown
@@ -116,6 +130,8 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData }) => {
     salaryMax: "",
     description: "",
     tags: [],
+    category: "",
+    proficiency: ""
   });
 
   const [tagInput, setTagInput] = useState("");
@@ -124,10 +140,10 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData }) => {
   const [selectedModality, setSelectedModality] = useState(null);
   const [selectedWorkType, setSelectedWorkType] = useState(null);
   const [availablePositions, setAvailablePositions] = useState(null);
+  const [selectedSalary, setSelectedSalary] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedProficiency, setSelectedProficiency] = useState(null);
-  const [openDropdown, setOpenDropdown] = useState(null);
-  const [saving, setSaving] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState(null); // shared state
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -163,193 +179,76 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData }) => {
   // Update handleSubmit to use the passed company data
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!isSalaryValid()) {
-      alert('Please enter valid salary amounts');
-      return;
-    }
-
-    // Check authentication first
-    if (!isAuthenticated) {
-      alert('Please log in to create a job posting.');
-      return;
-    }
-
-    // Make sure we have company data
-    if (!company || !company.company_id) {
-      alert('Company information is not available. Please try refreshing the page.');
-      return;
-    }
-
-    // Validate required fields with detailed logging
-    const missingFields = [];
-    
-    if (!form.jobTitle?.trim()) missingFields.push('Job Title');
-    if (!form.description?.trim()) missingFields.push('Job Description');
-    if (!selectedModality) missingFields.push('Job Modality');
-    if (!selectedWorkType) missingFields.push('Work Type');
-    if (!availablePositions) missingFields.push('Available Positions');
-    if (!form.salaryMin || parseInt(form.salaryMin) <= 0) missingFields.push('Minimum Salary');
-    if (!form.salaryMax || parseInt(form.salaryMax) <= 0) missingFields.push('Maximum Salary');
-
-    if (missingFields.length > 0) {
-      alert(`Please fill in the following required fields:\n• ${missingFields.join('\n• ')}`);
-      return;
-    }
-
-    try {
-      setSaving(true);
-      clearError();
-      
-      // Map category name to category ID for backend
-      const categoryMapping = {
-        "Web Development": 1,
-        "Programming Languages": 2, 
-        "Databases": 3,
-        "AI/ML/Data Science": 4,
-        "DevOps": 5,
-        "Cybersecurity": 7,
-        "Mobile Development": 8,
-        "Soft Skills": 9
-      };
-      
-      // Transform data to match backend expected format exactly
-      const jobData = {
-        job_title: form.jobTitle.trim(),
-        salary_min: parseInt(form.salaryMin),
-        salary_max: parseInt(form.salaryMax),
-        setting: selectedModality,
-        work_type: selectedWorkType,
-        description: form.description.trim(),
-        date_added: new Date().toISOString().split('T')[0],
-        created_at: new Date().toISOString(),
-        position_count: parseInt(availablePositions),
-        required_category_id: selectedCategory ? (categoryMapping[selectedCategory] || 0) : 0,
-        required_proficiency: parseInt(selectedProficiency) || 0,
-        company_id: parseInt(company.company_id)
-      };
-      
-      // Final validation with detailed error messages
-      const validationErrors = [];
-      
-      if (!jobData.job_title) validationErrors.push(`Job title is missing: "${jobData.job_title}"`);
-      if (!jobData.salary_min || jobData.salary_min <= 0) validationErrors.push(`Invalid salary_min: ${jobData.salary_min}`);
-      if (!jobData.salary_max || jobData.salary_max <= 0) validationErrors.push(`Invalid salary_max: ${jobData.salary_max}`);
-      if (jobData.salary_min > jobData.salary_max) validationErrors.push(`salary_min (${jobData.salary_min}) > salary_max (${jobData.salary_max})`);
-      if (!jobData.setting) validationErrors.push(`Missing setting: "${jobData.setting}"`);
-      if (!jobData.work_type) validationErrors.push(`Missing work_type: "${jobData.work_type}"`);
-      if (!jobData.description) validationErrors.push(`Missing description: "${jobData.description}"`);
-      if (!jobData.position_count || jobData.position_count <= 0) validationErrors.push(`Invalid position_count: ${jobData.position_count}`);
-      if (!jobData.company_id) validationErrors.push(`Missing company_id: ${jobData.company_id}`);
-      
-      // Check if these are valid enum values
-      const validSettings = ['onsite', 'hybrid', 'remote'];
-      const validWorkTypes = ['fulltime', 'contractual', 'part-time', 'internship'];
-      
-      if (!validSettings.includes(jobData.setting)) {
-        validationErrors.push(`Invalid setting enum: "${jobData.setting}". Must be one of: ${validSettings.join(', ')}`);
-      }
-      
-      if (!validWorkTypes.includes(jobData.work_type)) {
-        validationErrors.push(`Invalid work_type enum: "${jobData.work_type}". Must be one of: ${validWorkTypes.join(', ')}`);
-      }
-      
-      if (validationErrors.length > 0) {
-        alert('Validation errors found:\n\n' + validationErrors.join('\n'));
-        return;
-      }
-      
-      const result = await createJob(jobData);
-      
-      if (onSave) {
-        onSave(result);
-      }
-      
-      // Reset form
-      setForm({
-        jobTitle: "",
-        companyName: "",
-        location: "",
-        salaryMin: "",
-        salaryMax: "",
-        description: "",
-        tags: [],
+<<<<<<<<< Temporary merge branch 1
+    fetch("http://127.0.0.1:8000/api/v1/jobs/jobs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    })
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to post job");
+        return res.json();
+      })
+      .then(data => {
+        if (onSave) onSave(data);
+        setForm({
+          jobTitle: "",
+          companyName: "",
+          location: "",
+          salary: "",
+          modality: "",
+          workType: "",
+          description: "",
+          positions: "",
+          tags: [],
+        });
+        setShowTagInput(false);
+      })
+      .catch(err => {
+        console.error(err);
       });
-      setSelectedModality(null);
-      setSelectedWorkType(null);
-      setAvailablePositions(null);
-      setSelectedCategory(null);
-      setSelectedProficiency(null);
-      setShowTagInput(false);
-      setShowTagPopup(false);
-      
-      onClose();
-      
-    } catch (error) {
-      // Try to get more detailed error information
-      if (error.message.includes('422')) {
-        alert('Backend validation error: Please check all required fields.');
-      } else {
-        alert(`Failed to create job: ${error.message}`);
-      }
-    } finally {
-      setSaving(false);
-    }
+=========
+    // Create the job data with form values 
+    const jobData = {
+      jobTitle: form.jobTitle,
+      companyName: form.companyName,
+      location: form.location,
+      salary: selectedSalary, 
+      type: selectedModality,
+      employment: selectedWorkType,
+      description: form.description,
+      availablePositions: availablePositions,
+      tags: form.tags,
+      applicantCount: form.applicantCount || 0,
+      category: selectedCategory,
+      proficiency: selectedProficiency
+    };
+    onSave(jobData);
+    setForm({
+      jobTitle: "",
+      companyName: "",
+      location: "",
+      salary: "",
+      modality: "",
+      workType: "",
+      description: "",
+      positions: "",
+      tags: [],
+      category: "",
+      proficiency: ""
+    });
+    setSelectedModality(null);
+    setSelectedWorkType(null);
+    setAvailablePositions(null);
+    setSelectedSalary(null);
+    setSelectedCategory(null);
+    setSelectedProficiency(null);
+    setShowTagInput(false);
+>>>>>>>>> Temporary merge branch 2
   };
-
-  // Check authentication
-  if (!isAuthenticated) {
-    return (
-      <>
-        <div
-          className={`fixed inset-0 bg-black bg-opacity-40 transition-opacity duration-300 z-40 ${
-            open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-          }`}
-          onClick={onClose}
-        />
-        
-        <div
-          className={`fixed top-0 right-0 h-full w-[640px] bg-white shadow-2xl z-50 transform transition-transform duration-300 rounded-tl-[30px] rounded-bl-[30px] ${
-            open ? "translate-x-0" : "translate-x-full"
-          }`}
-        >
-          <div className="p-10 w-full h-full flex items-center justify-center">
-            <div className="text-red-500 font-semibold text-lg text-center">
-              Please log in to create job postings.
-            </div>
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  // Check company data (companyProfile)
-  if (!company || !company.company_id) {
-    return (
-      <>
-        <div
-          className={`fixed inset-0 bg-black bg-opacity-40 transition-opacity duration-300 z-40 ${
-            open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-          }`}
-          onClick={onClose}
-        />
-        
-        <div
-          className={`fixed top-0 right-0 h-full w-[640px] bg-white shadow-2xl z-50 transform transition-transform duration-300 rounded-tl-[30px] rounded-bl-[30px] ${
-            open ? "translate-x-0" : "translate-x-full"
-          }`}
-        >
-          <div className="p-10 w-full h-full flex items-center justify-center">
-            <div className="text-red-500 font-semibold text-lg text-center">
-              Company profile not loaded.<br />
-              Available properties: {Object.keys(company || {}).join(', ')}<br />
-              Please ensure you're logged in as an employer.
-            </div>
-          </div>
-        </div>
-      </>
-    );
-  }
+  
+  // Get tags for the selected category
+  const availableTags = selectedCategory ? TAGS[categoryOptions.find(opt => opt.value === selectedCategory)?.label.props.children] || [] : [];
 
   return (
     <>
@@ -528,13 +427,13 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData }) => {
           </div>
 
           {/* Category and Proficiency Row */}
-          <div className="flex flex-row gap-8">
+            <div className="flex flex-row gap-8">
             <div className="flex flex-col gap-2 flex-1">
               <label className="font-semibold text-[16px] text-[#3C3B3B]">Required Category</label>
               <CustomDropdown
                 options={categoryOptions}
-                selected={selectedCategory}
-                onSelect={setSelectedCategory}
+                selected={form.category}
+                onSelect={val => setForm({ ...form, category: val })}
                 placeholder="Tag +"
                 openDropdown={openDropdown}
                 setOpenDropdown={setOpenDropdown}
@@ -557,35 +456,72 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData }) => {
             </div>
           </div>
           
-          {/* Keep tag section exactly as is */}
           <div className="flex flex-col gap-2">
             <label className="font-semibold text-[16px] text-[#3C3B3B]">Tags</label>
             <div className="flex flex-wrap gap-2 mb-2">
-              {/* Show selected tags */}
-              {form.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="bg-[#FF8032] text-white font-semibold px-3 py-1 rounded-full text-[12px] flex items-center gap-1"
-                >
-                  {tag}
+              {/* Show tags for selected category */}
+              {availableTags.length > 0 && availableTags.map((tag) => {
+                const isSelected = form.tags.includes(tag);
+                return (
                   <button
                     type="button"
-                    className="ml-1 text-[12px] text-white hover:text-red-200"
-                    onClick={() => handleTagRemove(tag)}
+                    className={`px-3 py-1 rounded-full text-[12px] font-semibold border-2 transition-colors flex items-center gap-1 ${
+                      isSelected
+                        ? 'bg-[#FF8032] text-white border-[#FF8032]'
+                        : 'bg-white text-[#FF8032] border-[#FF8032] hover:bg-[#FF8032]/10'
+                    }`}
+                    onClick={() => {
+                      if (isSelected) {
+                        setForm({ ...form, tags: form.tags.filter((t) => t !== tag) });
+                      } else {
+                        setForm({ ...form, tags: [...form.tags, tag] });
+                      }
+                    }}
                   >
-                    &times;
+                    + {tag}
                   </button>
-                </span>
-              ))}
-              <button
-                type="button"
-                className="w-[219px] px-2 py-1 bg-transparent text-[#FF8032] border-2 border-[#FF8032] rounded-xl text-[12px] font-semibold hover:bg-[#FF8032] hover:text-white transition"
-                onClick={() => setShowTagPopup(true)}
-              >
-                + Tag
-              </button>
+                );
+              })}
+              {showTagInput ? (
+                <input
+                  className="border-2 focus:border-[#FF8032] focus:outline-none focus:ring-0 rounded px-2 py-1 text-[12px] w-24"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onBlur={() => setShowTagInput(false)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleTagAdd();
+                      setShowTagInput(false);
+                    }
+                  }}
+                  autoFocus
+                />
+              ) : (
+                <button
+                  type="button"
+                  className="w-[53px] px-2 py-1 bg-[#FF8032] text-white rounded-full text-[12px] font-semibold hover:bg-[#E66F24] transition"
+                  onClick={() => setShowTagInput(true)}
+                >
+                  Tag +
+                </button>
+              )}
             </div>
-          </div>  
+          </div>
+          <TagPopup
+            open={showTagPopup}
+            onClose={() => setShowTagPopup(false)}
+            currentTags={form.tags}
+            onTagSelect={(tag) => {
+              if (!form.tags.includes(tag)) {
+                setForm({ ...form, tags: [...form.tags, tag] });
+              }
+            }}
+            onSave={(selectedTags) => {
+              // Replace the current tags with the selected tags
+              setForm({ ...form, tags: selectedTags });
+            }}
+          />
 
           <div className="flex justify-center mt-4">
             <button

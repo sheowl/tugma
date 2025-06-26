@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import EmpHeader from "../components/EmpHeader";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
-import { useNavigate } from "react-router-dom";
 
 const EmpComReg = () => {
   const [companyName, setcompanyName] = useState("");
@@ -12,7 +11,6 @@ const EmpComReg = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
   const handleRegister = async (e) => {
     e.preventDefault();

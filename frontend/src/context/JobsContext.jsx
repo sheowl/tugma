@@ -81,7 +81,7 @@ export function JobsProvider({ children }) {
     dispatch({ type: JOBS_ACTIONS.SET_LOADING, payload: true });
     try {
       const backendJobs = await jobService.getCompanyJobs(companyId);
-      console.log('Raw backend jobs:', backendJobs);
+      console.log('Raw backend jobs:', backendJobs); // Debug log
       
       const transformedJobs = backendJobs.map(job => {
         const transformed = jobService.transformJobData(job);
@@ -174,8 +174,7 @@ export function JobsProvider({ children }) {
   // FIX: Don't auto-fetch with hardcoded company ID
   // Let the parent components fetch jobs with the correct company ID
   useEffect(() => {
-    // Remove auto-fetch to prevent interference
-    // Parent components should call fetchJobs(companyId) when needed
+    fetchJobs(2); // Default to company ID 2
   }, []);
 
   const value = {

@@ -3,6 +3,13 @@ import { NavLink } from 'react-router-dom';
 import TugmaLogoApplicant from '../assets/TugmaLogoApplicant.svg';
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "../services/supabaseClient";
+
+export const logout = async () => {
+  await supabase.auth.signOut();
+  localStorage.clear();
+  window.location.href = "/applicant-sign-in"; // Hard reload
+};
 
 const navItems = [
   { name: 'Browse Jobs', icon: 'bi-search', path: '/applicantbrowsejobs' },
@@ -14,8 +21,8 @@ const ApplicantSideBar = () => {
   const { logout } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate("/applicant-sign-in");
   };
 

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AuthService from '../services/AuthService';
+import { supabase } from '../services/supabaseClient';
 
 const AuthContext = createContext();
 
@@ -74,7 +75,8 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut();
     AuthService.logout();
     setUser(null);
     setUserType(null);

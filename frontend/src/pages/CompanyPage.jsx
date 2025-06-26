@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import EmployerSideBar from '../components/EmployerSideBar';
 import ApplicantDashLogo from '../assets/ApplicantDashLogo.svg';
-import { useCompany } from '../context/CompanyContext';
 
 const CompanyPage = () => {
   const navigate = useNavigate();

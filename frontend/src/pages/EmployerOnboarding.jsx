@@ -140,8 +140,9 @@ const EmployerOnboarding = () => {
     { value: 'large', label: 'Large Corporation' }
   ];
 
-  // Loading state while checking onboarding status (combine both loading states)
-  if (isLoading || companyLoading) {
+<<<<<<<<< Temporary merge branch 1
+  // Loading state while checking onboarding status
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">

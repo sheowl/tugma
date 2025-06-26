@@ -1,20 +1,83 @@
-import React, { useEffect } from 'react';
-import { useNavigate } from "react-router-dom";
 import ApplicantSideBar from '../components/ApplicantSideBar';
 import ApplicantTracker from '../components/ApplicantTracker';
 import SearchBar from '../components/SearchBar';
-import ApplicantDashLogo from '../assets/ApplicantDashLogo.svg';
 import Dropdown from '../components/Dropdown';
-import ApplicantNotification from '../components/ApplicantNotification';
+import ApplicantHeader from '../components/ApplicantHeader';
+import ApplicantTrackerDrawer from '../components/ApplicantTrackerDrawer';
+import { useState, useEffect } from 'react';
+
 
 function ApplicantApplications() {
-    const navigate = useNavigate();
+    const firstName = "Julianna Leila"; // Replace with actual user data
+    const [selectedSort, setSelectedSort] = useState("descending"); // Default sort option set to descending
+    const [sortedData, setSortedData] = useState([]); // State for sorted job data
+    const [selectedModality, setSelectedModality] = useState(null); // State for modality filter
+    const [selectedWorkType, setSelectedWorkType] = useState(null); // State for work type filter
+    const [drawerOpen, setDrawerOpen] = useState(false);
+    const [selectedJob, setSelectedJob] = useState(null);
 
-    useEffect(() => {
-      if (!localStorage.getItem("access_token")) {
-        navigate("/applicant-sign-in", { replace: true });
-      }
-    }, [navigate]);
+    // Example job applications data
+    const jobApplications = [
+        {
+            jobTitle: "Software Engineer",
+            companyName: "Tech Innovations Inc.",
+            location: "San Francisco, CA",
+            matchScore: 85,
+            employmentType: "Full-time",
+            workSetup: "Hybrid",
+            description: "Join our dynamic team to develop cutting-edge software solutions.",
+            salaryRangeLow: 40,
+            salaryRangeHigh: 80,
+            salaryFrequency: "Monthly",
+            companyDescription: "Tech Innovations Inc. is a leading software development company focused on delivering innovative solutions to our clients. We value creativity, collaboration, and continuous learning.",
+            status: "interview",
+        },
+    ];
+
+    const filterOptions = [
+            { label: "On-Site", value: "On-Site" },
+            { label: "Hybrid", value: "Hybrid" },
+            { label: "Remote", value: "Remote" },
+        ];
+    
+        const statusOptions = [
+            { label: "Full-Time", value: "Full-time" },
+            { label: "Contractual", value: "Contractual" },
+            { label: "Part-Time", value: "Part-Time" },
+            { label: "Internship", value: "Internship" },
+        ];
+    
+        const sortOptions = [
+            { label: "Ascending Match Score", value: "ascending" },
+            { label: "Descending Match Score", value: "descending" },
+        ];
+    
+        // Sort and filter the data whenever filters or sort options change
+        useEffect(() => {
+            let filtered = [...jobApplications]; // Start with the full job applications list
+    
+            // Apply modality filter
+            if (selectedModality) {
+                filtered = filtered.filter((job) => job.workSetup === selectedModality);
+            }
+    
+            // Apply work type filter
+            if (selectedWorkType) {
+                filtered = filtered.filter((job) => job.employmentType === selectedWorkType);
+            }
+    
+            // Apply sorting
+            const sorted = filtered.sort((a, b) => {
+                if (selectedSort === "ascending") {
+                    return a.matchScore - b.matchScore; // Ascending order
+                } else if (selectedSort === "descending") {
+                    return b.matchScore - a.matchScore; // Descending order
+                }
+                return 0;
+            });
+    
+            setSortedData(sorted); // Update the sorted and filtered data
+        }, [selectedSort, selectedModality, selectedWorkType]);
 
     return (
         <div className="min-h-screen bg-[#2A4D9B] flex items-start overflow-hidden">
@@ -24,67 +87,19 @@ function ApplicantApplications() {
             <div className="flex-1 h-screen bg-white rounded-tl-[40px] overflow-y-auto p-6 shadow-md">
 
                 {/* Header */}
-                <div className="flex justify-between w-full px-9 mb-0">
-                    <div className="flex items-center gap-[15px] m-9">
-                        <img
-                            src={ApplicantDashLogo}
-                            alt="Tugma Logo"
-                            className="max-w-[136px] h-auto"
-                        />
-                        <div>
-                            <div className="font-[Montserrat] text-4xl font-bold text-[#2A4D9B]">
-                                Track your applications
-                            </div>
-                            <div className="font-semibold italic text-orange-400 text-xl">
-                                Ready to make meets end?
-                            </div>
-                        </div>
-                    </div>
+                <ApplicantHeader
+                    title="Track Your Applications"
+                    subtitle="Ready to make meets end?"
+                    firstName={firstName}
+                    showProfile={true}
+                />
 
-                    <div className="flex items-center gap-4">
-                        <i className="bi bi-person-circle text-4xl text-gray-400"></i>
-                        <div className="leading-tight pl-3">
-                            <div className="font-semibold text-black text-sm">{firstName}</div>
-                        </div>
-                       <i
-                        className="bi bi-bell text-2xl text-[#2A4D9B] ml-6 cursor-pointer position-relative"
-                        onClick={() => setShowNotifications((prev) => !prev)}
-                        ></i>
-
-                    </div>
-                </div>
-
-                {showNotifications && (
-                    <div className="absolute top-[120px] right-[50px] z-50">
-                        <ApplicantNotification
-                        open={showNotifications}
-                        onClose={() => setShowNotifications(false)}
-                        notification={sampleData}
-                        onViewDetails={(notif) => {
-                            console.log("View notif details:", notif);
-                            setShowNotifications(false);
-                        }}
-                        />
-                    </div>
-                    )}
-
-                {/* Search Bar and Dropdowns */}
-                <div className="px-[112px] mt-0 mb-5 flex justify-between items-center">
-                    <SearchBar 
-                    onSearch={(query) => {
-                        setSearchQuery(query);
-                        console.log("Applicant Search:", query);
-                    }}
-                    value={searchQuery}
-                    onChange={(query) => setSearchQuery(query)}
-                    />
-                </div>
 
                 {/* Job Count */}
                 <div className="pl-[112px] pr-[118px]">
                     <div className="flex items-center justify-between mb-2">
                         <div className="text-base font-semibold text-gray-500 mb-2">
-                            {filteredApplications.length} matches displayed
+                            {sortedData.length} matches displayed
                         </div>
                         <div className="flex gap-4">
                             <Dropdown
@@ -174,9 +189,8 @@ function ApplicantApplications() {
                 </div>
 
                 {/* Job Applications */}
-                <div className="pl-[112px] pr-[118px]">
-                      <div className="grid grid-cols-2 gap-10 mt-10 mb-10">
-                    {filteredApplications.map((job, index) => (
+                <div className="pl-[112px] pr-[118px] mt-10 mb-10 flex flex-wrap gap-[33px] justify-center">
+                    {sortedData.map((job, index) => (
                         <div key={index} className="flex items-center justify-between mb-2">
                             <ApplicantTracker
                                 jobTitle={job.jobTitle}
@@ -190,13 +204,25 @@ function ApplicantApplications() {
                                 salaryRangeHigh={job.salaryRangeHigh}
                                 salaryFrequency={job.salaryFrequency}
                                 companyDescription={job.companyDescription}
-                                onViewDetails={() => alert(`View Details for ${job.jobTitle}`)}
+                                onViewDetails={() => {
+                                    setSelectedJob(job);
+                                    setDrawerOpen(true);
+                                }}
                                 status={job.status}
                             />
                         </div>
                     ))}
-                </div>
-                </div>
+                    </div>
+
+                <ApplicantTrackerDrawer
+                    open={drawerOpen}
+                    onClose={() => setDrawerOpen(false)}
+                    onViewDetails={(job) => {
+                        setSelectedJob(job);
+                        setDrawerOpen(true);
+                    }}
+                    job={selectedJob}
+                />
             </div>
         </div>
     );

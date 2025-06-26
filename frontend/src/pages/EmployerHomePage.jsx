@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import EmployerSideBar from "../components/EmployerSideBar";
 import SearchBar from "../components/SearchBar";
+<<<<<<<<< Temporary merge branch 1
 import { 
   BriefcaseIcon, 
   DocumentTextIcon, 
@@ -119,11 +120,42 @@ const EmployerHomePage = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+=========
+import { Briefcase, FileText, CalendarArrowUp, Star, Eye } from "lucide-react";
+import recentApplicants from "../context/recentApplicants";
 
-  // Get applicants based on whether showing all or limited view
-  const getApplicantsToShow = () => {
-    return showAllApplicants ? allApplicants : allApplicants.slice(0, DASHBOARD_LIMIT);
+const EmployerHomePage = () => {
+  const [companyInfo, setCompanyInfo] = useState({
+    name: 'Company Name',
+    type: 'Company/Business Type',
+    location: 'Company Location'
+  });
+
+  // Load company data when component mounts
+  useEffect(() => {
+    const savedCompanyData = localStorage.getItem('companyData');
+    if (savedCompanyData) {
+      const { companyData } = JSON.parse(savedCompanyData);
+      setCompanyInfo({
+        name: companyData.name || 'Company Name',
+        type: companyData.type || 'Company/Business Type',
+        location: companyData.location || 'Company Location'
+      });
+    }
+  }, []);
+  // Mock data for stats
+  const stats = {
+    activeJobs: 59,
+    totalApplications: 317,
+    pendingReviews: 18
+  };  
+  // Add state to control expanded/collapsed view
+  const [showAllApplicants, setShowAllApplicants] = useState(false);
+  // Get the 3 most recent applicants or all if expanded
+  const getRecentApplicants = () => {
+    const sorted = recentApplicants.sort((a, b) => b.appliedAt - a.appliedAt);
+    return showAllApplicants ? sorted : sorted.slice(0, 3);
+>>>>>>>>> Temporary merge branch 2
   };
 
   const getMatchColor = (percentage) => {
@@ -297,24 +329,20 @@ const EmployerHomePage = () => {
               <StarIcon className="text-[#FF8032] w-[25px] h-[25px]" strokeWidth={2} />
               <h2 className="text-[24px] font-bold text-[#3C3B3B]">Recent Applicants</h2>
             </div>
-            {allApplicants.length > DASHBOARD_LIMIT && (
-              <button 
-                onClick={handleToggleViewAll}
-                className="flex items-center gap-2 text-[#FF8032] hover:text-[#e6722d] font-semibold text-[16px] hover:underline transition-colors"
-              >
-                {showAllApplicants ? (
-                  <>
-                    Show Less
-                    <ChevronUpIcon className="w-4 h-4" />
-                  </>
-                ) : (
-                  <>
-                    View All
-                    <ChevronDownIcon className="w-4 h-4" />
-                  </>
-                )}
-              </button>
-            )}
+<<<<<<<<< Temporary merge branch 1
+            <button 
+              onClick={handleViewAllApplicants}
+              className="text-[#FF8032] hover:text-[#e6722d] font-semibold text-[16px] hover:underline transition-colors"
+            >
+              View All
+=========
+            <button
+              className="text-[#FF8032] hover:text-[#e6722d] font-semibold text-[16px] hover:underline transition-colors"
+              onClick={() => setShowAllApplicants((prev) => !prev)}
+            >
+              {showAllApplicants ? 'Show Less' : 'View All'}
+>>>>>>>>> Temporary merge branch 2
+            </button>
           </div>
 
           {applicantsToShow.length === 0 ? (

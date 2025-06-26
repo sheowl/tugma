@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
-
+from app.middleware.auth import get_current_applicant
 from app.schemas.applicant import (
     ApplicantCreate,
     ApplicantOut,
@@ -12,6 +12,7 @@ from app.schemas.applicant import (
     ApplicantWorkExperienceOut,
     ApplicantCertificateCreate,
     ApplicantCertificateOut,
+    ApplicantOnboardingStatus
 )
 from app.crud import applicant as crud
 from app.core.database import get_db
@@ -22,6 +23,46 @@ router = APIRouter(prefix="/applicants", tags=["applicants"])
 @router.post("/", response_model=ApplicantOut, status_code=status.HTTP_201_CREATED)
 async def create_applicant(applicant: ApplicantCreate, db: AsyncSession = Depends(get_db)):
     return await crud.create_applicant(db, applicant)
+
+# Get onboarding status
+@router.get("/onboarding-status", response_model=ApplicantOnboardingStatus)
+async def get_applicant_onboarding_status(
+    applicant_info = Depends(get_current_applicant)
+):
+    print("Onboarding Called.")
+    applicant = applicant_info["db_user"]
+    needs_onboarding = not all([
+        applicant.current_address,
+        applicant.university,
+        applicant.degree,
+        applicant.year_graduated,
+        applicant.field,
+        applicant.preferred_worksetting,
+        applicant.preferred_worktype,
+    ])
+    return {
+        "needs_onboarding": needs_onboarding,
+        "completed_fields": {
+            "current_address": bool(applicant.current_address),
+            "university": bool(applicant.university),
+            "degree": bool(applicant.degree),
+            "year_graduated": bool(applicant.year_graduated),
+            "field": bool(applicant.field),
+            "preferred_worksetting": bool(applicant.preferred_worksetting),
+            "preferred_worktype": bool(applicant.preferred_worktype)
+        }
+    }
+
+@router.post("/onboarding-details")
+async def save_onboarding_details(
+    applicant_update: ApplicantUpdate,
+    db: AsyncSession = Depends(get_db),
+    applicant_info = Depends(get_current_applicant)
+):
+    applicant = applicant_info["db_user"]
+    print("Saving onboarding details for:", applicant.applicant_id)
+    updated_applicant = await crud.update_applicant(db, applicant, applicant_update)
+    return updated_applicant
 
 # Get applicant by ID
 @router.get("/{applicant_id}", response_model=ApplicantOut)
@@ -72,4 +113,5 @@ async def add_certificate(applicant_id: int, certificate: ApplicantCertificateCr
 @router.get("/{applicant_id}/certificates", response_model=List[ApplicantCertificateOut])
 async def get_certificates(applicant_id: int, db: AsyncSession = Depends(get_db)):
     return await crud.get_applicant_certificates(db, applicant_id)
+
 

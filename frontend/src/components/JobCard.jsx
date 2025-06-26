@@ -127,7 +127,7 @@ const JobCard = (props) => {
         <div className="flex gap-3">
           <div className="relative">
             <button 
-              className="w-[100px] h-[32px] bg-transparent text-white px-4 py-3 rounded-lg text-[12px] text-[#FF8032] font-semibold border-2 border-[#FF8032] font-semibold hover:bg-[#FF8032] hover:text-white transition-colors flex items-center gap-2"
+              className="w-[100px] h-[32px] bg-transparen px-4 py-3 rounded-lg text-[12px] text-[#FF8032] font-semibold border-2 border-[#FF8032] hover:bg-[#FF8032] hover:text-white transition-colors flex items-center gap-2"
               onClick={handleActionClick}
               type="button"
             >
@@ -147,7 +147,7 @@ const JobCard = (props) => {
               </div>
             )}</div>          
             <button 
-            className="w-[144px] h-[32px] bg-transparent text-white px-5 py-3 rounded-lg text-[12px] text-[#FF8032] font-semibold border-2 border-[#FF8032] font-semibold hover:bg-[#FF8032] hover:text-white transition-colors flex items-center gap-2"
+            className="w-[144px] h-[32px] bg-transparent px-5 py-3 rounded-lg text-[12px] text-[#FF8032] border-2 border-[#FF8032] font-semibold hover:bg-[#FF8032] hover:text-white transition-colors flex items-center gap-2"
             onClick={handleViewApplicants}
           >
             View Applicants
