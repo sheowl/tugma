@@ -211,31 +211,11 @@ async def get_match_score(db: AsyncSession, applicant_id: int, job_id: int) -> O
         return 0.0
 
 async def get_applicant_tags(db: AsyncSession, applicant_id: int) -> List[int]:
-    """Get tags for a specific applicant from user_tags table"""
+    """Get tags for a specific applicant (returns array of tag IDs)"""
     try:
-        from app.models.users import UserTag  # Adjust import based on your model
-        from app.models.applicants import Applicant  # Adjust import based on your model
-        
-        print(f"🔍 DEBUG: Getting tags for applicant_id: {applicant_id}")
-        
-        # First, get the user_id associated with this applicant
-        applicant_stmt = select(Applicant.user_id).where(Applicant.applicant_id == applicant_id)
-        applicant_result = await db.execute(applicant_stmt)
-        user_id = applicant_result.scalar_one_or_none()
-        
-        if not user_id:
-            print(f"❌ DEBUG: No user_id found for applicant_id {applicant_id}")
-            return []
-        
-        print(f"🔍 DEBUG: Found user_id {user_id} for applicant_id {applicant_id}")
-        
-        # Get user tags for this user
-        tags_stmt = select(UserTag.tag_id).where(UserTag.user_id == user_id)
-        tags_result = await db.execute(tags_stmt)
-        tag_ids = tags_result.scalars().all()
-        
-        print(f"🔍 DEBUG: Found {len(tag_ids)} tags for applicant {applicant_id}: {list(tag_ids)}")
-        return list(tag_ids)
+        # Import the function from tags CRUD instead of duplicating logic
+        from app.crud.tags import get_applicant_tag_ids
+        return await get_applicant_tag_ids(db, applicant_id)
         
     except Exception as e:
         print(f"❌ DEBUG: Error getting applicant tags for {applicant_id}: {e}")
