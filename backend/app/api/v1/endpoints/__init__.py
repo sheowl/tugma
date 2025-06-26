@@ -7,4 +7,5 @@ from . import (
     jobs,
     notification,
     tags,
+    matching,
 )

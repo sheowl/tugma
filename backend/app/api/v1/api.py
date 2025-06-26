@@ -11,4 +11,6 @@ api_router.include_router(endpoints.interview.router, prefix="/interviews", tags
 api_router.include_router(endpoints.jobs.router, prefix="/jobs", tags=["jobs"])
 api_router.include_router(endpoints.notification.router, prefix="/notifications", tags=["notifications"])
 api_router.include_router(endpoints.tags.router, prefix="/tags", tags=["tags"])
+api_router.include_router(endpoints.matching.router, prefix="/matching", tags=["matching"])
+
 
