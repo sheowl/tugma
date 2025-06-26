@@ -34,15 +34,12 @@ function ApplicantBrowseJobs() {
     const [selectedModality, setSelectedModality] = useState(null); // State for modality filter
     const [selectedWorkType, setSelectedWorkType] = useState(null); // State for work type filter
     const [firstName, setFirstName] = useState("User"); // State for user's first name
-    const [showNotifications, setShowNotifications] = useState(false);
-    
 
-     const sampleData = [
-  { title: "Some Job Here", company: "Company Name Here", status: "Accepted", timeAgo: "3 hours ago" },
-  { title: "Junior Web Developer", company: "Kim Satrjt PH", status: "Rejected", timeAgo: "8 hours ago" },
-  { title: "Job Title", company: "Company Name", status: "Waitlisted", timeAgo: "3 hours ago" },
-  
-];
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+    const sortTime = "0.49 secs";
+
 
     // Simulate fetching first name from a database
     useEffect(() => {
@@ -129,8 +126,9 @@ function ApplicantBrowseJobs() {
                 {/* Job Count */}
                 <div className="pl-[112px] pr-[118px]">
                     <div className="flex items-center justify-between mb-2">
-                        <div className="text-base font-semibold text-gray-500 mb-2">
-                            {sortedData.length} matches displayed
+                         <div className="flex gap-2">
+                        <div className="text-base font-semibold text-gray-500 mb-2">{sortedData.length} matches displayed</div>
+                        <div className="text-base italic text-gray-500 mb-2">({sortTime})</div>
                         </div>
                         <div className="flex gap-4">
                             <Dropdown
