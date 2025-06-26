@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { useJobs } from "../context/JobsContext";
+import { useCompany } from "../context/CompanyContext"; // Changed from useJobs
+import { useTags } from "../context/TagsContext"; // Added for dynamic tags
 import { useAuth } from "../context/AuthContext";
-import TAGS from "./Tags"
 import TagPopup from "./TagPopup";
-import { getProficiencyLevel, getProficiencyOptions } from "../utils/jobMappings";
+import { SelectedTags } from "./DynamicTags"; // Added for dynamic tag display
+import { getCategoryName, getProficiencyLevel, CATEGORIES, PROFICIENCY_LEVELS } from "../utils/jobMappings";
 
 // Dropdown options - Update values to match backend
 const modalityOptions = [
@@ -24,26 +25,17 @@ const positionOptions = Array.from({ length: 100 }, (_, i) => ({
   value: i + 1,
 }));
 
-// Fix the categoryOptions to match your TAGS object keys exactly
-const categoryOptions = [
-  { label: <span className="text-[#FF8032] font-bold">Web Development</span>, value: "Web Development" },
-  { label: <span className="text-[#FF8032] font-bold">Programming Languages</span>, value: "Programming Languages" },
-  { label: <span className="text-[#FF8032] font-bold">AI/ML/Data Science</span>, value: "AI/ML/Data Science" },
-  { label: <span className="text-[#FF8032] font-bold">Databases</span>, value: "Databases" },
-  { label: <span className="text-[#FF8032] font-bold">DevOps</span>, value: "DevOps" },
-  { label: <span className="text-[#FF8032] font-bold">Cybersecurity</span>, value: "Cybersecurity" },
-  { label: <span className="text-[#FF8032] font-bold">Mobile Development</span>, value: "Mobile Development" },
-  { label: <span className="text-[#FF8032] font-bold">Soft Skills</span>, value: "Soft Skills" },
-];
+// Use dynamic categories from utils
+const categoryOptions = Object.entries(CATEGORIES).map(([id, name]) => ({
+  label: <span className="text-[#FF8032] font-bold">{name}</span>,
+  value: parseInt(id)
+}));
 
-// Also fix proficiencyOptions to use numeric values for backend
-const proficiencyOptions = [
-  { label: <span className="text-[#FF8032]">Level 1: <span className="font-bold">Novice</span></span>, value: 1 },
-  { label: <span className="text-[#FF8032]">Level 2: <span className="font-bold">Advanced Beginner</span></span>, value: 2 },
-  { label: <span className="text-[#FF8032]">Level 3: <span className="font-bold">Competent</span></span>, value: 3 },
-  { label: <span className="text-[#FF8032]">Level 4: <span className="font-bold">Proficient</span></span>, value: 4 },
-  { label: <span className="text-[#FF8032]">Level 5: <span className="font-bold">Expert</span></span>, value: 5 },
-];
+// Use dynamic proficiency from utils
+const proficiencyOptions = Object.entries(PROFICIENCY_LEVELS).map(([id, level]) => ({
+  label: <span className="text-[#FF8032]">{level}</span>,
+  value: parseInt(id)
+}));
 
 // Reusable Dropdown
 const CustomDropdown = ({
@@ -65,8 +57,14 @@ const CustomDropdown = ({
     setOpenDropdown(null);
   };
 
-  const selectedLabel =
-    options.find((opt) => opt.value === selected)?.label || placeholder;
+  let displayLabel;
+  if (dropdownKey === 'category' && selected) {
+    displayLabel = getCategoryName(selected);
+  } else if (dropdownKey === 'proficiency' && selected) {
+    displayLabel = getProficiencyLevel(selected);
+  } else {
+    displayLabel = options.find((opt) => opt.value === selected)?.label || placeholder;
+  }
 
   return (
     <div className="relative">
@@ -75,7 +73,7 @@ const CustomDropdown = ({
         onClick={handleActionClick}
         type="button"
       >
-        {selectedLabel}
+        {displayLabel}
         {!hideCaret && <i className="bi bi-caret-down-fill text-xs" />}
       </button>
       {isOpen && (
@@ -99,15 +97,16 @@ const CustomDropdown = ({
 
 //POST New Jobs
 const JobNewPost = ({ open, onClose, onSave, companyData, userData }) => {
-  // Use AuthContext and props for data
+  // Use CompanyContext instead of JobsContext
+  const { loading: contextLoading, error: contextError, clearError } = useCompany(); // REMOVED createJob from here
+  const { getTagNameById, loading: tagsLoading } = useTags();
   const { user, isAuthenticated } = useAuth();
-  const { createJob, loading: contextLoading, error: contextError, clearError } = useJobs();
   
   // Use company data from props (companyProfile from CompanyContext)
   const company = companyData || {};
   const currentUser = userData || user;
 
-  // Update form state to include salary min/max
+  // Update form state to use tag IDs instead of tag names
   const [form, setForm] = useState({
     jobTitle: "",
     companyName: "",
@@ -115,11 +114,9 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData }) => {
     salaryMin: "",
     salaryMax: "",
     description: "",
-    tags: [],
+    tags: [], // Now stores array of tag IDs
   });
 
-  const [tagInput, setTagInput] = useState("");
-  const [showTagInput, setShowTagInput] = useState(false);
   const [showTagPopup, setShowTagPopup] = useState(false);
   const [selectedModality, setSelectedModality] = useState(null);
   const [selectedWorkType, setSelectedWorkType] = useState(null);
@@ -141,15 +138,9 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData }) => {
     }
   };
 
-  const handleTagAdd = () => {
-    if (tagInput.trim() && !form.tags.includes(tagInput.trim())) {
-      setForm({ ...form, tags: [...form.tags, tagInput.trim()] });
-      setTagInput("");
-    }
-  };
-
-  const handleTagRemove = (tag) => {
-    setForm({ ...form, tags: form.tags.filter((t) => t !== tag) });
+  // Updated to handle tag IDs instead of tag names
+  const handleTagRemove = (tagId) => {
+    setForm({ ...form, tags: form.tags.filter((id) => id !== tagId) });
   };
 
   // Add salary validation
@@ -160,12 +151,24 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData }) => {
     return min > 0 && max > 0 && min <= max;
   };
 
-  // Update handleSubmit to use the passed company data
+  // Updated form validation
+  const isFormValid = () => {
+    return form.jobTitle.trim() && 
+           form.description.trim() && 
+           selectedModality && 
+           selectedWorkType && 
+           availablePositions && 
+           selectedCategory && 
+           selectedProficiency && 
+           isSalaryValid();
+  };
+
+  // Update handleSubmit to include the required date fields
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!isSalaryValid()) {
-      alert('Please enter valid salary amounts');
+    if (!isFormValid()) {
+      alert('Please fill in all required fields with valid data');
       return;
     }
 
@@ -181,37 +184,13 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData }) => {
       return;
     }
 
-    // Validate required fields with detailed logging
-    const missingFields = [];
-    
-    if (!form.jobTitle?.trim()) missingFields.push('Job Title');
-    if (!form.description?.trim()) missingFields.push('Job Description');
-    if (!selectedModality) missingFields.push('Job Modality');
-    if (!selectedWorkType) missingFields.push('Work Type');
-    if (!availablePositions) missingFields.push('Available Positions');
-    if (!form.salaryMin || parseInt(form.salaryMin) <= 0) missingFields.push('Minimum Salary');
-    if (!form.salaryMax || parseInt(form.salaryMax) <= 0) missingFields.push('Maximum Salary');
-
-    if (missingFields.length > 0) {
-      alert(`Please fill in the following required fields:\n• ${missingFields.join('\n• ')}`);
-      return;
-    }
-
     try {
       setSaving(true);
       clearError();
       
-      // Map category name to category ID for backend
-      const categoryMapping = {
-        "Web Development": 1,
-        "Programming Languages": 2, 
-        "Databases": 3,
-        "AI/ML/Data Science": 4,
-        "DevOps": 5,
-        "Cybersecurity": 7,
-        "Mobile Development": 8,
-        "Soft Skills": 9
-      };
+      // Get current date in the format expected by backend
+      const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+      const currentDateTime = new Date().toISOString(); // Full ISO datetime
       
       // Transform data to match backend expected format exactly
       const jobData = {
@@ -221,48 +200,20 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData }) => {
         setting: selectedModality,
         work_type: selectedWorkType,
         description: form.description.trim(),
-        date_added: new Date().toISOString().split('T')[0],
-        created_at: new Date().toISOString(),
         position_count: parseInt(availablePositions),
-        required_category_id: selectedCategory ? (categoryMapping[selectedCategory] || 0) : 0,
-        required_proficiency: parseInt(selectedProficiency) || 0,
-        company_id: parseInt(company.company_id)
+        required_category_id: parseInt(selectedCategory),
+        required_proficiency: parseInt(selectedProficiency),
+        job_tags: form.tags, // Array of tag IDs
+        company_id: company.company_id,
+        date_added: currentDate,
+        created_at: currentDateTime
       };
       
-      // Final validation with detailed error messages
-      const validationErrors = [];
+      console.log('🚀 JobNewPost: Preparing job data:', jobData);
       
-      if (!jobData.job_title) validationErrors.push(`Job title is missing: "${jobData.job_title}"`);
-      if (!jobData.salary_min || jobData.salary_min <= 0) validationErrors.push(`Invalid salary_min: ${jobData.salary_min}`);
-      if (!jobData.salary_max || jobData.salary_max <= 0) validationErrors.push(`Invalid salary_max: ${jobData.salary_max}`);
-      if (jobData.salary_min > jobData.salary_max) validationErrors.push(`salary_min (${jobData.salary_min}) > salary_max (${jobData.salary_max})`);
-      if (!jobData.setting) validationErrors.push(`Missing setting: "${jobData.setting}"`);
-      if (!jobData.work_type) validationErrors.push(`Missing work_type: "${jobData.work_type}"`);
-      if (!jobData.description) validationErrors.push(`Missing description: "${jobData.description}"`);
-      if (!jobData.position_count || jobData.position_count <= 0) validationErrors.push(`Invalid position_count: ${jobData.position_count}`);
-      if (!jobData.company_id) validationErrors.push(`Missing company_id: ${jobData.company_id}`);
-      
-      // Check if these are valid enum values
-      const validSettings = ['onsite', 'hybrid', 'remote'];
-      const validWorkTypes = ['fulltime', 'contractual', 'part-time', 'internship'];
-      
-      if (!validSettings.includes(jobData.setting)) {
-        validationErrors.push(`Invalid setting enum: "${jobData.setting}". Must be one of: ${validSettings.join(', ')}`);
-      }
-      
-      if (!validWorkTypes.includes(jobData.work_type)) {
-        validationErrors.push(`Invalid work_type enum: "${jobData.work_type}". Must be one of: ${validWorkTypes.join(', ')}`);
-      }
-      
-      if (validationErrors.length > 0) {
-        alert('Validation errors found:\n\n' + validationErrors.join('\n'));
-        return;
-      }
-      
-      const result = await createJob(jobData);
-      
+      // CHANGED: Call onSave instead of createJob directly
       if (onSave) {
-        onSave(result);
+        await onSave(jobData);
       }
       
       // Reset form
@@ -280,17 +231,18 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData }) => {
       setAvailablePositions(null);
       setSelectedCategory(null);
       setSelectedProficiency(null);
-      setShowTagInput(false);
       setShowTagPopup(false);
       
       onClose();
       
     } catch (error) {
+      console.error('❌ Failed to prepare job data:', error);
+      
       // Try to get more detailed error information
-      if (error.message.includes('422')) {
-        alert('Backend validation error: Please check all required fields.');
+      if (error.message && error.message.includes('422')) {
+        alert('Invalid data submitted. Please check all required fields are filled correctly.');
       } else {
-        alert(`Failed to create job: ${error.message}`);
+        alert(`Failed to create job: ${error.message || error}`);
       }
     } finally {
       setSaving(false);
@@ -342,7 +294,6 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData }) => {
           <div className="p-10 w-full h-full flex items-center justify-center">
             <div className="text-red-500 font-semibold text-lg text-center">
               Company profile not loaded.<br />
-              Available properties: {Object.keys(company || {}).join(', ')}<br />
               Please ensure you're logged in as an employer.
             </div>
           </div>
@@ -383,6 +334,7 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData }) => {
         )}
         
         <form onSubmit={handleSubmit} className="flex flex-col gap-5 mt-16 ml-12">
+          {/* Job Title Section */}
           <div>
             <div className="relative flex items-center">
               <input
@@ -421,10 +373,10 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData }) => {
             </div>
           </div>          
           
-          {/* Replace salary dropdown with min/max inputs */}
+          {/* Salary Range */}
           <div className="flex flex-col gap-2">
             <label className="text-[16px] font-semibold text-[#3C3B3B] mb-1">
-              Job Salary Range
+              Job Salary Range *
             </label>            
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-2">
@@ -436,7 +388,7 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData }) => {
                   value={form.salaryMin}
                   onChange={handleChange}
                   className="h-8 px-3 py-2 border-2 border-[#FF8032] focus:border-[#FF8032] focus:outline-none focus:ring-0 text-[#FF8032] rounded-[10px] text-[14px] font-bold bg-white w-[120px]"
-                  min="0"
+                  min="1"
                   step="1"
                   required
                 />
@@ -451,7 +403,7 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData }) => {
                   value={form.salaryMax}
                   onChange={handleChange}
                   className="h-8 px-3 py-2 border-2 border-[#FF8032] focus:border-[#FF8032] focus:outline-none focus:ring-0 text-[#FF8032] rounded-[10px] text-[14px] font-bold bg-white w-[120px]"
-                  min="0"
+                  min="1"
                   step="1"
                   required
                 />
@@ -470,37 +422,41 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData }) => {
             )}
           </div>
 
+          {/* Modality */}
           <div className="flex flex-col gap-2">
             <label className="font-semibold text-[16px] text-[#3C3B3B]">
-              Job Modality
+              Job Modality *
             </label>
             <CustomDropdown
               options={modalityOptions}
               selected={selectedModality}
               onSelect={setSelectedModality}
-              placeholder="Action"
+              placeholder="Select Modality"
               openDropdown={openDropdown}
               setOpenDropdown={setOpenDropdown}
               dropdownKey="modality"
             />
           </div>
 
+          {/* Work Type */}
           <div className="flex flex-col gap-2">
             <label className="font-semibold text-[16px] text-[#3C3B3B]">
-              Job Work Type
+              Job Work Type *
             </label>
             <CustomDropdown
               options={workTypeOptions}
               selected={selectedWorkType}
               onSelect={setSelectedWorkType}
-              placeholder="Action"
+              placeholder="Select Work Type"
               openDropdown={openDropdown}
               setOpenDropdown={setOpenDropdown}
               dropdownKey="worktype"
             />
           </div>
+
+          {/* Description */}
           <div className="flex flex-col gap-2">
-            <label className="font-semibold text-[#232323]">Job Description</label>
+            <label className="font-semibold text-[#232323]">Job Description *</label>
             <textarea
               className="border-2 border-[#A6A6A6] focus:border-[#FF8032] focus:outline-none focus:ring-0 rounded px-3 py-2"
               name="description"
@@ -512,15 +468,16 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData }) => {
             />
           </div>
 
+          {/* Available Positions */}
           <div className="flex flex-col gap-2">
             <label className="font-semibold text-[16px] text-[#3C3B3B]">
-              Available positions
+              Available positions *
             </label>
             <CustomDropdown
               options={positionOptions}
               selected={availablePositions}
               onSelect={setAvailablePositions}
-              placeholder="Action"
+              placeholder="Select Positions"
               openDropdown={openDropdown}
               setOpenDropdown={setOpenDropdown}
               dropdownKey="positions"
@@ -530,12 +487,15 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData }) => {
           {/* Category and Proficiency Row */}
           <div className="flex flex-row gap-8">
             <div className="flex flex-col gap-2 flex-1">
-              <label className="font-semibold text-[16px] text-[#3C3B3B]">Required Category</label>
+              <label className="font-semibold text-[16px] text-[#3C3B3B]">Required Category *</label>
               <CustomDropdown
                 options={categoryOptions}
                 selected={selectedCategory}
-                onSelect={setSelectedCategory}
-                placeholder="Tag +"
+                onSelect={(value) => {
+                  setSelectedCategory(value);
+                  setForm({ ...form, tags: [] }); // Clear tags when category changes
+                }}
+                placeholder="Select Category"
                 openDropdown={openDropdown}
                 setOpenDropdown={setOpenDropdown}
                 dropdownKey="category"
@@ -543,12 +503,12 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData }) => {
               />
             </div>
             <div className="flex flex-col gap-2 flex-1">
-              <label className="font-semibold text-[16px] text-[#3C3B3B]">Required Proficiency</label>
+              <label className="font-semibold text-[16px] text-[#3C3B3B]">Required Proficiency *</label>
               <CustomDropdown
                 options={proficiencyOptions}
                 selected={selectedProficiency}
                 onSelect={setSelectedProficiency}
-                placeholder="Tag +"
+                placeholder="Select Proficiency"
                 openDropdown={openDropdown}
                 setOpenDropdown={setOpenDropdown}
                 dropdownKey="proficiency"
@@ -557,26 +517,21 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData }) => {
             </div>
           </div>
           
-          {/* Keep tag section exactly as is */}
+          {/* Dynamic Tags Section */}
           <div className="flex flex-col gap-2">
             <label className="font-semibold text-[16px] text-[#3C3B3B]">Tags</label>
             <div className="flex flex-wrap gap-2 mb-2">
-              {/* Show selected tags */}
-              {form.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="bg-[#FF8032] text-white font-semibold px-3 py-1 rounded-full text-[12px] flex items-center gap-1"
-                >
-                  {tag}
-                  <button
-                    type="button"
-                    className="ml-1 text-[12px] text-white hover:text-red-200"
-                    onClick={() => handleTagRemove(tag)}
-                  >
-                    &times;
-                  </button>
-                </span>
-              ))}
+              {/* Display selected tags using dynamic tags component */}
+              {tagsLoading ? (
+                <span className="text-gray-500 text-sm">Loading tags...</span>
+              ) : (
+                <SelectedTags 
+                  tagIds={form.tags} 
+                  onRemoveTag={handleTagRemove}
+                  className="flex-wrap"
+                />
+              )}
+              
               <button
                 type="button"
                 className="w-[219px] px-2 py-1 bg-transparent text-[#FF8032] border-2 border-[#FF8032] rounded-xl text-[12px] font-semibold hover:bg-[#FF8032] hover:text-white transition"
@@ -587,12 +542,13 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData }) => {
             </div>
           </div>  
 
+          {/* Submit Button */}
           <div className="flex justify-center mt-4">
             <button
               type="submit"
-              disabled={saving || contextLoading || !isSalaryValid()}
+              disabled={!isFormValid() || saving || contextLoading}
               className={`w-[243px] h-[48px] font-bold rounded-lg transition text-[16px] ${
-                !saving && !contextLoading && isSalaryValid()
+                isFormValid() && !saving && !contextLoading
                   ? 'bg-[#FF8032] text-white hover:bg-[#E66F24]' 
                   : 'bg-[#979797] text-white cursor-not-allowed'
               }`}
@@ -602,17 +558,14 @@ const JobNewPost = ({ open, onClose, onSave, companyData, userData }) => {
           </div>
         </form>
         
+        {/* Dynamic Tag Popup */}
         <TagPopup
           open={showTagPopup}
           onClose={() => setShowTagPopup(false)}
-          currentTags={form.tags}
-          onTagSelect={(tag) => {
-            if (!form.tags.includes(tag)) {
-              setForm({ ...form, tags: [...form.tags, tag] });
-            }
-          }}
-          onSave={(selectedTags) => {
-            setForm({ ...form, tags: selectedTags });
+          currentTags={form.tags} // Pass array of tag IDs
+          onSave={(selectedTagIds) => {
+            console.log('💾 Saving selected tag IDs:', selectedTagIds);
+            setForm({ ...form, tags: selectedTagIds });
           }}
         />
         </div>

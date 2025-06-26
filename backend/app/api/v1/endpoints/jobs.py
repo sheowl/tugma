@@ -371,9 +371,9 @@ async def get_my_job_applicants(
                 "applicant_id": applicant.applicant_id,
                 "job_id": applicant.job_id,
                 "name": f"{applicant.first_name} {applicant.last_name}",
-                "email": applicant.email,
-                "phone_number": applicant.phone_number,
-                "location": applicant.location,
+                "applicant_email": applicant.applicant_email,
+                "phone_number": applicant.contact_number,
+                "location": applicant.current_address,
                 "application_created_at": applicant.application_created_at,
                 "status": applicant.status if applicant.status else "pending"
             }

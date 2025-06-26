@@ -169,9 +169,9 @@ async def get_applicants_by_job(db: AsyncSession, job_id: int):
             JobApplication.created_at.label('application_created_at'),
             Applicant.first_name,
             Applicant.last_name,
-            Applicant.email,
-            Applicant.phone_number,
-            Applicant.location
+            Applicant.applicant_email,
+            Applicant.contact_number,
+            Applicant.current_address
         )
         .join(Applicant, JobApplication.applicant_id == Applicant.applicant_id)
         .where(JobApplication.job_id == job_id)
