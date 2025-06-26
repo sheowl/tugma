@@ -19,6 +19,8 @@ function ApplicantBrowseJobs() {
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
 
+    const sortTime = "0.49 secs";
+
 
     // Simulate fetching first name from a database
     useEffect(() => {
@@ -221,8 +223,9 @@ const handleCloseSuccess = () => {
                 {/* Job Count */}
                 <div className="pl-[112px] pr-[118px]">
                     <div className="flex items-center justify-between mb-2">
-                        <div className="text-base font-semibold text-gray-500 mb-2">
-                            {sortedData.length} matches displayed
+                         <div className="flex gap-2">
+                        <div className="text-base font-semibold text-gray-500 mb-2">{sortedData.length} matches displayed</div>
+                        <div className="text-base italic text-gray-500 mb-2">({sortTime})</div>
                         </div>
                         <div className="flex gap-4">
                             <Dropdown
