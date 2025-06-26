@@ -832,6 +832,10 @@ video {
   margin-top: -0.25rem;
 }
 
+.-mt-16{
+  margin-top: -4rem;
+}
+
 .-mt-2{
   margin-top: -0.5rem;
 }
@@ -1076,6 +1080,10 @@ video {
   height: 0.5rem;
 }
 
+.h-20{
+  height: 5rem;
+}
+
 .h-24{
   height: 6rem;
 }
@@ -1110,6 +1118,10 @@ video {
 
 .h-\[128px\]{
   height: 128px;
+}
+
+.h-\[135px\]{
+  height: 135px;
 }
 
 .h-\[140px\]{
@@ -1198,6 +1210,10 @@ video {
 
 .h-\[41px\]{
   height: 41px;
+}
+
+.h-\[42px\]{
+  height: 42px;
 }
 
 .h-\[438px\]{
@@ -1336,10 +1352,6 @@ video {
   width: 40%;
 }
 
-.w-24{
-  width: 6rem;
-}
-
 .w-3\/5{
   width: 60%;
 }
@@ -1386,6 +1398,10 @@ video {
 
 .w-\[100px\]{
   width: 100px;
+}
+
+.w-\[110px\]{
+  width: 110px;
 }
 
 .w-\[1152px\]{
@@ -1472,6 +1488,10 @@ video {
   width: 243px;
 }
 
+.w-\[256px\]{
+  width: 256px;
+}
+
 .w-\[25px\]{
   width: 25px;
 }
@@ -1510,6 +1530,10 @@ video {
 
 .w-\[420px\]{
   width: 420px;
+}
+
+.w-\[431px\]{
+  width: 431px;
 }
 
 .w-\[44px\]{
@@ -1560,6 +1584,10 @@ video {
   width: 72px;
 }
 
+.w-\[77px\]{
+  width: 77px;
+}
+
 .w-fit{
   width: -moz-fit-content;
   width: fit-content;
@@ -1587,6 +1615,10 @@ video {
 
 .max-w-3xl{
   max-width: 48rem;
+}
+
+.max-w-4xl{
+  max-width: 56rem;
 }
 
 .max-w-5xl{
@@ -2354,14 +2386,33 @@ video {
   background-image: linear-gradient(to bottom right, var(--tw-gradient-stops));
 }
 
+.bg-gradient-to-r{
+  background-image: linear-gradient(to right, var(--tw-gradient-stops));
+}
+
+.from-\[\#2F6DF6\]{
+  --tw-gradient-from: #2F6DF6 var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(47 109 246 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+
 .from-gray-100{
   --tw-gradient-from: #f3f4f6 var(--tw-gradient-from-position);
   --tw-gradient-to: rgb(243 244 246 / 0) var(--tw-gradient-to-position);
   --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
 }
 
+.to-\[\#F2772B\]{
+  --tw-gradient-to: #F2772B var(--tw-gradient-to-position);
+}
+
 .to-gray-200{
   --tw-gradient-to: #e5e7eb var(--tw-gradient-to-position);
+}
+
+.bg-clip-text{
+  -webkit-background-clip: text;
+          background-clip: text;
 }
 
 .object-cover{
@@ -2459,6 +2510,11 @@ video {
 .px-\[112px\]{
   padding-left: 112px;
   padding-right: 112px;
+}
+
+.py-0{
+  padding-top: 0px;
+  padding-bottom: 0px;
 }
 
 .py-1{
@@ -2736,6 +2792,10 @@ video {
   font-size: 52px;
 }
 
+.text-\[55px\]{
+  font-size: 55px;
+}
+
 .text-base{
   font-size: 1rem;
   line-height: 1.5rem;
@@ -2763,6 +2823,10 @@ video {
 
 .font-bold{
   font-weight: 700;
+}
+
+.font-extrabold{
+  font-weight: 800;
 }
 
 .font-medium{
@@ -2990,6 +3054,10 @@ video {
 .text-stone-500{
   --tw-text-opacity: 1;
   color: rgb(120 113 108 / var(--tw-text-opacity, 1));
+}
+
+.text-transparent{
+  color: transparent;
 }
 
 .text-white{
@@ -3364,11 +3432,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   color: rgb(31 41 55 / var(--tw-text-opacity, 1));
 }
 
-.hover\:text-red-500:hover{
-  --tw-text-opacity: 1;
-  color: rgb(239 68 68 / var(--tw-text-opacity, 1));
-}
-
 .hover\:text-red-700:hover{
   --tw-text-opacity: 1;
   color: rgb(185 28 28 / var(--tw-text-opacity, 1));
@@ -3386,6 +3449,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .hover\:shadow-all-around:hover{
   --tw-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   --tw-shadow-colored: 0 4px 15px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+
+.hover\:shadow-xl:hover{
+  --tw-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --tw-shadow-colored: 0 20px 25px -5px var(--tw-shadow-color), 0 8px 10px -6px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
 

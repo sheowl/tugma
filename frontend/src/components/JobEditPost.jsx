@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { exampleJobPosts } from "../context/jobPostsData";
 import TAGS from "./Tags";
+import TagPopup from "./TagPopup";
 
 // Dropdown options
 const modalityOptions = [
@@ -117,7 +118,8 @@ const JobEditPost = ({ open, onClose, onSave, jobData }) => {
   const [originalForm, setOriginalForm] = useState({});
   const [tagInput, setTagInput] = useState("");
   const [showTagInput, setShowTagInput] = useState(false);
-  const [openDropdown, setOpenDropdown] = useState(null);// Initialize form with existing job data
+  const [openDropdown, setOpenDropdown] = useState(null);
+  const [showTagPopup, setShowTagPopup] = useState(false);// Initialize form with existing job data
   React.useEffect(() => {
     if (jobData && open) {
       // Find the complete job data from context
@@ -368,47 +370,45 @@ const JobEditPost = ({ open, onClose, onSave, jobData }) => {
           <div className="flex flex-col gap-2">
             <label className="font-semibold text-[16px] text-[#3C3B3B]">Tags</label>
             <div className="flex flex-wrap gap-2 mb-2">
-              {form.tags.map((tag) => (
+              {/* Show selected tags */}
+              {form.tags.length > 0 && form.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="bg-transparent text-[#FF8032] font-semibold border-2 border-[#FF8032] px-3 py-1 rounded-full text-[12px] flex items-center gap-1"
+                  className="px-3 py-1 rounded-full text-[12px] font-semibold bg-[#FF8032] text-white border-[#FF8032] border-2 flex items-center gap-1"
                 >
                   {tag}
                   <button
                     type="button"
-                    className="ml-1 text-[12px] text-[#FF8032] hover:text-red-500"
-                    onClick={() => handleTagRemove(tag)}
+                    className="ml-1 text-white hover:text-[#E66F24]"
+                    onClick={() => setForm({ ...form, tags: form.tags.filter((t) => t !== tag) })}
                   >
                     &times;
                   </button>
                 </span>
               ))}
-              {showTagInput ? (
-                <input
-                  className="border-2 focus:border-[#FF8032] focus:outline-none focus:ring-0 rounded px-2 py-1 text-[12px] w-24"
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onBlur={() => setShowTagInput(false)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleTagAdd();
-                      setShowTagInput(false);
-                    }
-                  }}
-                  autoFocus
-                />
-              ) : (
-                <button
-                  type="button"
-                  className="w-[53px] px-2 py-1 bg-[#FF8032] text-white rounded-full text-[12px] font-semibold hover:bg-[#E66F24] transition"
-                  onClick={() => setShowTagInput(true)}
-                >
-                  + Tag
-                </button>
-              )}            
+              <button
+                type="button"
+                className="w-[53px] px-2 py-1 bg-transparent text-[#FF8032] border-2 border-[#FF8032] rounded-xl text-[12px] font-semibold hover:bg-[#FF8032] hover:text-white transition"
+                onClick={() => setShowTagPopup(true)}
+              >
+                Tag +
+              </button>
             </div>
-          </div>            
+          </div>
+          <TagPopup
+            open={showTagPopup}
+            onClose={() => setShowTagPopup(false)}
+            currentTags={form.tags}
+            onTagSelect={(tag) => {
+              if (!form.tags.includes(tag)) {
+                setForm({ ...form, tags: [...form.tags, tag] });
+              }
+            }}
+            onSave={(selectedTags) => {
+              // Replace the current tags with the selected tags
+              setForm({ ...form, tags: selectedTags });
+            }}
+          />            
           <div className="flex justify-center items-center gap-4 mt-6">
             <button
               type="button"

@@ -1,12 +1,17 @@
 import React from "react";
 import TAGS from "./Tags";
 
-const TagPopup = ({ open, onClose, onTagSelect }) => {
+const TagPopup = ({ open, onClose, onTagSelect, onSave, currentTags = [] }) => {
   const [selectedTags, setSelectedTags] = React.useState([]);
 
   React.useEffect(() => {
-    if (!open) setSelectedTags([]);
-  }, [open]);
+    if (open) {
+      // Initialize with current tags when popup opens
+      setSelectedTags([...currentTags]);
+    } else {
+      setSelectedTags([]);
+    }
+  }, [open, currentTags]);
 
   const handleTagClick = (tag) => {
     let updated;
@@ -14,7 +19,6 @@ const TagPopup = ({ open, onClose, onTagSelect }) => {
       updated = selectedTags.filter((t) => t !== tag);
     } else {
       updated = [...selectedTags, tag];
-      if (onTagSelect) onTagSelect(tag);
     }
     setSelectedTags(updated);
   };
@@ -25,19 +29,47 @@ const TagPopup = ({ open, onClose, onTagSelect }) => {
   };
 
   const handleSave = () => {
-    // Implement save logic here
+    if (onSave) {
+      onSave(selectedTags);
+    }
     onClose();
   };
 
   const hasChanges = () => {
-    // Implement logic to determine if there are unsaved changes
-    return selectedTags.length > 0;
+    // Check if selected tags are different from current tags
+    if (selectedTags.length !== currentTags.length) return true;
+    return selectedTags.some(tag => !currentTags.includes(tag)) || 
+           currentTags.some(tag => !selectedTags.includes(tag));
   };
 
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-      <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-3xl w-full max-h-[80vh] overflow-y-auto relative">
+      <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-3xl w-full max-h-[80vh] overflow-y-auto relative custom-scrollbar">
+        <style jsx>{`
+          .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+            border-radius: 16px;
+            margin-top: 16px;
+            margin-bottom: 16px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #FF8032;
+            border-radius: 10px;
+            border: 2px solid transparent;
+            background-clip: content-box;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #E66F24;
+            background-clip: content-box;
+          }
+          .custom-scrollbar::-webkit-scrollbar-corner {
+            background: transparent;
+          }
+        `}</style>
         <button
           className="absolute top-8 left-8 text-3xl text-gray-400 hover:text-black"
           onClick={onClose}

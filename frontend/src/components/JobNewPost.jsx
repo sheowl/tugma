@@ -371,10 +371,15 @@ const JobNewPost = ({ open, onClose, onSave }) => {
           <TagPopup
             open={showTagPopup}
             onClose={() => setShowTagPopup(false)}
+            currentTags={form.tags}
             onTagSelect={(tag) => {
               if (!form.tags.includes(tag)) {
                 setForm({ ...form, tags: [...form.tags, tag] });
               }
+            }}
+            onSave={(selectedTags) => {
+              // Replace the current tags with the selected tags
+              setForm({ ...form, tags: selectedTags });
             }}
           />
 

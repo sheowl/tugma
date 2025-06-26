@@ -22,12 +22,12 @@ import EmployerOnboarding from "./pages/EmployerOnboarding.jsx";
 import CompanyPage from "./pages/CompanyPage.jsx";
 import EditCompanyPage from "./components/EditCompanyPage.jsx";
 import ApplicantResume from "./components/ApplicantResume.jsx";
-
+import TugmaLandingPage from "./pages/TugmaLandingPage.jsx";
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<EmployerOnboarding />} />
+        <Route path="/" element={<TugmaLandingPage />} />
         <Route path="/applicant-sign-in" element={<ApplicantSignIn />} />
         <Route path="/employer-sign-in" element={<EmployerSignIn />} />
         <Route path="/applicant-email-registration" element={<ApplicantEmailRegistration />} />
@@ -48,6 +48,7 @@ function App() {
         <Route path="/companypage" element={<CompanyPage />} />
         <Route path="/edit-company-profile" element={<EditCompanyPage />} />
         <Route path="/applicantresume" element={<ApplicantResume />} />
+        <Route path="/tugmalandingpage" element={<TugmaLandingPage />} />
       </Routes>
     </Router>
   );
