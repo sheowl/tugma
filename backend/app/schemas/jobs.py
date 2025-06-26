@@ -22,8 +22,18 @@ class JobCreate(JobBase):
     company_id: int
     job_tags: Optional[List[int]] = []  # Array of tag IDs
 
-class JobUpdate(JobBase):
-    job_tags: Optional[List[int]] = None  # Array of tag IDs
+class JobUpdate(BaseModel):
+    job_title: Optional[str] = None
+    salary_min: Optional[int] = None
+    salary_max: Optional[int] = None
+    setting: Optional[str] = None
+    work_type: Optional[str] = None
+    description: Optional[str] = None
+    position_count: Optional[int] = None
+    required_category_id: Optional[int] = None
+    required_proficiency: Optional[int] = None
+    job_tags: Optional[List[int]] = None
+    # Remove date_added and created_at from updates - these should be immutable
 
 class JobOut(JobBase):
     job_id: int

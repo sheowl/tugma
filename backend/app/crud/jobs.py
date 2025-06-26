@@ -82,23 +82,57 @@ async def delete_job_tags(db: AsyncSession, job_id: int) -> bool:
         return False
 
 async def update_job(db: AsyncSession, job_id: int, job_update: JobUpdate) -> Optional[Job]:
-    result = await db.execute(select(Job).where(Job.job_id == job_id))
-    job = result.scalars().first()
-    
-    if job:
-        # Update job fields (excluding job_tags)
-        job_data = job_update.model_dump(exclude_unset=True, exclude={'job_tags'})
-        for field, value in job_data.items():
-            setattr(job, field, value)
+    """Update a job and its associated tags"""
+    try:
+        # Get the existing job first
+        stmt = select(Job).where(Job.job_id == job_id)
+        result = await db.execute(stmt)
+        job = result.scalar_one_or_none()
         
-        # Update job tags if provided
-        if job_update.job_tags is not None:
-            await update_job_tags(db, job_id, job_update.job_tags)
+        if not job:
+            return None
+        
+        # Prepare update data excluding immutable fields
+        update_data = job_update.model_dump(exclude_unset=True, exclude={'date_added', 'created_at'})
+        
+        # Extract job_tags from update data if present
+        job_tags = update_data.pop('job_tags', None)
+        
+        print(f"🔍 DEBUG: Updating job {job_id} with data: {update_data}")
+        print(f"🔍 DEBUG: Job tags to update: {job_tags}")
+        
+        # Update job fields (excluding date_added and created_at)
+        for field, value in update_data.items():
+            if hasattr(job, field):
+                setattr(job, field, value)
+        
+        # Handle job tags update if provided
+        if job_tags is not None:
+            print(f"🔍 DEBUG: Updating job tags for job {job_id}")
+            
+            # Delete existing job tags
+            delete_stmt = delete(JobTag).where(JobTag.job_id == job_id)
+            await db.execute(delete_stmt)
+            
+            # Add new job tags (all set to required=True by default)
+            for tag_id in job_tags:
+                job_tag = JobTag(
+                    job_id=job_id,
+                    tag_id=tag_id,
+                    is_required=True  # All tags are required by default
+                )
+                db.add(job_tag)
         
         await db.commit()
         await db.refresh(job)
-    
-    return job
+        
+        print(f"🔍 DEBUG: Job {job_id} updated successfully")
+        return job
+        
+    except Exception as e:
+        print(f"❌ DEBUG: Error updating job: {e}")
+        await db.rollback()
+        raise e
 
 async def delete_job(db: AsyncSession, job_id: int) -> bool:
     result = await db.execute(select(Job).where(Job.job_id == job_id))

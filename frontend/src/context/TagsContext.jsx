@@ -77,6 +77,9 @@ export function TagsProvider({ children }) {
         tagService.getAllTags()
       ]);
       
+      console.log('Loaded categories:', categories);
+      console.log('Loaded tags:', tags);
+      
       // Set categories
       dispatch({ type: TAGS_ACTIONS.SET_CATEGORIES, payload: categories });
       
@@ -107,16 +110,22 @@ export function TagsProvider({ children }) {
     }
   };
 
-  const getCategoryName = (categoryId) => {
-    return state.categoryMapping[categoryId] || "No Category";
+  // Helper functions
+  const getCategoryNameById = (categoryId) => {
+    return state.categoryMapping[categoryId] || "Unknown Category";
   };
 
   const getTagsByCategory = (categoryId) => {
     return state.tagMapping[categoryId] || {};
   };
 
-  const getTagName = (tagId) => {
-    return state.flatTagMapping[tagId] || "Unknown Tag";
+  const getTagNameById = (tagId) => {
+    return state.flatTagMapping[tagId] || `Tag ${tagId}`;
+  };
+
+  const getTagNamesByIds = (tagIds) => {
+    if (!Array.isArray(tagIds)) return [];
+    return tagIds.map(id => getTagNameById(id));
   };
 
   const getCategoryOptions = () => {
@@ -128,11 +137,25 @@ export function TagsProvider({ children }) {
       }));
   };
 
+  // Group tags by category for display
+  const getTagsByCategories = () => {
+    const grouped = {};
+    state.tags.forEach(tag => {
+      const categoryName = state.categoryMapping[tag.category_id] || 'Other';
+      if (!grouped[categoryName]) {
+        grouped[categoryName] = [];
+      }
+      grouped[categoryName].push(tag);
+    });
+    return grouped;
+  };
+
   const clearError = () => {
     dispatch({ type: TAGS_ACTIONS.CLEAR_ERROR });
   };
 
   const value = {
+    // State
     categories: state.categories,
     categoryMapping: state.categoryMapping,
     tags: state.tags,
@@ -140,10 +163,14 @@ export function TagsProvider({ children }) {
     flatTagMapping: state.flatTagMapping,
     loading: state.loading,
     error: state.error,
-    getCategoryName,
+    
+    // Helper functions
+    getCategoryNameById,
     getTagsByCategory,
-    getTagName,
+    getTagNameById,
+    getTagNamesByIds,
     getCategoryOptions,
+    getTagsByCategories,
     loadCategoriesAndTags,
     clearError
   };

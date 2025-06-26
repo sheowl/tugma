@@ -81,6 +81,8 @@ class CompanyService {
     }
 
     async updateJob(jobId, jobData) {
+        console.log('🔄 CompanyService: Updating job with data:', jobData);
+        
         const response = await AuthService.makeAuthenticatedRequest(
             `${API_BASE_URL}/v1/jobs/my-jobs/${jobId}`,
             {
@@ -88,6 +90,13 @@ class CompanyService {
                 body: JSON.stringify(jobData),
             }
         );
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('❌ Update job failed:', errorData);
+            throw new Error(`Failed to update job: ${response.status}`);
+        }
+        
         return response.json();
     }
 
@@ -104,6 +113,11 @@ class CompanyService {
             `${API_BASE_URL}/v1/jobs/my-jobs/${jobId}`,
             { method: "GET" }
         );
+        
+        if (!response.ok) {
+            throw new Error(`Failed to fetch job details: ${response.status}`);
+        }
+        
         return response.json();
     }
 

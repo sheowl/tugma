@@ -184,11 +184,17 @@ export const CompanyProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
+      console.log('🔄 CompanyContext: Updating job with ID:', jobId);
+      console.log('📝 CompanyContext: Job data:', jobData);
+      
       const updatedJob = await CompanyService.updateJob(jobId, jobData);
-      // Refresh jobs list
+      console.log('✅ CompanyContext: Job updated successfully:', updatedJob);
+      
+      // Refresh jobs list after update
       await getCompanyJobs();
       return updatedJob;
     } catch (err) {
+      console.error('❌ CompanyContext: Error updating job:', err);
       setError(err.message);
       throw err;
     } finally {

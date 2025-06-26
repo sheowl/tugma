@@ -1,10 +1,10 @@
-import React from "react";
-import TAGS from "./Tags";
+import React, { useState, useEffect } from "react";
+import { TagsDisplay } from "./DynamicTags";
 
 const TagPopup = ({ open, onClose, onTagSelect, onSave, currentTags = [] }) => {
-  const [selectedTags, setSelectedTags] = React.useState([]);
+  const [selectedTags, setSelectedTags] = useState([]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (open) {
       // Initialize with current tags when popup opens
       setSelectedTags([...currentTags]);
@@ -13,18 +13,18 @@ const TagPopup = ({ open, onClose, onTagSelect, onSave, currentTags = [] }) => {
     }
   }, [open, currentTags]);
 
-  const handleTagClick = (tag) => {
+  const handleTagClick = (tagId) => {
     let updated;
-    if (selectedTags.includes(tag)) {
-      updated = selectedTags.filter((t) => t !== tag);
+    if (selectedTags.includes(tagId)) {
+      updated = selectedTags.filter((id) => id !== tagId);
     } else {
-      updated = [...selectedTags, tag];
+      updated = [...selectedTags, tagId];
     }
     setSelectedTags(updated);
   };
 
   const handleCancel = () => {
-    setSelectedTags([]);
+    setSelectedTags([...currentTags]); // Reset to original tags
     onClose();
   };
 
@@ -38,14 +38,15 @@ const TagPopup = ({ open, onClose, onTagSelect, onSave, currentTags = [] }) => {
   const hasChanges = () => {
     // Check if selected tags are different from current tags
     if (selectedTags.length !== currentTags.length) return true;
-    return selectedTags.some(tag => !currentTags.includes(tag)) || 
-           currentTags.some(tag => !selectedTags.includes(tag));
+    return selectedTags.some(tagId => !currentTags.includes(tagId)) || 
+           currentTags.some(tagId => !selectedTags.includes(tagId));
   };
 
   if (!open) return null;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-      <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-3xl w-full max-h-[80vh] overflow-y-auto relative custom-scrollbar">
+      <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-4xl w-full max-h-[80vh] overflow-y-auto relative custom-scrollbar">
         <style jsx>{`
           .custom-scrollbar::-webkit-scrollbar {
             width: 8px;
@@ -66,10 +67,8 @@ const TagPopup = ({ open, onClose, onTagSelect, onSave, currentTags = [] }) => {
             background: #E66F24;
             background-clip: content-box;
           }
-          .custom-scrollbar::-webkit-scrollbar-corner {
-            background: transparent;
-          }
         `}</style>
+        
         <button
           className="absolute top-8 left-8 text-3xl text-gray-400 hover:text-black"
           onClick={onClose}
@@ -77,39 +76,19 @@ const TagPopup = ({ open, onClose, onTagSelect, onSave, currentTags = [] }) => {
         >
           <i className="bi bi-arrow-left text-[52px]" />
         </button>
+        
         <h2 className="text-2xl font-bold text-[#FF8032] mb-6 mt-8 text-center">
           Select Tags
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 ml-8 mr-8">
-          {Object.entries(TAGS).map(([category, tags]) => (
-            <div key={category}>
-              <h3 className="text-lg font-semibold text-[#FF8032] mb-3">
-                {category}
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className={`border border-[#FF8032] px-3 py-1 rounded-full text-[13px] font-semibold transition-colors cursor-pointer ${
-                      selectedTags.includes(tag)
-                        ? "bg-[#FF8032] text-white"
-                        : "bg-[#FFF6F0] text-[#FF8032] hover:bg-[#FFE0C2] hover:text-[#FF8032]"
-                    }`}
-                    onClick={() => handleTagClick(tag)}
-                  >
-                    {selectedTags.includes(tag) ? (
-                      <>
-                        <span className="font-bold">&times;</span> {tag}
-                      </>
-                    ) : (
-                      <>+ {tag}</>
-                    )}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ))}
+        
+        <div className="ml-8 mr-8">
+          <TagsDisplay 
+            selectedTags={selectedTags}
+            onTagSelect={handleTagClick}
+            showCategories={true}
+          />
         </div>
+        
         <div className="flex justify-end gap-4 mt-8 mb-8 text-[14px]">
           <button
             onClick={handleCancel}
