@@ -265,7 +265,8 @@ const JobEditPost = ({ open, onClose, onSave, jobData }) => {
             <label className="text-[16px] font-semibold text-[#3C3B3B] mb-1">
               Job Salary
             </label>            
-            <div className="flex items-center gap-2">              <CustomDropdown
+            <div className="flex items-center gap-2">              
+              <CustomDropdown
                 options={salaryOptions}
                 selected={form.salary}
                 onSelect={(value) => handleDropdownSelect('salary', value)}
@@ -281,7 +282,8 @@ const JobEditPost = ({ open, onClose, onSave, jobData }) => {
           <div className="flex flex-col gap-2">
             <label className="font-semibold text-[16px] text-[#3C3B3B]">
               Job Modality
-            </label>              <CustomDropdown
+            </label>              
+            <CustomDropdown
               options={modalityOptions}
               selected={form.modality}
               onSelect={(value) => handleDropdownSelect('modality', value)}
@@ -295,7 +297,8 @@ const JobEditPost = ({ open, onClose, onSave, jobData }) => {
           <div className="flex flex-col gap-2">
             <label className="font-semibold text-[16px] text-[#3C3B3B]">
               Job Work Type
-            </label>              <CustomDropdown
+            </label>              
+            <CustomDropdown
               options={workTypeOptions}
               selected={form.workType}
               onSelect={(value) => handleDropdownSelect('workType', value)}
@@ -321,7 +324,8 @@ const JobEditPost = ({ open, onClose, onSave, jobData }) => {
           <div className="flex flex-col gap-2">
             <label className="font-semibold text-[16px] text-[#3C3B3B]">
               Available positions
-            </label>            <CustomDropdown
+            </label>            
+            <CustomDropdown
               options={positionOptions}
               selected={form.availablePositions}
               onSelect={(value) => handleDropdownSelect('availablePositions', value)}

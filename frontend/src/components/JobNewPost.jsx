@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import TAGS from "./Tags";
+import TagPopup from "./TagPopup";
 
 // Dropdown options
 const modalityOptions = [
@@ -28,23 +29,23 @@ const salaryOptions = [
   { label: "₱50,001+", value: "50k-up" },
 ];
 
-const categoryOptions = [
-  { label: <span className="text-[#FF8032] font-bold">Web Development</span>, value: "web-development" },
-  { label: <span className="text-[#FF8032] font-bold">Programming Languages</span>, value: "programming-languages" },
-  { label: <span className="text-[#FF8032] font-bold">AI/ML/Data Science</span>, value: "ai-ml-data-science" },
-  { label: <span className="text-[#FF8032] font-bold">Databases</span>, value: "databases" },
-  { label: <span className="text-[#FF8032] font-bold">DevOps</span>, value: "devops" },
-  { label: <span className="text-[#FF8032] font-bold">Cybersecurity</span>, value: "cybersecurity" },
-  { label: <span className="text-[#FF8032] font-bold">Mobile Development</span>, value: "mobile-development" },
-  { label: <span className="text-[#FF8032] font-bold">Soft Skills</span>, value: "soft-skills" },
-];
-
 const proficiencyOptions = [
   { label: <span className="text-[#FF8032]">Level 1: <span className="font-bold">Novice</span></span>, value: "novice" },
   { label: <span className="text-[#FF8032]">Level 2: <span className="font-bold">Advanced Beginner</span></span>, value: "advanced-beginner" },
   { label: <span className="text-[#FF8032]">Level 3: <span className="font-bold">Competent</span></span>, value: "competent" },
   { label: <span className="text-[#FF8032]">Level 4: <span className="font-bold">Proficient</span></span>, value: "proficient" },
   { label: <span className="text-[#FF8032]">Level 5: <span className="font-bold">Expert</span></span>, value: "expert" },
+];
+
+const categoryOptions = [
+  { label: <span className="text-[#FF8032] font-bold">Web Development</span>, value: "Web Development" },
+  { label: <span className="text-[#FF8032] font-bold">Programming Languages</span>, value: "Programming Languages" },
+  { label: <span className="text-[#FF8032] font-bold">AI/ML/Data Science</span>, value: "AI/ML/Data Science" },
+  { label: <span className="text-[#FF8032] font-bold">Databases</span>, value: "Databases" },
+  { label: <span className="text-[#FF8032] font-bold">DevOps</span>, value: "DevOps" },
+  { label: <span className="text-[#FF8032] font-bold">Cybersecurity</span>, value: "Cybersecurity" },
+  { label: <span className="text-[#FF8032] font-bold">Mobile Development</span>, value: "Mobile Development" },
+  { label: <span className="text-[#FF8032] font-bold">Soft Skills</span>, value: "Soft Skills" },
 ];
 
 // Reusable Dropdown
@@ -73,7 +74,7 @@ const CustomDropdown = ({
   return (
     <div className="relative">
       <button
-        className={`h-8 px-6 py-2 border-2 border-[#FF8032] focus:border-[#FF8032] hover:bg-[#FF8032]/10 text-[#FF8032] rounded-full text-[14px] font-bold bg-white flex items-center gap-2 transition-colors focus:outline-none focus:ring-0 ${dropdownKey === 'category' || dropdownKey === 'proficiency' ? 'w-[220px] justify-center' : ''}`}
+        className={`h-8 px-6 py-2 border-2 border-[#FF8032] focus:border-[#FF8032] hover:bg-[#FF8032]/10 text-[#FF8032] rounded-[10px] text-[14px] font-bold bg-white flex items-center gap-2 transition-colors focus:outline-none focus:ring-0 w-[219px] justify-center whitespace-nowrap`}
         onClick={handleActionClick}
         type="button"
       >
@@ -81,7 +82,7 @@ const CustomDropdown = ({
         {!hideCaret && <i className="bi bi-caret-down-fill text-xs" />}
       </button>
       {isOpen && (
-        <div className={`absolute left-0 mt-2 ${dropdownKey === 'category' || dropdownKey === 'proficiency' ? 'w-80' : 'w-44'} bg-white border border-gray-200 rounded shadow z-40 max-h-60 overflow-y-auto`}>
+        <div className="absolute left-0 mt-2 w-44 bg-white border border-gray-200 rounded shadow z-40 max-h-60 overflow-y-auto">
           {options.map((option) => (
             <div
               key={option.value}
@@ -110,7 +111,6 @@ const JobNewPost = ({ open, onClose, onSave }) => {
     description: "",
     positions: "",
     tags: [],
-    category: "",
     proficiency: ""
   });
 
@@ -120,9 +120,10 @@ const JobNewPost = ({ open, onClose, onSave }) => {
   const [selectedWorkType, setSelectedWorkType] = useState(null);
   const [availablePositions, setAvailablePositions] = useState(null);
   const [selectedSalary, setSelectedSalary] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedProficiency, setSelectedProficiency] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const [openDropdown, setOpenDropdown] = useState(null); // shared state
+  const [showTagPopup, setShowTagPopup] = useState(false);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -151,7 +152,6 @@ const JobNewPost = ({ open, onClose, onSave }) => {
       availablePositions: availablePositions,
       tags: form.tags,
       applicantCount: form.applicantCount || 0,
-      category: selectedCategory,
       proficiency: selectedProficiency
     };
     onSave(jobData);
@@ -165,21 +165,16 @@ const JobNewPost = ({ open, onClose, onSave }) => {
       description: "",
       positions: "",
       tags: [],
-      category: "",
       proficiency: ""
     });
     setSelectedModality(null);
     setSelectedWorkType(null);
     setAvailablePositions(null);
     setSelectedSalary(null);
-    setSelectedCategory(null);
     setSelectedProficiency(null);
     setShowTagInput(false);
   };
   
-  // Get tags for the selected category
-  const availableTags = selectedCategory ? TAGS[categoryOptions.find(opt => opt.value === selectedCategory)?.label.props.children] || [] : [];
-
   return (
     <>
       <div
@@ -317,13 +312,13 @@ const JobNewPost = ({ open, onClose, onSave }) => {
           </div>
 
           {/* Category and Proficiency Row */}
-          <div className="flex flex-row gap-8">
+            <div className="flex flex-row gap-8">
             <div className="flex flex-col gap-2 flex-1">
               <label className="font-semibold text-[16px] text-[#3C3B3B]">Required Category</label>
               <CustomDropdown
                 options={categoryOptions}
-                selected={selectedCategory}
-                onSelect={setSelectedCategory}
+                selected={form.category}
+                onSelect={val => setForm({ ...form, category: val })}
                 placeholder="Tag +"
                 openDropdown={openDropdown}
                 setOpenDropdown={setOpenDropdown}
@@ -345,60 +340,43 @@ const JobNewPost = ({ open, onClose, onSave }) => {
               />
             </div>
           </div>
-          
           <div className="flex flex-col gap-2">
             <label className="font-semibold text-[16px] text-[#3C3B3B]">Tags</label>
             <div className="flex flex-wrap gap-2 mb-2">
-              {/* Show tags for selected category */}
-              {availableTags.length > 0 && availableTags.map((tag) => {
-                const isSelected = form.tags.includes(tag);
-                return (
-                  <button
-                    key={tag}
-                    type="button"
-                    className={`px-3 py-1 rounded-full text-[12px] font-semibold border-2 transition-colors flex items-center gap-1 ${
-                      isSelected
-                        ? 'bg-[#FF8032] text-white border-[#FF8032]'
-                        : 'bg-white text-[#FF8032] border-[#FF8032] hover:bg-[#FF8032]/10'
-                    }`}
-                    onClick={() => {
-                      if (isSelected) {
-                        setForm({ ...form, tags: form.tags.filter((t) => t !== tag) });
-                      } else {
-                        setForm({ ...form, tags: [...form.tags, tag] });
-                      }
-                    }}
-                  >
-                    + {tag}
-                  </button>
-                );
-              })}
-              {showTagInput ? (
-                <input
-                  className="border-2 focus:border-[#FF8032] focus:outline-none focus:ring-0 rounded px-2 py-1 text-[12px] w-24"
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onBlur={() => setShowTagInput(false)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleTagAdd();
-                      setShowTagInput(false);
-                    }
-                  }}
-                  autoFocus
-                />
-              ) : (
-                <button
-                  type="button"
-                  className="w-[53px] px-2 py-1 bg-[#FF8032] text-white rounded-full text-[12px] font-semibold hover:bg-[#E66F24] transition"
-                  onClick={() => setShowTagInput(true)}
+              {/* Show selected tags */}
+              {form.tags.length > 0 && form.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="px-3 py-1 rounded-full text-[12px] font-semibold bg-[#FF8032] text-white border-[#FF8032] border-2 flex items-center gap-1"
                 >
-                  Tag +
-                </button>
-              )}
+                  {tag}
+                  <button
+                    type="button"
+                    className="ml-1 text-white hover:text-[#E66F24]"
+                    onClick={() => setForm({ ...form, tags: form.tags.filter((t) => t !== tag) })}
+                  >
+                    &times;
+                  </button>
+                </span>
+              ))}
+              <button
+                type="button"
+                className="w-[53px] px-2 py-1 bg-transparent text-[#FF8032] border-2 border-[#FF8032] rounded-xl text-[12px] font-semibold hover:bg-[#FF8032] hover:text-white transition"
+                onClick={() => setShowTagPopup(true)}
+              >
+                Tag +
+              </button>
             </div>
-          </div>  
+          </div>
+          <TagPopup
+            open={showTagPopup}
+            onClose={() => setShowTagPopup(false)}
+            onTagSelect={(tag) => {
+              if (!form.tags.includes(tag)) {
+                setForm({ ...form, tags: [...form.tags, tag] });
+              }
+            }}
+          />
 
           <div className="flex justify-center mt-4">
             <button
