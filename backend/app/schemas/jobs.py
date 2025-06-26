@@ -1,4 +1,4 @@
-﻿# schemas/job.py
+﻿# schemas/jobs.py
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import date, datetime
@@ -20,14 +20,16 @@ class JobBase(BaseModel):
 
 class JobCreate(JobBase):
     company_id: int
+    job_tags: Optional[List[int]] = []  # Array of tag IDs
 
 class JobUpdate(JobBase):
-    pass
+    job_tags: Optional[List[int]] = None  # Array of tag IDs
 
 class JobOut(JobBase):
     job_id: int
     company_id: int
-    applicant_count: Optional[int] = 0  # Add this field
+    applicant_count: Optional[int] = 0
+    job_tags: List[int] = []  # Simple array of tag IDs
 
     model_config = {"from_attributes": True}
 
@@ -35,7 +37,3 @@ class CompanyJobsResponse(BaseModel):
     jobs: List[JobOut]
     total: int
     company_info: dict
-
-class Config:
-    from_attributes = True  # For Pydantic v2
-
