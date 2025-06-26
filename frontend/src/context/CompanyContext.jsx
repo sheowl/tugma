@@ -117,7 +117,7 @@ export const CompanyProvider = ({ children }) => {
     }
   };
 
-  const getRecentApplicants = async (limit = 3) => {
+  const getRecentApplicants = async () => {  // Remove limit parameter
     if (!isEmployer()) {
       throw new Error('Only employers can access recent applicants');
     }
@@ -125,9 +125,9 @@ export const CompanyProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
-      const applicants = await CompanyService.getRecentApplicants(limit);
-      setRecentApplicants(applicants);
-      return applicants;
+      const response = await CompanyService.getRecentApplicants(); // No limit passed
+      setRecentApplicants(response);
+      return response;
     } catch (err) {
       setError(err.message);
       throw err;

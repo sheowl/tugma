@@ -6,7 +6,9 @@ import {
   DocumentTextIcon, 
   CalendarDaysIcon, 
   StarIcon, 
-  EyeIcon 
+  EyeIcon,
+  ChevronUpIcon,
+  ChevronDownIcon
 } from "@heroicons/react/24/outline";
 import { useAuth } from "../context/AuthContext";
 import { useCompany } from "../context/CompanyContext";
@@ -26,9 +28,13 @@ const EmployerHomePage = () => {
     company_size: "",
     location: ""
   });
-  const [recentApplicants, setRecentApplicants] = useState([]);
+  const [allApplicants, setAllApplicants] = useState([]); // Store all applicants
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [showAllApplicants, setShowAllApplicants] = useState(false); // New state for expanded view
+
+  // Dashboard limit for recent applicants
+  const DASHBOARD_LIMIT = 3;
 
   // Get methods from AuthContext (authentication only)
   const { 
@@ -81,10 +87,11 @@ const EmployerHomePage = () => {
       setError("");
       clearError(); // Clear any previous company errors
       
-      // Load dashboard stats, recent applicants, and company profile in parallel
+      // Load dashboard stats, all applicants, and company profile in parallel
+      // Note: getRecentApplicants now returns ALL applicants from backend
       const [statsResponse, applicantsResponse, profileResponse] = await Promise.all([
         getDashboardStats(),
-        getRecentApplicants(3),
+        getRecentApplicants(), // No limit parameter - backend returns all
         getCompanyProfile()
       ]);
 
@@ -103,8 +110,8 @@ const EmployerHomePage = () => {
         location: companyData.location || ""
       });
 
-      // Update recent applicants
-      setRecentApplicants(applicantsResponse.recent_applicants || applicantsResponse || []);
+      // Store ALL applicants in state
+      setAllApplicants(applicantsResponse.recent_applicants || applicantsResponse || []);
 
     } catch (error) {
       console.error("Error loading dashboard data:", error);
@@ -112,6 +119,11 @@ const EmployerHomePage = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Get applicants based on whether showing all or limited view
+  const getApplicantsToShow = () => {
+    return showAllApplicants ? allApplicants : allApplicants.slice(0, DASHBOARD_LIMIT);
   };
 
   const getMatchColor = (percentage) => {
@@ -142,8 +154,8 @@ const EmployerHomePage = () => {
     return sizeMapping[companySize] || `${companySize} Company`;
   };
 
-  const handleViewAllApplicants = () => {
-    navigate('/employerapplicants');
+  const handleToggleViewAll = () => {
+    setShowAllApplicants(!showAllApplicants);
   };
 
   const handleViewProfile = (applicantId) => {
@@ -157,6 +169,9 @@ const EmployerHomePage = () => {
     clearError();
     loadDashboardData();
   };
+
+  // Get the applicants to display (limited or all based on state)
+  const applicantsToShow = getApplicantsToShow();
 
   // Loading state (combine both loading states)
   if (isLoading || companyLoading) {
@@ -282,15 +297,27 @@ const EmployerHomePage = () => {
               <StarIcon className="text-[#FF8032] w-[25px] h-[25px]" strokeWidth={2} />
               <h2 className="text-[24px] font-bold text-[#3C3B3B]">Recent Applicants</h2>
             </div>
-            <button 
-              onClick={handleViewAllApplicants}
-              className="text-[#FF8032] hover:text-[#e6722d] font-semibold text-[16px] hover:underline transition-colors"
-            >
-              View All
-            </button>
+            {allApplicants.length > DASHBOARD_LIMIT && (
+              <button 
+                onClick={handleToggleViewAll}
+                className="flex items-center gap-2 text-[#FF8032] hover:text-[#e6722d] font-semibold text-[16px] hover:underline transition-colors"
+              >
+                {showAllApplicants ? (
+                  <>
+                    Show Less
+                    <ChevronUpIcon className="w-4 h-4" />
+                  </>
+                ) : (
+                  <>
+                    View All
+                    <ChevronDownIcon className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            )}
           </div>
 
-          {recentApplicants.length === 0 ? (
+          {applicantsToShow.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-[#6B7280] mb-4">
                 <BriefcaseIcon className="w-16 h-16 mx-auto mb-4 opacity-50" />
@@ -308,7 +335,7 @@ const EmployerHomePage = () => {
             </div>
           ) : (
             <div className="space-y-0">
-              {recentApplicants.map((applicant, index) => (
+              {applicantsToShow.map((applicant, index) => (
                 <div key={applicant.id} className="flex items-start gap-4 relative">
                   
                   {/* Timeline */}
@@ -316,7 +343,7 @@ const EmployerHomePage = () => {
                     <div className={`w-[25px] h-[25px] rounded-full ${
                       index === 0 ? 'bg-[#FF8032]' : 'bg-white border-2 border-[#FF8032]'
                     } mt-6 relative z-10`}></div>
-                    {index < recentApplicants.length - 1 && (
+                    {index < applicantsToShow.length - 1 && (
                       <div className="w-0.5 bg-[#FF8032] absolute top-[43px] bottom-[-102px] left-1/2 transform -translate-x-1/2"></div>
                     )}
                   </div>
