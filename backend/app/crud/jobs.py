@@ -179,3 +179,42 @@ async def get_applicants_by_job(db: AsyncSession, job_id: int):
     )
     
     return result.fetchall()
+
+# Add these functions to your CRUD file
+
+async def get_applicant_tags(db: AsyncSession, applicant_id: int) -> List[int]:
+    """Get tags for a specific applicant (returns array of tag IDs)"""
+    try:
+        from app.models.applicants import ApplicantTag  # Adjust import based on your model location
+        
+        stmt = select(ApplicantTag.tag_id).where(ApplicantTag.applicant_id == applicant_id)
+        result = await db.execute(stmt)
+        tag_ids = result.scalars().all()
+        
+        print(f"🔍 DEBUG: Found {len(tag_ids)} tags for applicant {applicant_id}")
+        return list(tag_ids)
+        
+    except Exception as e:
+        print(f"❌ DEBUG: Error getting applicant tags: {e}")
+        return []
+
+async def get_match_score(db: AsyncSession, applicant_id: int, job_id: int) -> Optional[float]:
+    """Get match score between applicant and job"""
+    try:
+        # Check if you have a match_scores table
+        from app.models.applicants import MatchScore  # Adjust import based on your model
+        
+        stmt = select(MatchScore.score).where(
+            MatchScore.applicant_id == applicant_id,
+            MatchScore.job_id == job_id
+        )
+        result = await db.execute(stmt)
+        score = result.scalar_one_or_none()
+        
+        print(f"🔍 DEBUG: Match score for applicant {applicant_id} and job {job_id}: {score}")
+        return score
+        
+    except Exception as e:
+        print(f"❌ DEBUG: Error getting match score: {e}")
+        # If no match_scores table exists, you could calculate on the fly or return 0
+        return None

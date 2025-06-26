@@ -364,9 +364,15 @@ async def get_my_job_applicants(
         
         print(f"🔍 DEBUG: Found {len(applicants)} applicants for job {job_id}")
         
-        # Format applicant data
+        # Format applicant data with tags and match scores
         applicants_data = []
         for applicant in applicants:
+            # Get applicant tags (array of tag IDs)
+            applicant_tags = await crud.get_applicant_tags(db, applicant.applicant_id)
+            
+            # Get or calculate match score
+            match_score = await crud.get_match_score(db, applicant.applicant_id, job_id)
+            
             applicant_info = {
                 "applicant_id": applicant.applicant_id,
                 "job_id": applicant.job_id,
@@ -375,7 +381,9 @@ async def get_my_job_applicants(
                 "phone_number": applicant.contact_number,
                 "location": applicant.current_address,
                 "application_created_at": applicant.application_created_at,
-                "status": applicant.status if applicant.status else "pending"
+                "status": applicant.status if applicant.status else "pending",
+                "applicant_tags": applicant_tags,  # Array of tag IDs
+                "match_score": match_score if match_score is not None else 0  # Default to 0 if null
             }
             applicants_data.append(applicant_info)
         
