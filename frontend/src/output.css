@@ -727,7 +727,6 @@ video {
   top: 2rem;
 }
 
-<<<<<<< frontend-employer
 .top-\[120px\]{
   top: 120px;
 }
@@ -736,8 +735,6 @@ video {
   top: 20px;
 }
 
-=======
->>>>>>> frontend
 .top-\[43px\]{
   top: 43px;
 }
@@ -778,17 +775,16 @@ video {
   z-index: 100;
 }
 
-<<<<<<< frontend-employer
 .z-\[200\]{
   z-index: 200;
 }
 
 .z-\[300\]{
   z-index: 300;
-=======
+}
+
 .z-\[999\]{
   z-index: 999;
->>>>>>> frontend
 }
 
 .m-9{
@@ -839,13 +835,11 @@ video {
   margin-top: -0.5rem;
 }
 
-<<<<<<< frontend-employer
 .-mt-4{
   margin-top: -1rem;
-=======
+}
 .-mt-6{
   margin-top: -1.5rem;
->>>>>>> frontend
 }
 
 .-mt-\[10\%\]{
@@ -1180,7 +1174,6 @@ video {
   height: 288px;
 }
 
-<<<<<<< frontend-employer
 .h-\[289px\]{
   height: 289px;
 }
@@ -1191,10 +1184,10 @@ video {
 
 .h-\[300px\]{
   height: 300px;
-=======
+}
+
 .h-\[310px\]{
   height: 310px;
->>>>>>> frontend
 }
 
 .h-\[30px\]{
@@ -1305,13 +1298,12 @@ video {
   max-height: 800px;
 }
 
-<<<<<<< frontend-employer
 .max-h-\[80vh\]{
   max-height: 80vh;
-=======
+}
+
 .min-h-\[110px\]{
   min-height: 110px;
->>>>>>> frontend
 }
 
 .min-h-\[128px\]{
@@ -1614,21 +1606,20 @@ video {
   width: 68px;
 }
 
-<<<<<<< frontend-employer
 .w-\[72px\]{
   width: 72px;
 }
 
 .w-\[77px\]{
   width: 77px;
-=======
+}
+
 .w-\[6px\]{
   width: 6px;
 }
 
 .w-\[90\%\]{
   width: 90%;
->>>>>>> frontend
 }
 
 .w-fit{
@@ -1640,17 +1631,16 @@ video {
   width: 100%;
 }
 
-<<<<<<< frontend-employer
 .min-w-\[160px\]{
   min-width: 160px;
 }
 
 .min-w-\[536px\]{
   min-width: 536px;
-=======
+}
+
 .min-w-\[218px\]{
   min-width: 218px;
->>>>>>> frontend
 }
 
 .min-w-\[96px\]{
@@ -2427,8 +2417,6 @@ video {
   background-color: rgb(0 0 0 / var(--tw-bg-opacity, 1));
 }
 
-<<<<<<< frontend-employer
-=======
 .bg-black\/30{
   background-color: rgb(0 0 0 / 0.3);
 }
@@ -2438,7 +2426,6 @@ video {
   background-color: rgb(229 231 235 / var(--tw-bg-opacity, 1));
 }
 
->>>>>>> frontend
 .bg-gray-300{
   --tw-bg-opacity: 1;
   background-color: rgb(209 213 219 / var(--tw-bg-opacity, 1));
@@ -2656,8 +2643,6 @@ video {
   padding-bottom: 0.75rem;
 }
 
-<<<<<<< frontend-employer
-=======
 .py-4{
   padding-top: 1rem;
   padding-bottom: 1rem;
@@ -2668,7 +2653,6 @@ video {
   padding-bottom: 1.5rem;
 }
 
->>>>>>> frontend
 .py-8{
   padding-top: 2rem;
   padding-bottom: 2rem;
@@ -2973,13 +2957,12 @@ video {
   font-weight: 600;
 }
 
-<<<<<<< frontend-employer
 .lowercase{
   text-transform: lowercase;
-=======
+}
+
 .capitalize{
   text-transform: capitalize;
->>>>>>> frontend
 }
 
 .italic{
@@ -3121,9 +3104,9 @@ video {
   color: rgb(255 135 63 / var(--tw-text-opacity, 1));
 }
 
-.text-\[\$\(color\)\]{
+/* .text-\[\$\(color\)\]{
   color: $(color);
-}
+} */
 
 .text-\[24x\]{
   color: 24x;
@@ -3159,14 +3142,13 @@ video {
   color: rgb(31 41 55 / var(--tw-text-opacity, 1));
 }
 
-<<<<<<< frontend-employer
 .text-inherit{
   color: inherit;
-=======
+}
+
 .text-gray-900{
   --tw-text-opacity: 1;
   color: rgb(17 24 39 / var(--tw-text-opacity, 1));
->>>>>>> frontend
 }
 
 .text-neutral-500{
@@ -3487,15 +3469,14 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   border-width: 2px;
 }
 
-<<<<<<< frontend-employer
 .hover\:border-\[\#FF8032\]:hover{
   --tw-border-opacity: 1;
   border-color: rgb(255 128 50 / var(--tw-border-opacity, 1));
-=======
+}
+
 .hover\:border-\[\#6B7280\]:hover{
   --tw-border-opacity: 1;
   border-color: rgb(107 114 128 / var(--tw-border-opacity, 1));
->>>>>>> frontend
 }
 
 .hover\:bg-\[\#16367D\]:hover{
@@ -3551,16 +3532,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   background-color: rgb(255 128 50 / 0.1);
 }
 
-<<<<<<< frontend-employer
-.hover\:bg-\[\#FFE0C2\]:hover{
-=======
 .hover\:bg-\[\#dce6f9\]:hover{
   --tw-bg-opacity: 1;
   background-color: rgb(220 230 249 / var(--tw-bg-opacity, 1));
 }
 
 .hover\:bg-\[\#e6722d\]:hover{
->>>>>>> frontend
   --tw-bg-opacity: 1;
   background-color: rgb(255 224 194 / var(--tw-bg-opacity, 1));
 }
@@ -3590,15 +3567,14 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   background-color: rgb(249 250 251 / var(--tw-bg-opacity, 1));
 }
 
-<<<<<<< frontend-employer
 .hover\:bg-gray-800:hover{
   --tw-bg-opacity: 1;
   background-color: rgb(31 41 55 / var(--tw-bg-opacity, 1));
-=======
+}
+
 .hover\:bg-red-100:hover{
   --tw-bg-opacity: 1;
   background-color: rgb(254 226 226 / var(--tw-bg-opacity, 1));
->>>>>>> frontend
 }
 
 .hover\:text-\[\#16367D\]:hover{
@@ -3606,15 +3582,14 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   color: rgb(22 54 125 / var(--tw-text-opacity, 1));
 }
 
-<<<<<<< frontend-employer
 .hover\:text-\[\#E66F24\]:hover{
   --tw-text-opacity: 1;
   color: rgb(230 111 36 / var(--tw-text-opacity, 1));
-=======
+}
+
 .hover\:text-\[\#2A4D9B\]:hover{
   --tw-text-opacity: 1;
   color: rgb(42 77 155 / var(--tw-text-opacity, 1));
->>>>>>> frontend
 }
 
 .hover\:text-\[\#FF8032\]:hover{
