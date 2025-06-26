@@ -1,11 +1,11 @@
-import React from 'react';
 import ApplicantSideBar from '../components/ApplicantSideBar';
 import ApplicantTracker from '../components/ApplicantTracker';
 import SearchBar from '../components/SearchBar';
-import ApplicantDashLogo from '../assets/ApplicantDashLogo.svg';
-import { useState, useEffect } from 'react';
 import Dropdown from '../components/Dropdown';
-import ApplicantNotification from '../components/ApplicantNotification';
+import ApplicantHeader from '../components/ApplicantHeader';
+import ApplicantTrackerDrawer from '../components/ApplicantTrackerDrawer';
+import { useState, useEffect } from 'react';
+
 
 function ApplicantApplications() {
     const firstName = "Julianna Leila"; // Replace with actual user data
@@ -13,15 +13,9 @@ function ApplicantApplications() {
     const [sortedData, setSortedData] = useState([]); // State for sorted job data
     const [selectedModality, setSelectedModality] = useState(null); // State for modality filter
     const [selectedWorkType, setSelectedWorkType] = useState(null); // State for work type filter
-    const [showNotifications, setShowNotifications] = useState(false);
+    const [drawerOpen, setDrawerOpen] = useState(false);
+    const [selectedJob, setSelectedJob] = useState(null);
 
-
-    const sampleData = [
-  { title: "Some Job Here", company: "Company Name Here", status: "Accepted", timeAgo: "3 hours ago" },
-  { title: "Junior Web Developer", company: "Kim Satrjt PH", status: "Rejected", timeAgo: "8 hours ago" },
-  { title: "Job Title", company: "Company Name", status: "Waitlisted", timeAgo: "3 hours ago" },
-  
-];
     // Example job applications data
     const jobApplications = [
         {
@@ -36,35 +30,7 @@ function ApplicantApplications() {
             salaryRangeHigh: 80,
             salaryFrequency: "Monthly",
             companyDescription: "Tech Innovations Inc. is a leading software development company focused on delivering innovative solutions to our clients. We value creativity, collaboration, and continuous learning.",
-            status: "rejected-after-interview", // or "interview", "accepted", etc.
-        },
-        {
-            jobTitle: "Product Manager",
-            companyName: "Innovatech Solutions",
-            location: "New York, NY",
-            matchScore: 90,
-            employmentType: "Full-time",
-            workSetup: "Remote",
-            description: "Lead product development and strategy for innovative solutions.",
-            salaryRangeLow: 50,
-            salaryRangeHigh: 100,
-            salaryFrequency: "Monthly",
-            companyDescription: "Innovatech Solutions is a global leader in tech innovation, empowering businesses worldwide.",
             status: "interview",
-        },
-        {
-            jobTitle: "UI/UX Designer",
-            companyName: "Creative Minds Studio",
-            location: "Austin, TX",
-            matchScore: 75,
-            employmentType: "Contract",
-            workSetup: "On-site",
-            description: "Design user-friendly interfaces for our cutting-edge applications.",
-            salaryRangeLow: 30,
-            salaryRangeHigh: 60,
-            salaryFrequency: "Monthly",
-            companyDescription: "Creative Minds Studio specializes in creating visually stunning and functional designs.",
-            status: "applied",
         },
     ];
 
@@ -121,54 +87,13 @@ function ApplicantApplications() {
             <div className="flex-1 h-screen bg-white rounded-tl-[40px] overflow-y-auto p-6 shadow-md">
 
                 {/* Header */}
-                <div className="flex justify-between w-full px-9 mb-0">
-                    <div className="flex items-center gap-[15px] m-9">
-                        <img
-                            src={ApplicantDashLogo}
-                            alt="Tugma Logo"
-                            className="max-w-[136px] h-auto"
-                        />
-                        <div>
-                            <div className="font-[Montserrat] text-4xl font-bold text-[#2A4D9B]">
-                                Track your applications
-                            </div>
-                            <div className="font-semibold italic text-orange-400 text-xl">
-                                Ready to make meets end?
-                            </div>
-                        </div>
-                    </div>
+                <ApplicantHeader
+                    title="Track Your Applications"
+                    subtitle="Ready to make meets end?"
+                    firstName={firstName}
+                    showProfile={true}
+                />
 
-                    <div className="flex items-center gap-4">
-                        <i className="bi bi-person-circle text-4xl text-gray-400"></i>
-                        <div className="leading-tight pl-3">
-                            <div className="font-semibold text-black text-sm">{firstName}</div>
-                        </div>
-                       <i
-                        className="bi bi-bell text-2xl text-[#2A4D9B] ml-6 cursor-pointer position-relative"
-                        onClick={() => setShowNotifications((prev) => !prev)}
-                        ></i>
-
-                    </div>
-                </div>
-
-                {showNotifications && (
-                    <div className="absolute top-[120px] right-[50px] z-50">
-                        <ApplicantNotification
-                        open={showNotifications}
-                        onClose={() => setShowNotifications(false)}
-                        notification={sampleData}
-                        onViewDetails={(notif) => {
-                            console.log("View notif details:", notif);
-                            setShowNotifications(false);
-                        }}
-                        />
-                    </div>
-                    )}
-
-                {/* Search Bar and Dropdowns */}
-                <div className="px-[112px] mt-0 mb-5 flex justify-between items-center">
-                    <SearchBar onSearch={(query) => console.log("Applicant Search:", query)} />
-                </div>
 
                 {/* Job Count */}
                 <div className="pl-[112px] pr-[118px]">
@@ -264,8 +189,7 @@ function ApplicantApplications() {
                 </div>
 
                 {/* Job Applications */}
-                <div className="pl-[112px] pr-[118px]">
-                      <div className="grid grid-cols-2 gap-10 mt-10 mb-10">
+                <div className="pl-[112px] pr-[118px] mt-10 mb-10 flex flex-wrap gap-[33px] justify-center">
                     {sortedData.map((job, index) => (
                         <div key={index} className="flex items-center justify-between mb-2">
                             <ApplicantTracker
@@ -280,13 +204,25 @@ function ApplicantApplications() {
                                 salaryRangeHigh={job.salaryRangeHigh}
                                 salaryFrequency={job.salaryFrequency}
                                 companyDescription={job.companyDescription}
-                                onViewDetails={() => alert(`View Details for ${job.jobTitle}`)}
+                                onViewDetails={() => {
+                                    setSelectedJob(job);
+                                    setDrawerOpen(true);
+                                }}
                                 status={job.status}
                             />
                         </div>
                     ))}
-                </div>
-                </div>
+                    </div>
+
+                <ApplicantTrackerDrawer
+                    open={drawerOpen}
+                    onClose={() => setDrawerOpen(false)}
+                    onViewDetails={(job) => {
+                        setSelectedJob(job);
+                        setDrawerOpen(true);
+                    }}
+                    job={selectedJob}
+                />
             </div>
         </div>
     );

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import ApplicantSideBar from '../components/ApplicantSideBar';
 import Card from '../components/Card';
-import ApplicantDashLogo from '../assets/ApplicantDashLogo.svg';
 import JobDetailsDrawer from '../components/JobDetailsDrawer';
 import SearchBar from '../components/SearchBar';
 import Dropdown from '../components/Dropdown';
-import ApplicantNotification from '../components/ApplicantNotification';
+import ApplicantHeader from '../components/ApplicantHeader';
+
 
 function ApplicantBrowseJobs() {
     const [drawerOpen, setDrawerOpen] = useState(false);
@@ -15,15 +15,10 @@ function ApplicantBrowseJobs() {
     const [selectedModality, setSelectedModality] = useState(null); // State for modality filter
     const [selectedWorkType, setSelectedWorkType] = useState(null); // State for work type filter
     const [firstName, setFirstName] = useState("User"); // State for user's first name
-    const [showNotifications, setShowNotifications] = useState(false);
-    
 
-     const sampleData = [
-  { title: "Some Job Here", company: "Company Name Here", status: "Accepted", timeAgo: "3 hours ago" },
-  { title: "Junior Web Developer", company: "Kim Satrjt PH", status: "Rejected", timeAgo: "8 hours ago" },
-  { title: "Job Title", company: "Company Name", status: "Waitlisted", timeAgo: "3 hours ago" },
-  
-];
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+
 
     // Simulate fetching first name from a database
     useEffect(() => {
@@ -162,6 +157,25 @@ function ApplicantBrowseJobs() {
         { label: "Descending Match Score", value: "descending" },
     ];
 
+    const handleApplyClick = () => {
+    setShowConfirmModal(true);
+    };
+
+    const handleProceed = () => {
+  setShowConfirmModal(false);
+  setShowSuccessModal(true);
+};
+
+const handleCancel = () => {
+  setShowConfirmModal(false);
+};
+
+const handleCloseSuccess = () => {
+  setShowSuccessModal(false);
+};
+
+
+
     // Sort and filter the data whenever filters or sort options change
     useEffect(() => {
         let filtered = [...mockJobData];
@@ -197,55 +211,12 @@ function ApplicantBrowseJobs() {
             {/* Main Content */}
             <div className="flex-1 h-screen bg-white rounded-tl-[40px] overflow-y-auto p-6 shadow-md font-montserrat">
                 {/* Header */}
-                <div className="flex justify-between w-full px-9 mb-0">
-                    <div className="flex items-center gap-[15px] m-9">
-                        <img
-                            src={ApplicantDashLogo}
-                            alt="Tugma Logo"
-                            className="max-w-[136px] h-auto"
-                        />
-                        <div>
-                            <div className="font-[Montserrat] text-4xl font-bold text-[#2A4D9B]">
-                                Welcome Back, {firstName}!
-                            </div>
-                            <div className="font-semibold italic text-orange-400 text-xl">
-                                Ready to make meets end?
-                            </div>
-                        </div>
-                    </div>
-
-                     <div className="flex items-center gap-4">
-                        <i className="bi bi-person-circle text-4xl text-gray-400"></i>
-                        <div className="leading-tight pl-3">
-                            <div className="font-semibold text-black text-sm">{firstName}</div>
-                        </div>
-                       <i
-                        className="bi bi-bell text-2xl text-[#2A4D9B] ml-6 cursor-pointer position-relative"
-                        onClick={() => setShowNotifications((prev) => !prev)}
-                        ></i>
-
-                    </div>
-                </div>
-                
-                {showNotifications && (
-                    <div className="absolute top-[120px] right-[50px] z-50">
-                        <ApplicantNotification
-                        open={showNotifications}
-                        onClose={() => setShowNotifications(false)}
-                        notification={sampleData}
-                        onViewDetails={(notif) => {
-                            console.log("View notif details:", notif);
-                            setShowNotifications(false);
-                        }}
-                        />
-                    </div>
-                    )}
-                
-
-                {/* Search Bar and Dropdowns */}
-                <div className="px-[112px] mt-0 mb-5 flex justify-between items-center">
-                    <SearchBar onSearch={(query) => console.log("Applicant Search:", query)} />
-                </div>
+                <ApplicantHeader
+                title={`Welcome Back, ${firstName}!`}
+                subtitle="Ready to make meets end?"
+                firstName={firstName}
+                showProfile={true}
+                />
 
                 {/* Job Count */}
                 <div className="pl-[112px] pr-[118px]">
@@ -354,9 +325,8 @@ function ApplicantBrowseJobs() {
                             description={job.description}
                             salaryRangeLow={job.salaryRangeLow}
                             salaryRangeHigh={job.salaryRangeHigh}
-                            tags={job.tags} // Pass tags here
+                            tags={job.tags}
                             onViewDetails={() => {
-                                console.log("Selected Job:", job); // Debugging
                                 setSelectedJob(job);
                                 setDrawerOpen(true);
                             }}
@@ -370,9 +340,53 @@ function ApplicantBrowseJobs() {
                 open={drawerOpen}
                 onClose={() => setDrawerOpen(false)}
                 job={selectedJob}
-                onApply={() => alert("Applied!")}
+                onApply={handleApplyClick}
             />
+
+            {/* Confirmation Modal */}
+        {showConfirmModal && (
+        <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center">
+            <div className="bg-white p-6 rounded-lg shadow-lg text-center w-[90%] max-w-md">
+            <h2 className="text-lg font-semibold mb-4 text-center">Are you sure you want to apply?</h2>
+            <div className="flex justify-center gap-4 mt-6">
+                <button
+                onClick={handleCancel}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-[10px] hover:bg-gray-400"
+                >
+                Cancel
+                </button>
+                <button
+                onClick={handleProceed}
+                className="px-4 py-2 bg-[#2A4D9B] text-white rounded-[10px] font-semibold hover:bg-[#1e3c78]"
+                >
+                Proceed
+                </button>
+            </div>
+            </div>
         </div>
+        )}
+
+        {/* Success Modal */}
+        {showSuccessModal && (
+        <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center">
+            <div className="bg-white p-6 rounded-lg shadow-lg text-center w-[90%] max-w-md">
+            <h2 className="text-lg font-semibold mb-2">Application Sent!</h2>
+            <p className="text-sm text-gray-600 mb-4">
+                Your resume has been sent over to the employer.
+            </p>
+            <button
+                onClick={handleCloseSuccess}
+                className="px-4 py-2 bg-[#2A4D9B] text-white rounded hover:bg-[#1e3c78]"
+            >
+                OK
+            </button>
+            </div>
+        </div>
+        )}
+
+        </div>
+
+        
     );
 }
 

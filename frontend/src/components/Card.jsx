@@ -6,7 +6,6 @@ function truncate(text, maxLength = 80) {
   return text.length > maxLength ? text.slice(0, maxLength) + "..." : text;
 }
 
-
 function Card({
   jobTitle,
   companyName,
@@ -44,7 +43,8 @@ function Card({
   }
 
   return (
-    <div className="bg-white shadow-all-around rounded-[20px] p-6 max-w-[304px] h-[330px] flex flex-col justify-between relative">
+    <div className="bg-white shadow-all-around rounded-[20px] p-6 max-w-[304px] h-[330px] flex flex-col 
+    justify-between relative transition transform duration-300 ease-in-out hover:scale-105">
       
       {/* Save Button + Match Score */}
       <div className="flex justify-between items-center">
@@ -95,7 +95,8 @@ function Card({
 
         <button 
         onClick={() => onViewDetails(jobData)} 
-        className="h-8 px-6 py-2 bg-white rounded-[10px] outline outline-1 outline-[#2A4D9B] inline-flex justify-center items-center gap-2.5 text-[#2A4D9B] text-xs font-bold hover:bg-[#2A4D9B] hover:text-white transition-colors">
+        className="h-8 px-6 py-2 bg-white rounded-[10px] outline outline-1 outline-[#2A4D9B] inline-flex justify-center 
+        items-center gap-2.5 text-[#2A4D9B] text-xs font-bold hover:bg-[#2A4D9B] hover:text-white transition-colors">
           View Details
         </button>
       </div>

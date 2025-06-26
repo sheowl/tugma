@@ -12,7 +12,6 @@ import EmpVerification from "./pages/EmpVerification.jsx";
 import LandingPage from "./pages/LandingPage.jsx";
 import ApplicantBrowseJobs from "./pages/ApplicantBrowseJobs.jsx";
 import ApplicantApplications from "./pages/ApplicantApplications.jsx";
-import ApplicantInbox from "./pages/ApplicantInbox.jsx";
 import ApplicantProfile from "./pages/ApplicantProfile.jsx";
 import EmployerApplicants from "./pages/EmployerApplicants.jsx";
 import EmployerHomePage from "./pages/EmployerHomePage.jsx";
@@ -37,7 +36,6 @@ function App() {
         <Route path="/appverification" element={<AppVerification />} />
         <Route path="/empverification" element={<EmpVerification />} />
         <Route path="/applicantbrowsejobs" element={<ApplicantBrowseJobs />} />
-        <Route path="/applicantinbox" element={<ApplicantInbox />} />
         <Route path="/applicantapplications" element={<ApplicantApplications />} />
         <Route path="/applicantprofile" element={<ApplicantProfile />} />
         <Route path="/employerhomepage" element={<EmployerHomePage />} />
