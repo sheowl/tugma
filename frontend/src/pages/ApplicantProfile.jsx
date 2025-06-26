@@ -3,8 +3,8 @@ import { useState } from "react";
 import ApplicantHeader from "../components/ApplicantHeader";
 
 function ApplicantProfile() {
-  const fullName = localStorage.getItem("fullName") || "User";
-
+  
+  const [zoomedCertificate, setZoomedCertificate] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeField, setActiveField] = useState(""); // "github" | "linkedin" | "portfolio"
   const [linkValues, setLinkValues] = useState({
@@ -98,21 +98,30 @@ const handleRemoveImage = () => {
     );
   };
 
-const CertificateCard = ({ image, title, description }) => {
+const CertificateCard = ({ image, title, description, onClick }) => {
   return (
-    <div className="min-w-[218px] min-h-[290px] rounded-lg border border-gray-300 p-4 shadow-sm
-    transition duration-300 flex flex-col items-center text-center">
+    <div
+      onClick={onClick}
+      className="min-w-[218px] min-h-[290px] max-w-[218px] rounded-lg border border-gray-300 p-4 shadow-sm hover:border-[#6B7280] 
+      transition-transform duration-300 ease-in-out flex flex-col items-center text-center cursor-pointer"
+    >
       <div className="w-full min-h-[110px] bg-[#D9D9D9] rounded-md mb-4 overflow-hidden">
-        {/* Replace this with actual image if available */}
-        {image ? (
+        {image && (
           <img src={image} alt={title} className="w-full h-full object-cover" />
-        ) : null}
+        )}
       </div>
-      <h3 className="font-semibold text-base text-neutral-700">{truncate(title, 20)}</h3>
-      <p className="text-xs text-gray-500 mt-2">{truncate(description, 140)}</p>
+      <h3 className="font-semibold text-base text-neutral-700">
+        {title.length > 20 ? `${title.slice(0, 20)}...` : title}
+      </h3>
+      <p className="text-xs text-gray-500 mt-2">
+        {description.length > 140 ? `${description.slice(0, 140)}...` : description}
+      </p>
     </div>
   );
 };
+
+
+
 
   {/* HARD CODED INFORMATION STARTS HERE */}
   const contactInfo = [
@@ -137,28 +146,6 @@ const CertificateCard = ({ image, title, description }) => {
   ];
 
   const experienceData = [
-    {
-      title: "Senior Graphic Designer",
-      company: "Canva Philippines",
-      date: "JANUARY 2024 - MAY 2025",
-      responsibilities: [
-        "Ano kanina pa ako nakababad dito oh? Baka pwede mo namang...huy ano raw?",
-        "Ganto pala tong laro na to? naka...ay may hamaliway...",
-        "Kyle huwag naman tayong ganito oh...pag-usapan naman natin to pls...",
-      ],
-    },
-
-    {
-      title: "Senior Graphic Designer",
-      company: "Canva Philippines",
-      date: "JANUARY 2024 - MAY 2025",
-      responsibilities: [
-        "Ano kanina pa ako nakababad dito oh? Baka pwede mo namang...huy ano raw?",
-        "Ganto pala tong laro na to? naka...ay may hamaliway...",
-        "Kyle huwag naman tayong ganito oh...pag-usapan naman natin to pls...",
-      ],
-    },
-
     {
       title: "Senior Graphic Designer",
       company: "Canva Philippines",
@@ -194,30 +181,6 @@ const CertificateCard = ({ image, title, description }) => {
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,",
     image: "", // Add a URL to certificate image if available
   },
-  {
-    title: "Title of Certificate",
-    description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,",
-    image: "", // Add a URL to certificate image if available
-  },
-  {
-    title: "Title of Certificate",
-    description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,",
-    image: "", // Add a URL to certificate image if available
-  },
-  {
-    title: "React Developer Certification React Developer Certification",
-    description:
-      "Issued by Meta. Validates proficiency in modern React development.",
-    image: "", // Replace with actual image URL if available
-  },
-  {
-    title: "React Developer Certification React Developer Certification",
-    description:
-      "Issued by Meta. Validates proficiency in modern React development.",
-    image: "", // Replace with actual image URL if available
-  },
 ];
   {/* HARD CODED INFORMATION ENDS HERE */}
 
@@ -231,6 +194,7 @@ const CertificateCard = ({ image, title, description }) => {
         <ApplicantHeader
             title="User Profile"
             showProfile={false}
+            showSearchBar={false}
           />
 
         {/* Profile Content */}
@@ -423,17 +387,18 @@ const CertificateCard = ({ image, title, description }) => {
             </div>
           </div>
 
-          <div className="w-full max-w-[976px] h-auto rounded-[20px] shadow-all-around bg-white p-10">
+          <div className="w-full max-w-[976px] h-auto rounded-[20px] shadow-all-around bg-white p-10 overflow-visible">
             <div className="text-2xl font-bold text-neutral-700 mb-8">Certifications</div>
-            <div className="flex flex-row gap-6 justify-start overflow-x-auto">
+            <div className="flex flex-row gap-6 justify-start overflow-x-auto overflow-visible relative">
               {certificates.map((cert, idx) => (
-                <CertificateCard
-                  key={idx}
-                  title={cert.title}
-                  description={cert.description}
-                  image={cert.image}
-                />
-              ))}
+              <CertificateCard
+                key={idx}
+                title={cert.title}
+                description={cert.description}
+                image={cert.image}
+                onClick={() => setZoomedCertificate(cert)}
+              />
+            ))}
             </div>
           </div>
 
