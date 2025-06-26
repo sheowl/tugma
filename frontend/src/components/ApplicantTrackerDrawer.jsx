@@ -61,7 +61,7 @@ export default function ApplicantTrackerDrawer({ open, onClose, job, onViewDetai
           {job ? (
             <div className="space-y-20">
               <div>
-                <span className={`text-2xl font-bold ${matchScoreColor}`}>
+                <span className={`text-2xl font-bold text-right ${matchScoreColor}`}>
                   {job.matchScore}% Matched
                 </span>
                 <div>
