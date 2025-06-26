@@ -14,7 +14,6 @@ import EmpComReg from "./pages/EmpComReg.jsx";
 import AppComReg from "./pages/AppComReg.jsx";
 import AppVerification from "./pages/AppVerification.jsx";
 import EmpVerification from "./pages/EmpVerification.jsx";
-import LandingPage from "./pages/LandingPage.jsx";
 import ApplicantBrowseJobs from "./pages/ApplicantBrowseJobs.jsx";
 import ApplicantApplications from "./pages/ApplicantApplications.jsx";
 import ApplicantInbox from "./pages/ApplicantInbox.jsx";
@@ -28,6 +27,7 @@ import TechnicalSkills from "./components/TechnicalSkills.jsx";
 import CompanyPage from "./pages/CompanyPage.jsx";
 import EditCompanyPage from "./components/EditCompanyPage.jsx";
 import ApplicantResume from "./components/ApplicantResume.jsx";
+import TugmaLandingPage from './pages/TugmaLandingPage.jsx';
 
 function App() {
   return (
@@ -38,7 +38,7 @@ function App() {
             <Router>
               <div className="App">
                 <Routes>
-                  <Route path="/" element={<ApplicantSignIn />} />
+                  <Route path="/" element={<TugmaLandingPage />} />
                   <Route path="/applicant-sign-in" element={<ApplicantSignIn />} />
                   <Route path="/employer-sign-in" element={<EmployerSignIn />} />
                   <Route path="/applicant-email-registration" element={<ApplicantEmailRegistration />} />
@@ -59,6 +59,7 @@ function App() {
                   <Route path="/companypage" element={<CompanyPage />} />
                   <Route path="/edit-company-profile" element={<EditCompanyPage />} />
                   <Route path="/applicantresume" element={<ApplicantResume />} />
+                  <Route path="/tugmalandingpage" element={<TugmaLandingPage />} />
                 </Routes>
               </div>
             </Router>
