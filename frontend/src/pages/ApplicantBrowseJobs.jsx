@@ -351,7 +351,7 @@ const handleCloseSuccess = () => {
             <div className="flex justify-center gap-4 mt-6">
                 <button
                 onClick={handleCancel}
-                className="px-4 py-2 bg-gray-300 rounded-[10px] hover:bg-gray-400"
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-[10px] hover:bg-gray-400"
                 >
                 Cancel
                 </button>
