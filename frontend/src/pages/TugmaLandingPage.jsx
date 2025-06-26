@@ -21,13 +21,14 @@ const TugmaLandingPage = () => {
         background: 'linear-gradient(to right, #BDD1FF 0%, white 25%, white 75%, #FFDAAC 100%)'
       }}
     >
-      <div className=" items-center mt-8 justify-start px-6">
-        <img 
-          src={ApplicantDashLogo} 
-          alt="Tugma Logo" 
-          className="h-[42px] w-[77px] ml-16"
-        />
-      </div>
+      <div className="fixed top-0 left-0 w-full z-50 bg-white h-[110px] shadow-lg flex items-center justify-start px-6">
+      <img 
+        src={ApplicantDashLogo} 
+        alt="Tugma Logo" 
+        className="h-[42px] w-[77px] ml-16"
+      />
+    </div>
+
       
       {/* Header/Navigation */}
       <nav className="w-full p-6 flex justify-start">
