@@ -44,6 +44,26 @@ function ApplicantTracker({
     matchScoreColor = "text-[#F5B041]";
   }
 
+  const getStatusDescription = (status) => {
+    switch (status) {
+      case "applied":
+        return "You have applied for this job.";
+      case "rejected-at-applied":
+        return "Your application was rejected at the applied stage.";
+      case "interview":
+        return "You are scheduled for an interview.";
+      case "rejected-after-interview":
+        return "You were rejected after the interview.";
+      case "standby":
+        return "You are on standby for further updates.";
+      case "accepted":
+        return "Congratulations! You have been accepted for this job.";
+      case "rejected":
+        return "You were rejected after the interview.";
+      default:
+        return "Status not available.";
+    }
+  };
 
   const getTimelineSteps = () => {
     switch (status) {

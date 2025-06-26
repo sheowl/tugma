@@ -30,7 +30,7 @@ function ApplicantApplications() {
             salaryRangeHigh: 80,
             salaryFrequency: "Monthly",
             companyDescription: "Tech Innovations Inc. is a leading software development company focused on delivering innovative solutions to our clients. We value creativity, collaboration, and continuous learning.",
-            status: "applied",
+            status: "interview",
         },
     ];
 
@@ -94,11 +94,6 @@ function ApplicantApplications() {
                     showProfile={true}
                 />
 
-
-                {/* Search Bar and Dropdowns */}
-                <div className="px-[112px] mt-0 mb-5 flex justify-between items-center">
-                    <SearchBar onSearch={(query) => console.log("Applicant Search:", query)} />
-                </div>
 
                 {/* Job Count */}
                 <div className="pl-[112px] pr-[118px]">

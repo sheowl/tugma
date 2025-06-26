@@ -1,23 +1,26 @@
 import CompanyDetails from "./CompanyDetails";
 import ApplicantApplicationTimeline from "./ApplicantApplicationTimeline";
+import { getStatusDescription, getStatusLabel } from "../services/jobStatusUtils";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
 function StatusDetailsBox({ status = "Status", message, children }) {
   return (
-    <div className="bg-[#2A4D9B] text-white rounded-[20px] p-6 mt-6">
+    <div className="bg-[#2A4D9B] text-white rounded-[20px] px-8 p-6 w-full">
       <div className="flex justify-between items-center mb-4">
         <h4 className="text-base font-bold">Status Details</h4>
         <p className="text-sm font-semibold">{status}</p>
       </div>
-      <div className="text-xs mb-4">{message}</div>
+      <div className="text-xs text-left mb-4">{message}</div>
       {children}
     </div>
   );
 }
 
 export default function ApplicantTrackerDrawer({ open, onClose, job, onViewDetails }) {
-  const [companyDetailsOpen, setCompanyDetailsOpen] = useState(false); // State for CompanyDetails drawer
+  const [companyDetailsOpen, setCompanyDetailsOpen] = useState(false);
+  const [showInterviewDetails, setShowInterviewDetails] = useState(false);
+  const [interviewAction, setInterviewAction] = useState(null); // confirmed | cancelled
 
   let matchScoreColor = "text-[#27AE60]";
   if (job && job.matchScore < 50) {
@@ -37,12 +40,13 @@ export default function ApplicantTrackerDrawer({ open, onClose, job, onViewDetai
 
       {/* Drawer Panel */}
       <div
-        className={`fixed top-0 px-8 right-0 h-full w-[640px] bg-white shadow-2xl z-50 transform 
+        className={`fixed top-0 px-12 right-0 h-full w-[640px] bg-white shadow-2xl z-50 transform 
           transition-transform duration-300 rounded-tl-[30px] rounded-bl-[30px] ${
             open ? "translate-x-0" : "translate-x-full"
-          }`}
+          } flex flex-col justify-between py-12`}
       >
-        <div className="flex items-center justify-between mt-12 px-10 h-[80px] z-10">
+        {/* Top Bar */}
+        <div className="px-0 mb-4">
           <button
             className="p-2 text-gray-400 hover:text-gray-700"
             onClick={onClose}
@@ -52,18 +56,18 @@ export default function ApplicantTrackerDrawer({ open, onClose, job, onViewDetai
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-10 pb-40 font-montserrat">
+        {/* Main Content */}
+        <div className="px-10 flex-grow font-montserrat">
           {job ? (
-            <div className="space-y-4">
-              <div className="mb-4">
-                <span className={`text-2xl font-bold text-right ${matchScoreColor}`}>
+            <div className="space-y-20">
+              <div>
+                <span className={`text-2xl font-bold ${matchScoreColor}`}>
                   {job.matchScore}% Matched
                 </span>
-
                 <div>
                   <Link
                     to={``}
-                    className="text-sm font-semibold text-left text-[#2A4D9B] underline"
+                    className="text-sm font-semibold text-[#2A4D9B] underline"
                     onClick={onViewDetails}
                   >
                     View Job Details
@@ -82,62 +86,127 @@ export default function ApplicantTrackerDrawer({ open, onClose, job, onViewDetai
                   <i
                     className="bi bi-info-circle text-[19px] ml-2 cursor-pointer text-gray-500"
                     title="Company Information"
-                    onClick={() => setCompanyDetailsOpen(true)} // Open CompanyDetails drawer
+                    onClick={() => setCompanyDetailsOpen(true)}
                   />
                 </div>
 
                 <p className="text-base text-[#676767]">{job.location}</p>
+                <div className="flex gap-4 mt-4">
+                  <span className="px-2 py-1 bg-indigo-50 rounded text-xs font-semibold text-neutral-700">
+                    <i className="bi bi-geo-alt-fill text-[#2A4D9B] mr-1" />
+                    {job.workSetup}
+                  </span>
+                  <span className="px-2 py-1 bg-indigo-50 rounded text-xs font-semibold text-neutral-700">
+                    <i className="bi bi-briefcase-fill text-[#2A4D9B] mr-1" />
+                    {job.employmentType}
+                  </span>
+                </div>
               </div>
 
-              <div className="flex gap-4 mb-8">
-                <span className="px-2 py-1 bg-indigo-50 rounded text-xs font-semibold text-neutral-700">
-                  <i className="bi bi-geo-alt-fill text-[#2A4D9B] mr-1" />
-                  {job.workSetup}
-                </span>
-                <span className="px-2 py-1 bg-indigo-50 rounded text-xs font-semibold text-neutral-700">
-                  <i className="bi bi-briefcase-fill text-[#2A4D9B] mr-1" />
-                  {job.employmentType}
-                </span>
-              </div>
-
-              <div>
-                <ApplicantApplicationTimeline status={job.status} large />
-              </div>
-
-              {job.status === "interview" && (
-                <StatusDetailsBox
-                  status="For Interview"
-                  message="Your application has been reviewed, and the employer has scheduled you for an interview. Please review the provided details including date, time, location (or video link), and any additional remarks."
-                >
-                  <div className="flex justify-end">
-                    <button
-                      className="mt-2 px-4 py-2 bg-white text-[#2A4D9B] font-bold text-xs rounded-[8px] hover:bg-[#dce6f9] transition-colors"
-                    >
-                      View Interview Details
-                    </button>
-                  </div>
-                </StatusDetailsBox>
-              )}
-
-              {job.status !== "interview" && (
-                <StatusDetailsBox
-                  status={job.status
-                    .replace(/-/g, " ")
-                    .replace(/\b\w/g, (c) => c.toUpperCase())}
-                  message="Your application has been reviewed. Please wait for further updates regarding the next steps."
-                />
-              )}
+              <ApplicantApplicationTimeline status={job.status} large />
             </div>
           ) : (
             <div className="py-20 text-center text-gray-400">No job selected</div>
           )}
         </div>
+
+        {/* Bottom Status Section */}
+        {job && (
+          <div className="px-10">
+            <StatusDetailsBox
+              status={getStatusLabel(job.status)}
+              message={getStatusDescription(job.status)}
+            >
+              {job.status === "interview" && (
+                <div className="flex justify-end mt-2">
+                  <button
+                    onClick={() => {
+                      setShowInterviewDetails(true);
+                      setInterviewAction(null); // reset
+                    }}
+                    className="px-4 py-2 bg-white text-[#2A4D9B] font-bold text-xs rounded-[8px] hover:bg-[#dce6f9] transition-colors"
+                  >
+                    View Interview Details
+                  </button>
+                </div>
+              )}
+            </StatusDetailsBox>
+          </div>
+        )}
       </div>
 
+      {/* Interview Modal */}
+      {showInterviewDetails && job && (
+        <div className="fixed inset-0 z-[999] bg-black bg-opacity-40 flex justify-center items-center font-montserrat">
+          <div className="bg-white w-[500px] p-8 rounded-[20px] shadow-xl text-[#2A4D9B] relative">
+            <button
+              className="absolute top-4 right-4 text-2xl"
+              onClick={() => setShowInterviewDetails(false)}
+            >
+              <i className="bi bi-x-lg" />
+            </button>
+
+            <h2 className="text-2xl font-bold mb-6">Interview Details</h2>
+
+            <div className="space-y-3 text-sm">
+              {[
+                { label: "Job Title", value: job.jobTitle },
+                { label: "Company", value: job.companyName },
+                { label: "Interview Type", value: "Online via Zoom" },
+                { label: "Interview Date", value: "June 15, 2025" },
+                { label: "Interview Time", value: "11:59 PM (PST)" },
+              ].map(({ label, value }) => (
+                <div className="flex justify-between" key={label}>
+                  <span className="font-semibold text-gray-500">{label}</span>
+                  <span className="font-medium">{value}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6">
+              <h3 className="text-base font-bold mb-2">Remarks</h3>
+              <div className="bg-[#2A4D9B] text-white text-xs p-6 rounded-[10px]">
+                Please ensure that you are available at the scheduled time, as rescheduling opportunities may be limited.
+                We strongly encourage you to review the job description, our company background, and prepare any relevant
+                materials or portfolio beforehand. More detailed instructions, including the interview link and any
+                attachments, have been sent to your registered email. Should you have any unavoidable conflicts, inform
+                us as soon as possible.
+              </div>
+            </div>
+
+            {!interviewAction && (
+            <div className="flex justify-between mt-6 gap-4">
+              <button
+                onClick={() => setInterviewAction("cancelled")}
+                className="flex-1 py-2 rounded-[8px] border border-[#2A4D9B] text-[#2A4D9B] font-bold text-sm hover:bg-[#2A4D9B] hover:text-white transition"
+              >
+                Cancel Interview
+              </button>
+              <button
+                onClick={() => setInterviewAction("confirmed")}
+                className="flex-1 py-2 rounded-[8px] border border-[#2A4D9B] text-[#2A4D9B] font-bold text-sm hover:bg-[#2A4D9B] hover:text-white transition"
+              >
+                Confirm Interview
+              </button>
+            </div>
+          )}
+
+
+            {interviewAction && (
+              <div className="mt-4 text-xs text-gray-500 italic font-medium text-center">
+                You have <span className="font-bold">{interviewAction}</span> this interview schedule.
+                Should you need to make any changes or cancellations, please notify the company directly.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Company Details Drawer */}
       <CompanyDetails
         open={companyDetailsOpen}
-        onClose={() => setCompanyDetailsOpen(false)} // Close the drawer
-        job={job} // Pass the job details
+        onClose={() => setCompanyDetailsOpen(false)}
+        job={job}
       />
     </>
   );
