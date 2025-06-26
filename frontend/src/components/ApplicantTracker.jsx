@@ -91,7 +91,8 @@ function ApplicantTracker({
   const timelineSteps = getTimelineSteps();
 
   return (
-    <div className="bg-white shadow-all-around rounded-[20px] p-6 max-w-[500px] h-[300px] flex flex-row justify-between gap-6">
+    <div className="bg-white shadow-all-around rounded-[20px] p-6 max-w-[500px] h-[300px] flex flex-row justify-between 
+    gap-6 transition transform duration-300 ease-in-out hover:scale-105">
       {/* Left Column */}
       <div className="flex flex-col justify-between w-3/5">
         <div className="flex justify-between items-center">
