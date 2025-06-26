@@ -1,6 +1,8 @@
+import React, { useEffect, useState } from "react";
 import ApplicantSideBar from "../components/ApplicantSideBar";
 import { useState } from "react";
 import ApplicantHeader from "../components/ApplicantHeader";
+import { supabase } from "../services/supabaseClient";
 
 function ApplicantProfile() {
   const [isEditMode, setIsEditMode] = useState(false);
@@ -133,57 +135,55 @@ const CertificateCard = ({ image, title, description, onClick }) => {
   ];
 
   const personalInfoLeft = [
-    { label: "Name", value: "Kyle Desmond ni Jianna" },
-    { label: "Mobile Number", value: "0992 356 7294" },
-    { label: "University", value: "Polytechnic University of the Philippines" },
-    { label: "Year Graduated", value: "2027" },
-  ];
+  { label: "Name", value: "Kyle Desmond ni Jianna" },
+  { label: "Mobile Number", value: "0992 356 7294" },
+  { label: "University", value: "Polytechnic University of the Philippines" },
+  { label: "Year Graduated", value: "2027" },
+];
 
-  const personalInfoRight = [
-    { label: "Address", value: "#1 Kurt St. Brgy. Mapagmahal Silang, Cavite" },
-    { label: "Telephone Number", value: "8153-4137" },
-    { label: "Degree", value: "Bachelor of Science in Computer Science" },
-    { label: "Field", value: "Software Cybersecurity" },
-  ];
+const personalInfoRight = [
+  { label: "Address", value: "#1 Kurt St. Brgy. Mapagmahal Silang, Cavite" },
+  { label: "Telephone Number", value: "8153-4137" },
+  { label: "Degree", value: "Bachelor of Science in Computer Science" },
+  { label: "Field", value: "Software Cybersecurity" },
+];
+
 
   const experienceData = [
-    {
-      title: "Senior Graphic Designer",
-      company: "Canva Philippines",
-      date: "JANUARY 2024 - MAY 2025",
-      responsibilities: [
-        "Ano kanina pa ako nakababad dito oh? Baka pwede mo namang...huy ano raw?",
-        "Ganto pala tong laro na to? naka...ay may hamaliway...",
-        "Kyle huwag naman tayong ganito oh...pag-usapan naman natin to pls...",
-      ],
-    },
-  ];
-
-  const technicalSkills = [
-    { label: "Programming Languages", level: "novice", tags: ["JavaScript", "Python", "Java"] },
-    { label: "Web Development", level: "Advanced beginner", tags: ["HTML", "CSS", "React"] },
-    { label: "AI/ML/Data Science", level: "competent", tags: ["TensorFlow", "PyTorch", "Pandas"] },
-    { label: "Database", level: "proficient", tags: ["MySQL", "MongoDB", "PostgreSQL"] },
-    { label: "DevOps", level: "expert", tags: ["Docker", "Kubernetes", "CI/CD"] },
-    { label: "Cybersecurity", level: "expert", tags: ["Network Security", "Penetration Testing", "Cryptography"] },
-    { label: "Mobile Development", level: "novice", tags: ["Flutter", "React Native", "Dart"] },
-  ];
-
-  const softSkills = [
-    { label: "Communication"},
-    { label: "Teamwork" },
-    { label: "Problem Solving" }, 
-  ];
-
-  const certificates = [
   {
-    title: "Title of Certificate",
-    description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,",
-    image: "", // Add a URL to certificate image if available
+    title: "Senior Graphic Designer",
+    company: "Canva Philippines",
+    date: "JANUARY 2024 - MAY 2025",
+    responsibilities: [
+      "Ano kanina pa ako nakababad dito oh? Baka pwede mo namang...huy ano raw?",
+      "Ganto pala tong laro na to? naka...ay may hamaliway...",
+      "Kyle huwag naman tayong ganito oh...pag-usapan naman natin to pls...",
+    ],
   },
+
+  {
+    title: "Senior Graphic Designer",
+    company: "Canva Philippines",
+    date: "JANUARY 2024 - MAY 2025",
+    responsibilities: [
+      "Ano kanina pa ako nakababad dito oh? Baka pwede mo namang...huy ano raw?",
+      "Ganto pala tong laro na to? naka...ay may hamaliway...",
+      "Kyle huwag naman tayong ganito oh...pag-usapan naman natin to pls...",
+    ],
+  },
+
+  {
+    title: "Senior Graphic Designer",
+    company: "Canva Philippines",
+    date: "JANUARY 2024 - MAY 2025",
+    responsibilities: [
+      "Ano kanina pa ako nakababad dito oh? Baka pwede mo namang...huy ano raw?",
+      "Ganto pala tong laro na to? naka...ay may hamaliway...",
+      "Kyle huwag naman tayong ganito oh...pag-usapan naman natin to pls...",
+    ],
+  },
+  // You can add more experiences here if needed
 ];
-  {/* HARD CODED INFORMATION ENDS HERE */}
 
   return (
     <div className="min-h-screen bg-[#2A4D9B] flex items-start overflow-hidden">
@@ -277,22 +277,16 @@ const CertificateCard = ({ image, title, description, onClick }) => {
 
             {/* Profile Info */}
             <div className="flex flex-col justify-center flex-grow">
-              <h2 className="text-2xl font-bold">{contactInfo[0].value}</h2>
-              {contactInfo.slice(1).map((info, index) => (
-                <div key={index} className="text-gray-600 flex items-center gap-2 mt-1">
-                  <i
-                    className={`bi ${
-                      info.label === "Location"
-                        ? "bi-geo-alt"
-                        : info.label === "Contact Number"
-                        ? "bi-telephone"
-                        : "bi-envelope"
-                    }`}
-                  ></i>
-                  {info.value}
-                </div>
-              ))}
-
+              <h2 className="text-2xl font-bold">Kyle Desmond Co</h2>
+              <div className="text-gray-600 flex items-center gap-2 mt-1">
+                <i className="bi bi-geo-alt"></i> Silang, Cavite
+              </div>
+              <div className="text-gray-600 flex items-center gap-2 mt-1">
+                <i className="bi bi-telephone"></i> 0992 356 7294
+              </div>
+              <div className="text-gray-600 flex items-center gap-2 mt-1">
+                <i className="bi bi-envelope"></i> nasapusokoanglove14@gmail.com
+              </div>
 
               {/* Buttons */}
               <div className="flex gap-4 mt-4">
@@ -386,72 +380,47 @@ const CertificateCard = ({ image, title, description, onClick }) => {
                 Experience
               </div>
 
-              {experienceData.map((exp, index) => (
-                <div key={index} className="border-l-1 border-[#2A4D9B] pl-6 mb-6">
-                  <div className="flex flex-row justify-between">
-                    <div className="text-base text-neutral-700 font-semibold">
-                      {exp.title}
-                    </div>
-                    <div className="text-gray-500 text-sm font-semibold">
-                      {exp.date}
-                    </div>
-                  </div>
-                  <div className="text-gray-500 text-sm font-semibold">
-                    {exp.company}
-                  </div>
-                  <ul className="text-gray-500 text-xs list-disc pl-6">
-                    {exp.responsibilities.map((item, idx) => (
-                      <li key={idx}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
+           {experienceData.map((exp, index) => (
+          <div key={index} className="border-l-1 border-[#2A4D9B] pl-6 mb-6">
+            <div className="flex flex-row justify-between">
+              <div className="text-base text-neutral-700 font-semibold">
+                {exp.title}
+              </div>
+              <div className="text-gray-500 text-sm font-semibold">
+                {exp.date}
+              </div>
+            </div>
+            <div className="text-gray-500 text-sm font-semibold">
+              {exp.company}
+            </div>
+            <ul className="text-gray-500 text-xs list-disc pl-6">
+              {exp.responsibilities.map((item, idx) => (
+                <li key={idx}>{item}</li>
               ))}
+            </ul>
+          </div>
+        ))}
 
               <hr className="border-t border-gray-300 my-4" />
 
-              <div className="text-xl font-semibold text-neutral-700">Technical Skills</div>
-                <div className="mt-4 space-y-4">
-                  {technicalSkills.map((skill, index) => (
-                    <ProgressBar
-                      key={index}
-                      label={skill.label}
-                      level={skill.level}
-                      tags={skill.tags || []}
-                    />
-                  ))}
-                </div>
+          <div className="text-xl font-semibold text-neutral-700">
+            Technical Skills
+          </div>
 
-              <hr className="border-t border-gray-300 my-4" />
+        <hr className="border-t border-gray-300 my-4" />
 
-              <div className="text-xl font-semibold text-neutral-700">Soft Skills</div>
-                <div className="flex flex-wrap gap-2 mt-2">
-                {softSkills.map((skill, index) => (
-                  <span
-                    key={index}
-                    className="text-xs text-neutral-700 font-semibold bg-[#EFEEEE] py-1 px-3 rounded-full"
-                  >
-                    {skill.label}
-                  </span>
-                ))}
-                </div>
+          <div className="text-xl font-semibold text-neutral-700">
+           Soft Skills
+          </div>
             </div>
           </div>
 
-          <div className="w-full max-w-[976px] h-auto rounded-[20px] shadow-all-around bg-white p-10 overflow-visible">
-            <div className="text-2xl font-bold text-neutral-700 mb-8">Certifications</div>
-            <div className="flex flex-row gap-6 justify-start overflow-x-auto overflow-visible relative">
-              {certificates.map((cert, idx) => (
-              <CertificateCard
-                key={idx}
-                title={cert.title}
-                description={cert.description}
-                image={cert.image}
-                onClick={() => setZoomedCertificate(cert)}
-              />
-            ))}
-            </div>
+          <div className="w-full max-w-[976px] h-auto rounded-[20px] shadow-all-around flex items-center gap-8 bg-white p-10">
+            <div className="text-2xl font-bold text-neutral-700">Certifications</div>
           </div>
 
+
+        </div>  
       </div>
     </div>
     

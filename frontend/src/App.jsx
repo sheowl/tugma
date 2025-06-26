@@ -1,5 +1,8 @@
 // import { useState } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext'; // Import AuthProvider
+import { JobsProvider } from './context/JobsContext';
 import "./output.css";
 import ApplicantEmailRegistration from "./pages/Applicant_Email_Registration.jsx";
 import EmployerEmailRegistration from "./pages/Employer_Email_Registration.jsx";
@@ -21,34 +24,39 @@ import EmployerOnboarding from "./pages/EmployerOnboarding.jsx";
 import CompanyPage from "./pages/CompanyPage.jsx";
 import EditCompanyPage from "./components/EditCompanyPage.jsx";
 import ApplicantResume from "./components/ApplicantResume.jsx";
-import TugmaLandingPage from "./pages/TugmaLandingPage.jsx";
+import TugmaLandingPage from "./pages/TugmaLandingPage.jsx";// Remove CompanyOnboarding import for now
+
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<TugmaLandingPage />} />
-        <Route path="/applicant-sign-in" element={<ApplicantSignIn />} />
-        <Route path="/employer-sign-in" element={<EmployerSignIn />} />
-        <Route path="/applicant-email-registration" element={<ApplicantEmailRegistration />} />
-        <Route path="/employer-email-registration" element={<EmployerEmailRegistration />} />
-        <Route path="/empcomreg" element={<EmpComReg />} />
-        <Route path="/appcomreg" element={<AppComReg />} />
-        <Route path="/appverification" element={<AppVerification />} />
-        <Route path="/empverification" element={<EmpVerification />} />
-        <Route path="/applicantbrowsejobs" element={<ApplicantBrowseJobs />} />
-        <Route path="/applicantapplications" element={<ApplicantApplications />} />
-        <Route path="/applicantprofile" element={<ApplicantProfile />} />
-        <Route path="/employerhomepage" element={<EmployerHomePage />} />
-        <Route path="/employerapplicants" element={<EmployerApplicants />} />
-        <Route path="/employerjobposts" element={<EmployerJobPosts />} />
-        <Route path="/applicantonboarding" element={<ApplicantOnboarding />} />
-        <Route path="/employeronboarding" element={<EmployerOnboarding />} />
-        <Route path="/companypage" element={<CompanyPage />} />
-        <Route path="/edit-company-profile" element={<EditCompanyPage />} />
-        <Route path="/applicantresume" element={<ApplicantResume />} />
-        <Route path="/tugmalandingpage" element={<TugmaLandingPage />} />
-      </Routes>
-    </Router>
+    <AuthProvider>
+      <JobsProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<TugmaLandingPage />} />
+            <Route path="/applicant-sign-in" element={<ApplicantSignIn />} />
+            <Route path="/employer-sign-in" element={<EmployerSignIn />} />
+            <Route path="/applicant-email-registration" element={<ApplicantEmailRegistration />} />
+            <Route path="/employer-email-registration" element={<EmployerEmailRegistration />} />
+            <Route path="/empcomreg" element={<EmpComReg />} />
+            <Route path="/appcomreg" element={<AppComReg />} />
+            <Route path="/appverification" element={<AppVerification />} />
+            <Route path="/empverification" element={<EmpVerification />} />
+            <Route path="/applicantbrowsejobs" element={<ApplicantBrowseJobs />} />
+            <Route path="/applicantapplications" element={<ApplicantApplications />} />
+            <Route path="/applicantprofile" element={<ApplicantProfile />} />
+            <Route path="/employerhomepage" element={<EmployerHomePage />} />
+            <Route path="/employerapplicants" element={<EmployerApplicants />} />
+            <Route path="/employerjobposts" element={<EmployerJobPosts />} />
+            <Route path="/applicantonboarding" element={<ApplicantOnboarding />} />
+            <Route path="/employeronboarding" element={<EmployerOnboarding />} />
+            <Route path="/companypage" element={<CompanyPage />} />
+            <Route path="/edit-company-profile" element={<EditCompanyPage />} />
+            <Route path="/applicantresume" element={<ApplicantResume />} />
+            <Route path="/tugmalandingpage" element={<TugmaLandingPage />} />
+          </Routes>
+        </Router>
+      </JobsProvider>
+    </AuthProvider>
   );
 }
 

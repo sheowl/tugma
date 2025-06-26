@@ -1,12 +1,36 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
+import { useAuth } from "../context/AuthContext";
+import { supabase } from "../services/supabaseClient";
 import TugmaLogo from "../assets/TugmaLogo.svg";
 
 const Applicant_SignIn = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { applicantLogin } = useAuth();
   const navigate = useNavigate();
+
+  const handleGoogleSignIn = async () => {
+    setError("");
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin + "/applicantonboarding", // or your desired page
+        },
+      });
+      if (error) setError("Google sign-in failed: " + error.message);
+    } catch (err) {
+      setError("Google sign-in error: " + err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#FEFEFF] font-montserrat pt-24 pb-12 px-2 sm:pt-32 sm:pb-20 sm:px-6 md:pt-[120px] md:pb-[80px] md:px-[120px]">
@@ -20,9 +44,42 @@ const Applicant_SignIn = () => {
         </h1>
         <form
           className="space-y-3 sm:space-y-4 w-full flex flex-col items-center justify-center"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            navigate("/applicantbrowsejobs");
+            setError("");
+            setIsLoading(true);
+
+            // Basic validation
+            if (!username || !password) {
+              setError("Please fill in all fields");
+              setIsLoading(false);
+              return;
+            }
+            if (!username.includes("@")) {
+              setError("Please enter a valid email address");
+              setIsLoading(false);
+              return;
+            }
+
+            try {
+              const { data, error } = await supabase.auth.signInWithPassword({
+                email: username,
+                password,
+              });
+              if (error) {
+                setError(error.message || "Login failed");
+                setIsLoading(false);
+                return;
+              }
+              // Optionally, sync with your backend if you need to create a DB row
+              navigate("/applicantonboarding");
+              setIsLoading(false);
+            } catch (error) {
+              console.error("Login error:", error);
+              setError("Network error. Please check your connection.");
+            } finally {
+              setIsLoading(false);
+            }
           }}
         >
           <div className="w-full max-w-xs sm:max-w-xs md:max-w-md">
@@ -33,6 +90,8 @@ const Applicant_SignIn = () => {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Email"
+              required
+              disabled={isLoading}
             />
           </div>
           <div className="relative w-full max-w-xs sm:max-w-xs md:max-w-md">
@@ -42,6 +101,10 @@ const Applicant_SignIn = () => {
               className="w-full px-1 sm:px-2 md:px-3 py-1 sm:py-1.5 md:py-2 rounded-lg md:rounded-xl bg-[#F9F9F9] border border-[#6B7280] hover:border-2 text-black focus:outline-none focus:ring-2 md:focus:ring-4 focus:ring-blue-200 text-xs sm:text-sm md:text-base placeholder:font-montserrat placeholder:text-xs sm:placeholder:text-sm md:placeholder:text-base"
               placeholder="Password"
               style={{ paddingRight: "3.5rem" }}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              disabled={isLoading}
             />
             <button
               type="button"
@@ -68,7 +131,9 @@ const Applicant_SignIn = () => {
             <div className="h-[24px]" />
             <button
               type="button"
+              onClick={handleGoogleSignIn}
               className="flex items-center justify-center gap-2 border border-[#6B7280] hover:border-2 rounded-full bg-[#FEFEFF] hover:bg-gray-50 transition w-full max-w-md h-[44px] mx-auto"
+              disabled={isLoading}
             >
               <img
                 src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg"
@@ -80,12 +145,25 @@ const Applicant_SignIn = () => {
               </span>
             </button>
           </div>
+          {error && (
+            <div className="text-red-500 text-sm mb-2">{error}</div>
+          )}
           <div className="h-2" />
           <button
             type="submit"
-            className="max-w-md bg-[#2A4D9B] text-white rounded-2xl hover:bg-[#16367D] transition mt-4 h-[44px] w-[225px] font-semibold text-sm"
+            className={`max-w-md bg-[#2A4D9B] text-white rounded-2xl hover:bg-[#16367D] transition mt-4 h-[44px] w-[225px] font-semibold text-sm ${
+              isLoading ? "bg-gray-400 cursor-not-allowed" : ""
+            }`}
+            disabled={isLoading}
           >
-            Sign In
+            {isLoading ? (
+              <div className="flex items-center justify-center">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                Signing In...
+              </div>
+            ) : (
+              "Sign In"
+            )}
           </button>
         </form>
         <p className="text-center text-sm text-[#6B7280] font-semibold mt-2">

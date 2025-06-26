@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const EmployerOnboarding = () => {
   const navigate = useNavigate();
@@ -12,15 +13,49 @@ const EmployerOnboarding = () => {
   const [formData, setFormData] = useState({
     location: '',
     description: '',
-    companySize: ''
+    company_size: ''  // Changed from companySize to company_size to match backend
   });
+  
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  // Use AuthContext methods
+  const { isEmployer, getOnboardingStatus, completeOnboarding, isAuthenticated } = useAuth();
 
   useEffect(() => {
-    const savedRegistrationData = localStorage.getItem('registrationData');
-    if (savedRegistrationData) {
-      setRegistrationData(JSON.parse(savedRegistrationData));
-    }
+    checkOnboardingAndRedirect();
   }, []);
+
+  const checkOnboardingAndRedirect = async () => {
+    try {
+      // Check if user is authenticated and is an employer
+      if (!isAuthenticated()) {
+        navigate('/employer-sign-in');
+        return;
+      }
+
+      if (!isEmployer()) {
+        navigate('/employer-sign-in');
+        return;
+      }
+
+      // Check onboarding status using AuthContext method
+      const status = await getOnboardingStatus();
+
+      if (!status.needs_onboarding) {
+        // Already completed onboarding - redirect to homepage
+        navigate('/employerhomepage');
+      } else {
+        // Show onboarding form
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error('Error checking onboarding status:', error);
+      setError('Failed to load onboarding status. Please try again.');
+      setIsLoading(false);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -33,43 +68,59 @@ const EmployerOnboarding = () => {
   const handleRadioChange = (value) => {
     setFormData(prev => ({
       ...prev,
-      companySize: value
+      company_size: value  // Changed from companySize to company_size
     }));
   };
-  const handleContinue = () => {
-    const completeRegistrationData = {
-      ...registrationData,
-      ...formData
-    };
+
+  const handleContinue = async () => {
+    setError('');
     
-    console.log('Complete registration data:', completeRegistrationData);
-    
-    // Save complete data to localStorage for later use
-    localStorage.setItem('completeRegistrationData', JSON.stringify(completeRegistrationData));
-    
-    // Initialize company data for the company profile
-    localStorage.setItem('companyData', JSON.stringify({
-      companyData: {
-        name: registrationData.companyName,
-        location: formData.location,
-        type: formData.companySize,
-        description: formData.description,
-        logo: null
-      },
-      socialLinks: {
-        linkedin: '',
-        instagram: '',
-        facebook: '',
-        github: '',
-        telegram: '',
-        viber: ''
+    // Basic validation
+    if (!formData.location || !formData.description || !formData.company_size) {
+      setError('Please fill in all required fields');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Map frontend values to backend enum values
+      const mappedData = {
+        location: formData.location.trim(),
+        description: formData.description.trim(),
+        company_size: mapCompanySize(formData.company_size)
+      };
+
+      console.log('Submitting onboarding data:', mappedData);
+
+      // Use AuthContext method to complete onboarding
+      const result = await completeOnboarding(mappedData);
+      
+      if (result.company) {
+        console.log('Onboarding completed successfully:', result);
+        // Onboarding successful - redirect to homepage
+        navigate('/employerhomepage');
+      } else {
+        setError('Failed to complete onboarding. Please try again.');
       }
-    }));
-    
-    // Clean up temporary registration data
-    localStorage.removeItem('registrationData');
-    
-    navigate('/employer-sign-in'); 
+    } catch (error) {
+      console.error('Onboarding error:', error);
+      setError(error.message || 'An error occurred during onboarding. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Map frontend values to backend CompanySizeEnum values
+  const mapCompanySize = (value) => {
+    const mapping = {
+      'just-me': 'Me',
+      'micro': 'Micro',
+      'small': 'Small',
+      'medium': 'Medium',
+      'large': 'Large'
+    };
+    return mapping[value] || value;
   };
 
   const companySizeOptions = [
@@ -79,6 +130,30 @@ const EmployerOnboarding = () => {
     { value: 'medium', label: 'Medium Corporation' },
     { value: 'large', label: 'Large Corporation' }
   ];
+
+  // Loading state while checking onboarding status
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Checking your profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Loading state while checking onboarding status
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Checking your profile...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (    <div className="min-h-screen bg-[#FEFEFF]">         
       <div className="bg-[#F9F9F9] shadow-lg min-h-[128px] fixed top-0 left-0 right-0 z-50">
@@ -90,6 +165,7 @@ const EmployerOnboarding = () => {
           </div>
         </div>
       </div>      
+      
       {/* Main Content */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-44 mt-24">
         {/* Title Section */}        <div className="text-center mb-12">
@@ -100,9 +176,17 @@ const EmployerOnboarding = () => {
             Answer a few questions to start posting jobs and finding the right candidates.
           </p>
         </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-8 max-w-4xl mx-auto">
+            {error}
+          </div>
+        )}
+        
         {/* Form Card */}
-        <div className="bg-[#FEFEFF] rounded-[24px] shadow-2xl mx-auto border border-gray-100 w-[1152px] h-[438px]">
-          <h2 className="text-[24px] font-bold text-[#FF8032] mb-8 mt-8 text-center">
+        <div className="bg-[#FEFEFF] rounded-[24px] shadow-2xl mx-auto border border-gray-100" style={{width: '1152px', height: '438px'}}>
+          <h2 className="text-[24px] font-bold text-[#FF8032] mb-10 mt-4 text-center">
             Company Information
           </h2>
           
@@ -110,64 +194,69 @@ const EmployerOnboarding = () => {
             <div className="space-y-8 ml-24">
               <div>
                 <label className="block text-[16px] font-semibold text-[#3C3B3B] mb-3">
-                  Location of the Company
+                  Location of the Company *
                 </label>
                 <input
                   type="text"
                   name="location"
                   value={formData.location}
                   onChange={handleInputChange}
-                  className="w-full h-50 px-4 py-3 border-2 border-[#6B7280] rounded-[8px] focus:ring-2 focus:ring-[#FF8032] focus:border-[#FF8032] outline-none transition-colors text-[14px]"
-                  placeholder=""
+                  className="w-full px-4 py-3 border-2 border-[#6B7280] rounded-[8px] focus:ring-2 focus:ring-[#FF8032] focus:border-[#FF8032] outline-none transition-colors text-[14px]"
+                  placeholder="City, Country"
+                  required
+                  disabled={isSubmitting}
                 />
               </div>
 
               {/* Description Field */}
               <div>
                 <label className="block text-[14px] font-semibold text-[#3C3B3B] mb-3">
-                  Brief Description of the Company
+                  Brief Description of the Company *
                 </label>
                 <textarea
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
                   rows="6"
-                  className="w-full h-[128px] px-4 py-3 border-2 border-[#6B7280] rounded-[8px] focus:ring-2 focus:ring-[#FF8032] focus:border-[#FF8032] outline-none transition-colors resize-none text-[14px]"
-                  placeholder=""
+                  className="w-full px-4 py-3 border-2 border-[#6B7280] rounded-[8px] focus:ring-2 focus:ring-[#FF8032] focus:border-[#FF8032] outline-none transition-colors resize-none text-[14px]"
+                  placeholder="Tell us about your company..."
+                  required
+                  disabled={isSubmitting}
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-[16px] font-semibold text-[#3C3B3B] mb-6 ml-32">
-                How many people are in your company?
+              <label className="block text-[16px] font-semibold text-[#3C3B3B] mb-6">
+                How many people are in your company? *
               </label>
               <div className="space-y-4 ml-32">
                 {companySizeOptions.map((option) => (
                   <div
                     key={option.value}
-                    className="flex items-center cursor-pointer group"
-                    onClick={() => handleRadioChange(option.value)}
+                    className={`flex items-center cursor-pointer group ${isSubmitting ? 'pointer-events-none opacity-50' : ''}`}
+                    onClick={() => !isSubmitting && handleRadioChange(option.value)}
                   >
                     <input
                       type="radio"
-                      name="companySize"
+                      name="company_size"
                       value={option.value}
-                      checked={formData.companySize === option.value}
+                      checked={formData.company_size === option.value}
                       onChange={() => handleRadioChange(option.value)}
                       className="sr-only"
+                      disabled={isSubmitting}
                     />
                     <div className={`w-6 h-6 rounded-full border-2 mr-4 flex items-center justify-center transition-colors ${
-                      formData.companySize === option.value
+                      formData.company_size === option.value
                         ? 'border-[#FF8032] bg-white'
                         : 'border-[#D1D5DB] bg-white group-hover:border-[#FF8032]'
                     }`}>
-                      {formData.companySize === option.value && (
+                      {formData.company_size === option.value && (
                         <div className="w-4 h-4 rounded-full bg-[#FF8032]"></div>
                       )}
                     </div>
                     <span className={`text-[14px] text-[#3C3B3B] font-semibold transition-colors ${
-                      formData.companySize === option.value
+                      formData.company_size === option.value
                         ? 'text-[#374151]'
                         : 'text-[#374151] group-hover:text-[#FF8032]'
                     }`}>
@@ -179,15 +268,39 @@ const EmployerOnboarding = () => {
             </div>         
           </div>
         </div>
-      </div>
-      
-      <div className="flex justify-end pr-[220px] mt-4 mb-8">
-        <button
-          onClick={handleContinue}
-          className="w-[192px] h-[44px] bg-[#FF8032] hover:bg-[#E66F24] text-white font-semibold px-8 py-3 rounded-[8px] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#FF8032] focus:ring-offset-2 text-[14px]"
-        >
-          Continue
-        </button>
+
+        {/* Continue Button - Outside the form */}
+        <div className="flex justify-end max-w-4xl mx-auto mt-8">
+          <button
+            onClick={handleContinue}
+            disabled={isSubmitting}
+            className={`font-semibold px-8 py-3 rounded-[8px] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#FF8032] focus:ring-offset-2 text-[14px] ${
+              isSubmitting
+                ? 'bg-gray-400 cursor-not-allowed text-white'
+                : 'bg-[#FF8032] hover:bg-[#e6722d] text-white'
+            }`}
+          >
+            {isSubmitting ? (
+              <div className="flex items-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Completing...
+              </div>
+            ) : (
+              'Continue'
+            )}
+          </button>
+        </div>
+
+        {/* Skip Option */}
+        <div className="flex justify-center mt-4 mb-8">
+          <button
+            onClick={() => navigate('/employerhomepage')}
+            disabled={isSubmitting}
+            className="text-sm text-[#FF8032] hover:text-[#e6722d] underline"
+          >
+            Skip for now
+          </button>
+        </div>
       </div>
     </div>
   );
