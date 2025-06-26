@@ -1,16 +1,19 @@
 import React, { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { useNavigate } from "react-router-dom";
 import TechnicalSkills from "./TechnicalSkills";
 import ApplicantCertPopup from "./ApplicantCertPopup";
 import ApplicantCertCard from "./ApplicantCertCard";
 import StepProgressFooter from "./StepProgressFooter";
+import { flattenUserDetails, mapWorkSettingToEnum, mapWorkTypeToEnum } from "../utils/userUtils"; 
 
-function AppOnbStepTwo({ step, segment, onBack }) {
+function AppOnbStepTwo({ step, segment, onNext, onBack, onSkip, userDetails, setUserDetails, saveUserDetails }) { // <-- add onSkip prop
   const [skills, setSkills] = useState([]);
   const [proficiency, setProficiency] = useState({});
   const [softSkillsTags, setSoftSkillsTags] = useState([]);
   const [certifications, setCertifications] = useState([]); // State for certifications
   const [showCertPopup, setShowCertPopup] = useState(false); // State for showing the popup
+  const [preferredWorkSetting, setPreferredWorkSetting] = useState("");
+  const [preferredWorkType, setPreferredWorkType] = useState("");
   const popupRef = useRef(null);
   const navigate = useNavigate(); // Initialize useNavigate
 
@@ -24,11 +27,37 @@ function AppOnbStepTwo({ step, segment, onBack }) {
     setCertifications((prev) => prev.filter((cert) => cert !== certification));
   };
 
-  const handleContinue = () => {
-    if (step === 2 && segment === 10) {
-      console.log("Navigating to ApplicantProfile"); // Debugging
-      navigate("/ApplicantProfile"); // Redirect to ApplicantProfile
+  const handleContinue = async () => {
+    if (step === 2 && segment === 9) {
+      if (!preferredWorkSetting || !preferredWorkType) {
+        alert("Please select both work setting and work type.");
+        return;
+      }
+      // Update parent state with the complete userDetails PLUS the new preferences
+      const updatedUserDetails = {
+        ...userDetails,
+        preferred_worksetting: preferredWorkSetting,
+        preferred_worktype: preferredWorkType,
+      };
+      
+      setUserDetails(updatedUserDetails);
+      
+      // Save to backend with all existing data preserved
+      await saveUserDetails(flattenUserDetails(updatedUserDetails));
+      onNext();
+    } else if (step === 2 && segment === 10) {
+      navigate("/ApplicantProfile");
+    } else {
+      onNext();
     }
+  };
+
+  const handleSkip = () => {
+    if (step === 2 && segment === 9) {
+      setPreferredWorkSetting("");
+      setPreferredWorkType("");
+    }
+    onSkip();
   };
 
   const programmingLanguageTags = [
@@ -96,14 +125,21 @@ function AppOnbStepTwo({ step, segment, onBack }) {
   const workSettings = ["Hybrid", "Remote", "On-Site"];
   const workTypes = ["Part-Time", "Full-Time", "Contractual", "Internship"];
 
-  function RadioGroup({ title, name, options, grid = false }) {
+  function RadioGroup({ title, name, options, value, onChange, grid = false }) {
     return (
       <div className="w-[420px] bg-white rounded-[10px] shadow-all-around p-6 h-auto min-h-[240px] font-montserrat">
         <h1 className="text-2xl font-bold text-[#2A4D9B] p-6">{title}</h1>
         <div className={grid ? "grid grid-cols-2 gap-x-10 gap-y-2" : "flex flex-col space-y-2"}>
           {options.map((option) => (
             <label key={option} className="flex items-center gap-2 text-base pl-6">
-              <input type="radio" name={name} value={option} className="accent-[#2A4D9B] w-5 h-5" />
+              <input
+                type="radio"
+                name={name}
+                value={option}
+                checked={value === option}
+                onChange={() => onChange(option)}
+                className="accent-[#2A4D9B] w-5 h-5"
+              />
               {option}
             </label>
           ))}
@@ -234,13 +270,18 @@ function AppOnbStepTwo({ step, segment, onBack }) {
                 title="Preferred Work Settings"
                 name="workSettings"
                 options={workSettings}
+                value={preferredWorkSetting}
+                onChange={setPreferredWorkSetting}
               />
-                <RadioGroup title="Preferred Work Type" 
-                name="workType" 
-                options={workTypes} 
-                grid />
-
-             </div>
+              <RadioGroup
+                title="Preferred Work Type"
+                name="workType"
+                options={workTypes}
+                value={preferredWorkType}
+                onChange={setPreferredWorkType}
+                grid
+              />
+            </div>
           </div>
         )}
 
@@ -295,7 +336,12 @@ function AppOnbStepTwo({ step, segment, onBack }) {
         </div>
       )}
 
-
+      <StepProgressFooter
+        step={step}
+        segment={segment}
+        onContinue={handleContinue}
+        onSkip={handleSkip}
+      />
     </div>
   );
 }

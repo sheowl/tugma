@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from "react-router-dom";
 import ApplicantSideBar from '../components/ApplicantSideBar';
 import Card from '../components/Card';
@@ -11,6 +11,13 @@ import ApplicantNotification from '../components/ApplicantNotification';
 function ApplicantBrowseJobs() {
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [selectedJob, setSelectedJob] = useState(null);
+    const [firstName, setFirstName] = useState("");
+    const [showNotifications, setShowNotifications] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [selectedModality, setSelectedModality] = useState(null);
+    const [selectedWorkType, setSelectedWorkType] = useState(null);
+    const [selectedSort, setSelectedSort] = useState("ascending"); // <-- ADD THIS
+    const [sortedData, setSortedData] = useState([]);
     const navigate = useNavigate();
 
     // Auth check: redirect if not logged in

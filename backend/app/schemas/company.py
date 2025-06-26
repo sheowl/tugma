@@ -37,5 +37,9 @@ class CompanyOnboardingUpdate(BaseModel):
 
 class CompanyOut(CompanyBase):
     company_id: int
-
     model_config = {"from_attributes": True}
+
+class CompanyLogin(BaseModel):
+    company_email: EmailStr
+    password: str
+
