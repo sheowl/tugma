@@ -361,7 +361,7 @@ const JobNewPost = ({ open, onClose, onSave }) => {
               ))}
               <button
                 type="button"
-                className="w-[53px] px-2 py-1 bg-transparent text-[#FF8032] border-2 border-[#FF8032] rounded-xl text-[12px] font-semibold hover:bg-[#FF8032] hover:text-white transition"
+                className="w-[219px] px-2 py-1 bg-transparent text-[#FF8032] border-2 border-[#FF8032] rounded-xl text-[12px] font-semibold hover:bg-[#FF8032] hover:text-white transition"
                 onClick={() => setShowTagPopup(true)}
               >
                 Tag +
