@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import ApplicantSideBar from '../components/ApplicantSideBar';
 import Card from '../components/Card';
-import ApplicantDashLogo from '../assets/ApplicantDashLogo.svg';
 import JobDetailsDrawer from '../components/JobDetailsDrawer';
 import SearchBar from '../components/SearchBar';
 import Dropdown from '../components/Dropdown';
-import ApplicantNotification from '../components/ApplicantNotification';
 import ApplicantHeader from '../components/ApplicantHeader';
 
 
@@ -17,8 +15,6 @@ function ApplicantBrowseJobs() {
     const [selectedModality, setSelectedModality] = useState(null); // State for modality filter
     const [selectedWorkType, setSelectedWorkType] = useState(null); // State for work type filter
     const [firstName, setFirstName] = useState("User"); // State for user's first name
-    const [showNotifications, setShowNotifications] = useState(false);
-    const hasNotifications = true; // or from state: useState(true)
 
     // Simulate fetching first name from a database
     useEffect(() => {
@@ -311,9 +307,8 @@ function ApplicantBrowseJobs() {
                             description={job.description}
                             salaryRangeLow={job.salaryRangeLow}
                             salaryRangeHigh={job.salaryRangeHigh}
-                            tags={job.tags} // Pass tags here
+                            tags={job.tags}
                             onViewDetails={() => {
-                                console.log("Selected Job:", job); // Debugging
                                 setSelectedJob(job);
                                 setDrawerOpen(true);
                             }}

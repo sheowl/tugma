@@ -1,11 +1,10 @@
-import React from 'react';
 import ApplicantSideBar from '../components/ApplicantSideBar';
 import ApplicantTracker from '../components/ApplicantTracker';
 import SearchBar from '../components/SearchBar';
-import { useState, useEffect } from 'react';
 import Dropdown from '../components/Dropdown';
-import ApplicantNotification from '../components/ApplicantNotification';
 import ApplicantHeader from '../components/ApplicantHeader';
+import ApplicantTrackerDrawer from '../components/ApplicantTrackerDrawer';
+import { useState, useEffect } from 'react';
 
 
 function ApplicantApplications() {
@@ -14,8 +13,8 @@ function ApplicantApplications() {
     const [sortedData, setSortedData] = useState([]); // State for sorted job data
     const [selectedModality, setSelectedModality] = useState(null); // State for modality filter
     const [selectedWorkType, setSelectedWorkType] = useState(null); // State for work type filter
-    const [showNotifications, setShowNotifications] = useState(false);
-    const hasNotifications = true; // or from state: useState(true)
+    const [drawerOpen, setDrawerOpen] = useState(false);
+    const [selectedJob, setSelectedJob] = useState(null);
 
     // Example job applications data
     const jobApplications = [
@@ -31,34 +30,6 @@ function ApplicantApplications() {
             salaryRangeHigh: 80,
             salaryFrequency: "Monthly",
             companyDescription: "Tech Innovations Inc. is a leading software development company focused on delivering innovative solutions to our clients. We value creativity, collaboration, and continuous learning.",
-            status: "rejected-after-interview", // or "interview", "accepted", etc.
-        },
-        {
-            jobTitle: "Product Manager",
-            companyName: "Innovatech Solutions",
-            location: "New York, NY",
-            matchScore: 90,
-            employmentType: "Full-time",
-            workSetup: "Remote",
-            description: "Lead product development and strategy for innovative solutions.",
-            salaryRangeLow: 50,
-            salaryRangeHigh: 100,
-            salaryFrequency: "Monthly",
-            companyDescription: "Innovatech Solutions is a global leader in tech innovation, empowering businesses worldwide.",
-            status: "interview",
-        },
-        {
-            jobTitle: "UI/UX Designer",
-            companyName: "Creative Minds Studio",
-            location: "Austin, TX",
-            matchScore: 75,
-            employmentType: "Contract",
-            workSetup: "On-site",
-            description: "Design user-friendly interfaces for our cutting-edge applications.",
-            salaryRangeLow: 30,
-            salaryRangeHigh: 60,
-            salaryFrequency: "Monthly",
-            companyDescription: "Creative Minds Studio specializes in creating visually stunning and functional designs.",
             status: "applied",
         },
     ];
@@ -123,19 +94,6 @@ function ApplicantApplications() {
                     showProfile={true}
                 />
 
-                {showNotifications && (
-                    <div className="absolute top-[120px] right-[50px] z-50">
-                        <ApplicantNotification
-                        open={showNotifications}
-                        onClose={() => setShowNotifications(false)}
-                        notification={sampleData}
-                        onViewDetails={(notif) => {
-                            console.log("View notif details:", notif);
-                            setShowNotifications(false);
-                        }}
-                        />
-                    </div>
-                    )}
 
                 {/* Search Bar and Dropdowns */}
                 <div className="px-[112px] mt-0 mb-5 flex justify-between items-center">
@@ -236,8 +194,7 @@ function ApplicantApplications() {
                 </div>
 
                 {/* Job Applications */}
-                <div className="pl-[112px] pr-[118px]">
-                      <div className="grid grid-cols-2 gap-10 mt-10 mb-10">
+                <div className="pl-[112px] pr-[118px] mt-10 mb-10 flex flex-wrap gap-[33px] justify-center">
                     {sortedData.map((job, index) => (
                         <div key={index} className="flex items-center justify-between mb-2">
                             <ApplicantTracker
@@ -252,13 +209,25 @@ function ApplicantApplications() {
                                 salaryRangeHigh={job.salaryRangeHigh}
                                 salaryFrequency={job.salaryFrequency}
                                 companyDescription={job.companyDescription}
-                                onViewDetails={() => alert(`View Details for ${job.jobTitle}`)}
+                                onViewDetails={() => {
+                                    setSelectedJob(job);
+                                    setDrawerOpen(true);
+                                }}
                                 status={job.status}
                             />
                         </div>
                     ))}
-                </div>
-                </div>
+                    </div>
+
+                <ApplicantTrackerDrawer
+                    open={drawerOpen}
+                    onClose={() => setDrawerOpen(false)}
+                    onViewDetails={(job) => {
+                        setSelectedJob(job);
+                        setDrawerOpen(true);
+                    }}
+                    job={selectedJob}
+                />
             </div>
         </div>
     );

@@ -3,7 +3,6 @@ import { useState } from "react";
 import ApplicantHeader from "../components/ApplicantHeader";
 
 function ApplicantProfile() {
-  const fullName = localStorage.getItem("fullName") || "User";
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeField, setActiveField] = useState(""); // "github" | "linkedin" | "portfolio"
