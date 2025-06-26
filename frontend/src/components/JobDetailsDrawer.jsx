@@ -30,7 +30,7 @@ export default function JobDetailsDrawer({ open, onClose, job, onApply }) {
       >
         <div className="flex flex-col h-full">
           {/* Top Bar */}
-          <div className="flex items-center justify-between mt-12 px-10 h-[80px] z-10">
+          <div className="flex items-center justify-between mt-12 px-0 h-[80px] z-10 mb-4">
             <button
               className="p-2 text-gray-400 hover:text-gray-700"
               onClick={onClose}
@@ -42,7 +42,7 @@ export default function JobDetailsDrawer({ open, onClose, job, onApply }) {
           </div>
 
           {/* Scrollable Content */}
-          <div className="flex-1 overflow-y-auto px-10 pb-40 font-montserrat">
+          <div className="flex-1 overflow-y-auto px-20 pb-40 font-montserrat">
             <div className="flex flex-col gap-6">
               {job ? (
                 <>

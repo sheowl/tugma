@@ -17,12 +17,10 @@ const JobCard = (props) => {
     onViewDetails = () => {},
     onViewApplicants = () => {},
     dropdownOpen = false,
-    onDropdownToggle = () => {},
-    onCardHover = () => {},  } = props;
+    onDropdownToggle = () => {} } = props;
 
   const navigate = useNavigate();
 
-  // Dynamic action options based on status
   const actionOptions = status === "Active" 
     ? [
         { label: "Edit", value: "edit" },
@@ -37,15 +35,31 @@ const JobCard = (props) => {
 
   const handleActionClick = () => {
     onDropdownToggle(id);
-  };
-
-  const handleOptionClick = (option) => {
-    setDropdownOpen(false);
+  };  const handleOptionClick = (option) => {
+    console.log('Option clicked:', option, 'Job ID:', id);
+    onDropdownToggle(id); 
     if (option && onAction) {
-      onAction(option);
+      console.log('Calling onAction with:', id, option.value);
+      onAction(id, option.value);
     }
-  };  const handleViewApplicants = () => {
-    onViewApplicants();
+  };const handleViewApplicants = () => {
+    const job = {
+      id,
+      jobTitle,
+      companyName,
+      location,
+      type,
+      employment,
+      description,
+      status,
+      postedDaysAgo,
+    };
+    navigate('/employerapplicants', {
+      state: {
+        jobPosts: [job],
+        selectedJob: job,
+      },
+    });
   };
 
   const handleViewPostingDetails = () => {
@@ -60,13 +74,13 @@ const JobCard = (props) => {
       postedDaysAgo,
     };
     onViewDetails(jobData);  };
-  const statusClass =
+  
     status === "Archived"
       ? "text-[#FACC15]"      : "text-[#16A34A]";
+  
   return (
-    <div className={`bg-white border rounded-[20px] shadow-all-around p-6 flex relative w-full max-w-full h-[288px] hover:scale-101 transition-transform duration-300 ${dropdownOpen ? 'z-50' : 'z-10'}`}>
-      <div className="absolute top-12 right-12">
-        <span className={`px-4 py-2 rounded-full text-[14px] font-bold ${
+    <div className={`bg-white border rounded-[20px] shadow-all-around p-6 flex relative w-full max-w-full h-[288px] hover:scale-101 transition-transform duration-300 ${dropdownOpen ? 'z-50' : 'z-10'}`}>      <div className="absolute top-12 right-12">
+        <span className={`px-4 py-2 rounded-full text-[14px] w-[126px] h-[29px] font-semibold flex items-center justify-center ${
           status === "Active" 
             ? "bg-[#16A34A] text-white" 
             : "bg-[#FACC15] text-white"
@@ -103,7 +117,7 @@ const JobCard = (props) => {
         <div className="flex gap-3">
           <div className="relative">
             <button 
-              className="w-[100px] h-[32px] bg-transparent text-white px-4 py-3 rounded-lg text-[12px] text-[#FF8032] font-semibold border-2 border-[#FF8032] font-semibold hover:bg-[#FF8032] hover:text-white transition-colors flex items-center gap-2"
+              className="w-[100px] h-[32px] bg-transparen px-4 py-3 rounded-lg text-[12px] text-[#FF8032] font-semibold border-2 border-[#FF8032] hover:bg-[#FF8032] hover:text-white transition-colors flex items-center gap-2"
               onClick={handleActionClick}
               type="button"
             >
@@ -123,7 +137,7 @@ const JobCard = (props) => {
               </div>
             )}</div>          
             <button 
-            className="w-[144px] h-[32px] bg-transparent text-white px-5 py-3 rounded-lg text-[12px] text-[#FF8032] font-semibold border-2 border-[#FF8032] font-semibold hover:bg-[#FF8032] hover:text-white transition-colors flex items-center gap-2"
+            className="w-[144px] h-[32px] bg-transparent px-5 py-3 rounded-lg text-[12px] text-[#FF8032] border-2 border-[#FF8032] font-semibold hover:bg-[#FF8032] hover:text-white transition-colors flex items-center gap-2"
             onClick={handleViewApplicants}
           >
             View Applicants

@@ -29,42 +29,41 @@ export default function ApplicantNotification({ open, onClose, notification = []
 
       {/* Notification List */}
       <div className="mt-6 flex flex-col gap-4">
-        {notification.map((notif, index) => {
-  const style = statusStyles[notif.status] || {};
-  return (
-    <div
-      key={index}
-      className="flex justify-between items-start p-3 rounded-lg hover:bg-gray-100 cursor-pointer"
-      onClick={() => onViewDetails?.(notif)}
-    >
-      {/* Left: Icon + Info */}
-      <div className="flex gap-3">
-        {/* Icon with circle background */}
-        <div className={`w-6 h-6 rounded-full flex items-center justify-center ${style.badgeBg}`}>
-          <i className={`bi ${style.icon} text-base ${style.color}`}></i>
-        </div>
-
-        <div>
-          <div className="font-semibold text-gray-800">{notif.title}</div>
-          <div className="text-sm text-gray-500 mb-1">{notif.company}</div>
-
-          {/* Status badge */}
-          <span
-            className={`mt-2 px-3 py-1 text-xs font-medium rounded-full ${style.badgeBg} ${style.color}`}
-          >
-            {notif.status}
-          </span>
-        </div>
+        {notification.length > 0 ? (
+          notification.map((notif, index) => {
+            const style = statusStyles[notif.status] || {};
+            return (
+              <div
+                key={index}
+                className="flex justify-between items-start p-3 rounded-lg hover:bg-gray-100 cursor-pointer"
+                onClick={() => onViewDetails?.(notif)}
+              >
+                {/* Left: Icon + Info */}
+                <div className="flex gap-3">
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center ${style.badgeBg}`}>
+                    <i className={`bi ${style.icon} text-base ${style.color}`}></i>
+                  </div>
+                  <div>
+                    <div className="font-semibold text-gray-800">{notif.title}</div>
+                    <div className="text-sm text-gray-500 mb-1">{notif.company}</div>
+                    <span className={`mt-2 px-3 py-1 text-xs font-medium rounded-full ${style.badgeBg} ${style.color}`}>
+                      {notif.status}
+                    </span>
+                  </div>
+                </div>
+                <div className="text-sm text-gray-400 whitespace-nowrap mt-1">
+                  {notif.timeAgo}
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div className="text-center text-sm text-gray-500 py-10">
+            No notifications today.
+          </div>
+        )}
       </div>
 
-      {/* Time */}
-      <div className="text-sm text-gray-400 whitespace-nowrap mt-1">
-        {notif.timeAgo}
-      </div>
-    </div>
-  );
-})}
-      </div>
     </div>
   );
 }

@@ -15,14 +15,16 @@ import EmpVerification from "./pages/EmpVerification.jsx";
 import LandingPage from "./pages/LandingPage.jsx";
 import ApplicantBrowseJobs from "./pages/ApplicantBrowseJobs.jsx";
 import ApplicantApplications from "./pages/ApplicantApplications.jsx";
-import ApplicantInbox from "./pages/ApplicantInbox.jsx";
 import ApplicantProfile from "./pages/ApplicantProfile.jsx";
 import EmployerApplicants from "./pages/EmployerApplicants.jsx";
 import EmployerHomePage from "./pages/EmployerHomePage.jsx";
 import EmployerJobPosts from "./pages/EmployerJobPosts.jsx";
 import ApplicantOnboarding from "./pages/ApplicantOnboarding.jsx";
 import EmployerOnboarding from "./pages/EmployerOnboarding.jsx";
-import TechnicalSkills from "./components/TechnicalSkills.jsx";
+import CompanyPage from "./pages/CompanyPage.jsx";
+import EditCompanyPage from "./components/EditCompanyPage.jsx";
+import ApplicantResume from "./components/ApplicantResume.jsx";
+import TugmaLandingPage from "./pages/TugmaLandingPage.jsx";
 // Remove CompanyOnboarding import for now
 
 function App() {
@@ -50,6 +52,10 @@ function App() {
             <Route path="/employerjobposts" element={<EmployerJobPosts />} />
             <Route path="/applicantonboarding" element={<ApplicantOnboarding />} />
             <Route path="/employeronboarding" element={<EmployerOnboarding />} />
+            <Route path="/companypage" element={<CompanyPage />} />
+            <Route path="/edit-company-profile" element={<EditCompanyPage />} />
+            <Route path="/applicantresume" element={<ApplicantResume />} />
+            <Route path="/tugmalandingpage" element={<TugmaLandingPage />} />
           </Routes>
         </div>
       </Router>

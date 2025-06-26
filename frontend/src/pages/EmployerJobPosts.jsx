@@ -4,8 +4,10 @@ import JobCard from '../components/JobCard.jsx';
 import EmployerSideBar from "../components/EmployerSideBar";
 import SearchBar from "../components/SearchBar";
 import JobNewPost from "../components/JobNewPost";
+import JobEditPost from "../components/JobEditPost";
 import Dropdown from "../components/Dropdown";
 import EmployerPostingDetails from "../components/EmployerPostingDetails";
+import { exampleJobPosts } from "../context/jobPostsData";
 import { useJobs } from "../context/JobsContext"; // This should work now
 import CompanyService from "../services/CompanyService";
 
@@ -137,7 +139,7 @@ const EmployerJobPosts = () => {
 
   const handleEditJob = () => {
     setPostingDetailsOpen(false);
-    console.log('Edit job clicked');
+    console.log('Edit job clicked', completeJobData || jobData);
   };
 
   const handleViewApplicants = async () => {
@@ -149,6 +151,72 @@ const EmployerJobPosts = () => {
       });
     } catch (error) {
       console.error('Error navigating to applicants:', error);
+    }
+  };
+  const handleDropdownToggle = (jobId) => {
+    setOpenDropdownId(openDropdownId === jobId ? null : jobId);
+  };
+  const handleEditJobSave = (updatedJobData) => {
+    console.log('Saving job with data:', updatedJobData);
+    setJobPosts(prevJobs => 
+      prevJobs.map(job => 
+        job.id === jobToEdit.id ? updatedJobData : job
+      )
+    );
+    setShowEditModal(false);
+    setJobToEdit(null);
+  };
+
+  const handleEditModalClose = () => {
+    setShowEditModal(false);
+    setJobToEdit(null);
+  };const handleJobAction = (jobId, action) => {
+    console.log(`Action ${action} for job ${jobId}`);
+    
+    setOpenDropdownId(null);
+      if (action === 'edit') {
+      // Handle edit action
+      const jobData = jobPosts.find(job => job.id === jobId);
+      if (jobData) {
+        console.log('Opening job for editing:', jobData.jobTitle);
+        setJobToEdit(jobData);
+        setShowEditModal(true);
+      }
+    } else if (action === 'archive') {
+      // Handle archive action
+      console.log('Archiving job:', jobId);
+      setJobPosts(prevJobs => 
+        prevJobs.map(job => 
+          job.id === jobId ? { ...job, status: 'Archived' } : job
+        )
+      );
+    } else if (action === 'restore') {
+      // Handle restore action
+      console.log('Restoring job:', jobId);
+      setJobPosts(prevJobs => 
+        prevJobs.map(job => 
+          job.id === jobId ? { ...job, status: 'Active' } : job
+        )
+      );
+    } else if (action === 'delete') {
+      // Handle delete action with confirmation
+      const jobToDelete = jobPosts.find(job => job.id === jobId);
+      console.log('Attempting to delete job:', jobToDelete?.jobTitle);
+      
+      const confirmDelete = window.confirm(
+        `Are you sure you want to delete the job posting "${jobToDelete?.jobTitle}"? This action cannot be undone.`
+      );
+      
+      if (confirmDelete) {
+        console.log('User confirmed deletion, removing job:', jobId);
+        setJobPosts(prevJobs => {
+          const newJobs = prevJobs.filter(job => job.id !== jobId);
+          console.log('Jobs after deletion:', newJobs.length, 'remaining');
+          return newJobs;
+        });
+      } else {
+        console.log('User cancelled deletion');
+      }
     }
   };
 
@@ -381,6 +449,9 @@ const EmployerJobPosts = () => {
                 postedDaysAgo={job.postedDaysAgo}
                 onViewDetails={handleViewJobDetails}
                 onViewApplicants={handleViewApplicants}
+                dropdownOpen={openDropdownId === job.id}
+                onDropdownToggle={handleDropdownToggle}
+                onAction={handleJobAction}
               />
             ))
           ) : !loading && !companyLoading ? (
@@ -406,6 +477,14 @@ const EmployerJobPosts = () => {
           companyProfile={companyProfile}
         />
         
+        <JobEditPost
+          open={showEditModal}
+          onClose={handleEditModalClose}
+          onSave={handleEditJobSave}
+          jobData={jobToEdit}
+        />
+        
+        {/* Employer Posting Details Drawer */}
         {/* Job Details Modal */}
         <EmployerPostingDetails
           open={postingDetailsOpen}

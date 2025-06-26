@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import EmployerSideBar from "../components/EmployerSideBar";
 import SearchBar from "../components/SearchBar";
+import { Briefcase, FileText, CalendarArrowUp, Star, Eye } from "lucide-react";
+import recentApplicants from "../context/recentApplicants";
 import { 
   BriefcaseIcon, 
   DocumentTextIcon, 
