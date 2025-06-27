@@ -8,7 +8,7 @@ const ApplicationFullDetails = ({ open, onClose, applicant, jobId, onStatusUpdat
   const navigate = useNavigate();
   
   // Use CompanyContext for authentication and API calls
-  const { authToken, user, isAuthenticated, loading: contextLoading } = useCompany();
+  const { authToken, user, isAuthenticated, loading: contextLoading, getCompanyProfile } = useCompany();
   
   const [applicationStatus, setApplicationStatus] = useState("applied");
   const [finalDecision, setFinalDecision] = useState(null);
@@ -16,28 +16,74 @@ const ApplicationFullDetails = ({ open, onClose, applicant, jobId, onStatusUpdat
   const [appliedTimestamp] = useState(new Date());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [companyProfile, setCompanyProfile] = useState(null);
+  const [profileFetched, setProfileFetched] = useState(false);
+  const [showRemarksModal, setShowRemarksModal] = useState(false);
+  const [remarksText, setRemarksText] = useState("");
+  const [pendingStatusChange, setPendingStatusChange] = useState(null);
+  const [interviewExists, setInterviewExists] = useState(false);
   const [interviewData, setInterviewData] = useState({
     jobTitle: applicant?.jobTitle || "Software Developer",
-    company: "Microsoft",
+    company: "Loading...",
     interview_type: "",
     interview_date: "",
     interview_time: "",
     remarks: "",
-    interview_status: "confirmed", // Changed from "scheduled" to "confirmed"
+    interview_status: "confirmed",
     applicant_id: applicant?.applicant_id || 0,
     job_id: jobId || 0
   });
 
-  // Debug auth state
+  // Add missing variables
+  const matchScoreColor = applicant?.matched >= 80 ? "text-green-600" : 
+                         applicant?.matched >= 60 ? "text-yellow-600" : "text-red-600";
+
+  const tempContactInfo = {
+    location: applicant?.location || "Location not provided",
+    phone: applicant?.phone || "+1 (555) 123-4567",
+    email: applicant?.email || "email@example.com"
+  };
+
+  const tempSkillMatches = {
+    matched: applicant?.matchedSkills || ["JavaScript", "React", "Node.js"],
+    notMatched: applicant?.unmatchedSkills || ["Python", "Django"],
+    moreNotMatched: applicant?.moreUnmatched || 0
+  };
+
+  // Fetch company profile when component opens - only once
   useEffect(() => {
-    console.log('🔍 ApplicationFullDetails Auth Debug:', {
-      authToken: authToken ? 'Present' : 'Missing',
-      tokenLength: authToken ? authToken.length : 0,
-      user: user ? 'Present' : 'Missing',
-      isAuthenticated,
-      contextLoading
-    });
-  }, [authToken, user, isAuthenticated, contextLoading]);
+    const fetchCompanyProfile = async () => {
+      if (open && getCompanyProfile && !profileFetched) {
+        try {
+          setProfileFetched(true); // Set flag before making request
+          const profile = await getCompanyProfile();
+          if (profile) {
+            setCompanyProfile(profile);
+            setInterviewData(prev => ({
+              ...prev,
+              company: profile.company_name || "Company Name"
+            }));
+          }
+        } catch (error) {
+          console.error('Failed to fetch company profile:', error);
+          // Fallback to default
+          setInterviewData(prev => ({
+            ...prev,
+            company: "Microsoft"
+          }));
+        }
+      }
+    };
+
+    fetchCompanyProfile();
+  }, [open, getCompanyProfile, profileFetched]);
+
+  // Reset profile fetched flag when component closes
+  useEffect(() => {
+    if (!open) {
+      setProfileFetched(false);
+    }
+  }, [open]);
 
   useEffect(() => {
     if (open && applicant) {
@@ -46,10 +92,11 @@ const ApplicationFullDetails = ({ open, onClose, applicant, jobId, onStatusUpdat
       setIsInterviewConfirmed(false);
       setFinalDecision(null);
       setError(null);
+      setInterviewExists(false);
       
-      setInterviewData({
+      setInterviewData(prev => ({
         jobTitle: applicant?.jobTitle || "Software Developer",
-        company: "Microsoft",
+        company: companyProfile?.company_name || "Loading...",
         interview_type: "",
         interview_date: "",
         interview_time: "",
@@ -57,17 +104,22 @@ const ApplicationFullDetails = ({ open, onClose, applicant, jobId, onStatusUpdat
         interview_status: "confirmed",
         applicant_id: applicant.applicant_id,
         job_id: jobId
-      });
-    }
-  }, [open, applicant, jobId]);
+      }));
 
-  // Add this function to check if interview already exists
+      // Check if interview already exists when status is interview
+      if (applicant.status === "interview") {
+        checkExistingInterview();
+      }
+    }
+  }, [open, applicant, jobId, companyProfile]);
+
+  // Check if interview already exists
   const checkExistingInterview = async () => {
     try {
       const token = getAuthToken();
-      if (!token) return;
+      if (!token) return false;
 
-      const response = await fetch(`http://localhost:8000/api/v1/interviews/application/${applicant.applicant_id}/${jobId}`, {
+      const response = await fetch(`http://localhost:8000/api/v1/interviews/${applicant.applicant_id}/${jobId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -76,6 +128,7 @@ const ApplicationFullDetails = ({ open, onClose, applicant, jobId, onStatusUpdat
       if (response.ok) {
         const interview = await response.json();
         if (interview) {
+          setInterviewExists(true);
           setIsInterviewConfirmed(true);
           setInterviewData(prev => ({
             ...prev,
@@ -85,52 +138,22 @@ const ApplicationFullDetails = ({ open, onClose, applicant, jobId, onStatusUpdat
             remarks: interview.remarks,
             interview_status: interview.interview_status
           }));
+          return true;
         }
+      } else if (response.status === 404) {
+        // Interview not found - show interview creator
+        setInterviewExists(false);
+        setIsInterviewConfirmed(false);
+        return false;
       }
+      return false;
     } catch (error) {
       console.log('No existing interview found or error checking:', error);
-    }
-  };
-
-  // Update the useEffect to check for existing interview
-  useEffect(() => {
-    if (open && applicant && applicationStatus === "interview") {
-      // Use the actual status from the applicant data
-      setApplicationStatus(applicant.status || "applied");
+      setInterviewExists(false);
       setIsInterviewConfirmed(false);
-      setFinalDecision(null);
-      setError(null);
-      
-      setInterviewData({
-        jobTitle: applicant?.jobTitle || "Software Developer",
-        company: "Microsoft",
-        interview_type: "",
-        interview_date: "",
-        interview_time: "",
-        remarks: "Please ensure that you are available at the scheduled time, as rescheduling opportunities may be limited. We encourage you to research our company, review the job description, our company background, and prepare any relevant materials or portfolio beforehand. More detailed instructions, including the interview link and any attachments, have been sent to your registered email. Should you have any unavoidable conflicts, inform us as soon as possible.",
-        interview_status: "confirmed",
-        applicant_id: applicant.applicant_id,
-        job_id: jobId
-      });
-
-      // Check if interview already exists
-      checkExistingInterview();
+      return false;
     }
-  }, [open, applicant, jobId]);
-
-  const tempContactInfo = {
-    location: applicant?.location || "Silang, Cavite",
-    phone: applicant?.phone || "0992 356 7294",
-    email: applicant?.email || "nanapusokoanglove14@gmail.com"
   };
-
-  const tempSkillMatches = {
-    matched: applicant?.skills?.slice(0, 3) || ["React", "JavaScript", "CSS"],
-    notMatched: ["Python", "Django"],
-    moreNotMatched: 3
-  };
-
-  if (!applicant) return null;
 
   // Get auth token with fallback to localStorage
   const getAuthToken = () => {
@@ -155,7 +178,7 @@ const ApplicationFullDetails = ({ open, onClose, applicant, jobId, onStatusUpdat
   };
 
   // API call to update application status
-  const updateApplicationStatus = async (newStatus) => {
+  const updateApplicationStatus = async (newStatus, remarks = null) => {
     try {
       setLoading(true);
       setError(null);
@@ -171,11 +194,12 @@ const ApplicationFullDetails = ({ open, onClose, applicant, jobId, onStatusUpdat
       const response = await fetch(`http://localhost:8000/api/v1/applications/${applicant.applicant_id}/${jobId}`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           status: newStatus,
-          remarks: newStatus === 'interview' ? null : 'interview'
+          remarks: remarks
         })
       });
 
@@ -191,20 +215,22 @@ const ApplicationFullDetails = ({ open, onClose, applicant, jobId, onStatusUpdat
         throw new Error(errorMessage);
       }
 
-      // Check if response has content before parsing JSON
-      const responseText = await response.text();
-      const result = responseText ? JSON.parse(responseText) : { success: true };
+      const result = await response.json();
       console.log('✅ Status updated:', result);
       
       // Update local state
       setApplicationStatus(newStatus);
       
-      // If updating to interview, set predefined remarks
-      if (newStatus === 'interview' && result.predefined_remarks) {
-        setInterviewData(prev => ({
-          ...prev,
-          remarks: result.predefined_remarks
-        }));
+      // If updating to interview, check for existing interview
+      if (newStatus === 'interview') {
+        if (result.predefined_remarks) {
+          setInterviewData(prev => ({
+            ...prev,
+            remarks: result.predefined_remarks
+          }));
+        }
+        // Check if interview already exists
+        await checkExistingInterview();
       }
       
       // Notify parent component
@@ -250,21 +276,6 @@ const ApplicationFullDetails = ({ open, onClose, applicant, jobId, onStatusUpdat
         job_id: jobId
       };
 
-      // 🐛 DETAILED DEBUG LOGGING
-      console.log('🔍 =================================');
-      console.log('🔍 INTERVIEW CREATION DEBUG INFO');
-      console.log('🔍 =================================');
-      console.log('📝 Raw Interview Data State:', JSON.stringify(interviewData, null, 2));
-      console.log('📝 Formatted Time:', formattedTime);
-      console.log('📝 Applicant ID:', applicant.applicant_id);
-      console.log('📝 Job ID:', jobId);
-      console.log('📝 Final Payload Being Sent:');
-      console.log(JSON.stringify(interviewPayload, null, 2));
-      console.log('📝 Payload String Length:', JSON.stringify(interviewPayload).length);
-      console.log('📝 Auth Token Present:', token ? 'YES' : 'NO');
-      console.log('📝 Auth Token Length:', token ? token.length : 0);
-      console.log('🔍 =================================');
-
       const response = await fetch('http://localhost:8000/api/v1/interviews/', {
         method: 'POST',
         headers: {
@@ -274,23 +285,16 @@ const ApplicationFullDetails = ({ open, onClose, applicant, jobId, onStatusUpdat
         body: JSON.stringify(interviewPayload)
       });
 
-      console.log('📡 Response Status:', response.status);
-      console.log('📡 Response Status Text:', response.statusText);
-      console.log('📡 Response Headers:', Object.fromEntries(response.headers.entries()));
-
       if (!response.ok) {
         const errorText = await response.text();
-        console.log('❌ Raw Error Response:', errorText);
         
         let errorMessage = 'Failed to create interview';
         try {
           const errorData = JSON.parse(errorText);
-          console.log('❌ Parsed Error Data:', JSON.stringify(errorData, null, 2));
           
           if (errorData.detail) {
             if (Array.isArray(errorData.detail)) {
               errorMessage = errorData.detail.map(err => {
-                console.log('❌ Validation Error:', err);
                 return `${err.loc?.join?.('.') || 'Field'}: ${err.msg}`;
               }).join(', ');
             } else {
@@ -298,19 +302,16 @@ const ApplicationFullDetails = ({ open, onClose, applicant, jobId, onStatusUpdat
             }
           }
         } catch (parseError) {
-          console.log('❌ Error parsing error response:', parseError);
           errorMessage = errorText || errorMessage;
         }
         throw new Error(errorMessage);
       }
 
       const result = await response.json();
-      console.log('✅ Interview created successfully:', JSON.stringify(result, null, 2));
       setIsInterviewConfirmed(true);
       return result;
     } catch (error) {
       console.error('❌ Error creating interview:', error);
-      console.error('❌ Error stack:', error.stack);
       setError(error.message);
       throw error;
     } finally {
@@ -326,12 +327,8 @@ const ApplicationFullDetails = ({ open, onClose, applicant, jobId, onStatusUpdat
   };
 
   const handleReject = async () => {
-    try {
-      await updateApplicationStatus("rejected");
-      setFinalDecision("Rejected");
-    } catch (error) {
-      console.error('Failed to reject application:', error);
-    }
+    setPendingStatusChange("rejected");
+    setShowRemarksModal(true);
   };
 
   const handleAcceptAndProceed = async () => {
@@ -354,95 +351,38 @@ const ApplicationFullDetails = ({ open, onClose, applicant, jobId, onStatusUpdat
     }
   };
 
-  const handleCancelApplication = async () => {
+  const handleRemarksSubmit = async () => {
     try {
-      await updateApplicationStatus("rejected");
-      setIsInterviewConfirmed(false);
+      if (pendingStatusChange) {
+        await updateApplicationStatus(pendingStatusChange, remarksText);
+        setFinalDecision(pendingStatusChange === "rejected" ? "Rejected" : "Accepted");
+      }
+      setShowRemarksModal(false);
+      setRemarksText("");
+      setPendingStatusChange(null);
     } catch (error) {
-      console.error('Failed to cancel application:', error);
+      console.error('Failed to update application with remarks:', error);
     }
-  };
-
-  const handleEditDetails = () => {
-    setIsInterviewConfirmed(false);
   };
 
   const handleRejectApplicant = async () => {
-    try {
-      await updateApplicationStatus("rejected");
-      setFinalDecision("Rejected");
-    } catch (error) {
-      console.error('Failed to reject applicant:', error);
-    }
+    setPendingStatusChange("rejected");
+    setShowRemarksModal(true);
   };
 
   const handleAcceptApplicant = async () => {
-    try {
-      await updateApplicationStatus("accepted");
-      setFinalDecision("Accepted");
-    } catch (error) {
-      console.error('Failed to accept applicant:', error);
-    }
+    setPendingStatusChange("accepted");
+    setShowRemarksModal(true);
   };
 
-  // Helper to format date and time
-  const formatDateTime = (date) => {
-    if (!date) return '';
-    const d = new Date(date);
-    return `${d.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: '2-digit' })}; ${d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}`;
+  // Check if status is final (accepted/rejected)
+  const isFinalStatus = () => {
+    return applicationStatus === "accepted" || applicationStatus === "rejected";
   };
-
-  // Dynamic timeline steps based on status and timestamps
-  const getTimelineSteps = () => {
-    const steps = [];
-    
-    // Always show Applied
-    steps.push({
-      label: 'Applied',
-      date: formatDateTime(appliedTimestamp),
-      color: 'bg-[#27AE60]'
-    });
-
-    if (applicationStatus === 'interview' || (finalDecision && isInterviewConfirmed)) {
-      steps.push({
-        label: 'For Interview',
-        date: interviewData.interview_date && interviewData.interview_time
-          ? formatDateTime(`${interviewData.interview_date}T${interviewData.interview_time}`)
-          : formatDateTime(new Date()),
-        color: 'bg-[#27AE60]'
-      });
-    }
-
-    if (finalDecision === 'Rejected' || applicationStatus === 'rejected') {
-      steps.push({
-        label: 'Rejected',
-        date: formatDateTime(new Date()),
-        color: 'bg-[#E74C3C]'
-      });
-    }
-
-    if (finalDecision === 'Accepted' || applicationStatus === 'accepted') {
-      steps.push({
-        label: 'Accepted',
-        date: formatDateTime(new Date()),
-        color: 'bg-[#27AE60]'
-      });
-    }
-
-    return steps;
-  };
-
-  // Determine match color based on matchScore
-  let matchScoreColor = "text-[#27AE60]";
-  if (applicant && applicant.matchScore < 50) {
-    matchScoreColor = "text-[#E74C3C]";
-  } else if (applicant && applicant.matchScore < 75) {
-    matchScoreColor = "text-[#F5B041]";
-  }
 
   // Helper to check if interview is done and confirmed
   const isInterviewDoneAndConfirmed = () => {
-    if (!isInterviewConfirmed) return false;
+    if (!isInterviewConfirmed || !interviewExists) return false;
     if (!interviewData.interview_date || !interviewData.interview_time) return false;
     const interviewDateTime = new Date(`${interviewData.interview_date}T${interviewData.interview_time}`);
     return interviewDateTime < new Date();
@@ -482,16 +422,6 @@ const ApplicationFullDetails = ({ open, onClose, applicant, jobId, onStatusUpdat
               <div className="text-red-500 text-lg font-bold mb-4">Authentication Required</div>
               <div className="text-gray-600 mb-6">Please log in to manage applications</div>
               
-              {/* Debug info */}
-              <div className="bg-gray-100 p-4 rounded mb-4 text-xs text-left">
-                <div><strong>Debug Info:</strong></div>
-                <div>Context Token: {authToken ? '✅ Present' : '❌ Missing'}</div>
-                <div>User: {user ? '✅ Present' : '❌ Missing'}</div>
-                <div>IsAuthenticated: {isAuthenticated ? '✅ Yes' : '❌ No'}</div>
-                <div>Context Loading: {contextLoading ? '⏳ Yes' : '✅ No'}</div>
-                <div>LocalStorage Token: {localStorage.getItem('company_token') ? '✅ Present' : '❌ Missing'}</div>
-              </div>
-              
               <button
                 onClick={onClose}
                 className="bg-[#FF8032] text-white px-6 py-2 rounded-lg hover:bg-[#E66F24] transition"
@@ -507,6 +437,42 @@ const ApplicationFullDetails = ({ open, onClose, applicant, jobId, onStatusUpdat
 
   return (
     <>
+      {/* Remarks Modal */}
+      {showRemarksModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-60 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-bold mb-4">
+              {pendingStatusChange === "rejected" ? "Rejection" : "Acceptance"} Remarks
+            </h3>
+            <textarea
+              className="w-full h-32 border border-gray-300 rounded-lg p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#FF8032]"
+              placeholder={`Enter ${pendingStatusChange === "rejected" ? "rejection" : "acceptance"} remarks...`}
+              value={remarksText}
+              onChange={(e) => setRemarksText(e.target.value)}
+            />
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={() => {
+                  setShowRemarksModal(false);
+                  setRemarksText("");
+                  setPendingStatusChange(null);
+                }}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRemarksSubmit}
+                disabled={loading}
+                className="flex-1 px-4 py-2 bg-[#FF8032] text-white rounded-lg hover:bg-[#E66F24] disabled:opacity-50"
+              >
+                {loading ? 'Submitting...' : 'Submit'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div
         className={`fixed inset-0 bg-black bg-opacity-40 transition-opacity duration-300 z-40 ${
           open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
@@ -521,7 +487,6 @@ const ApplicationFullDetails = ({ open, onClose, applicant, jobId, onStatusUpdat
       >
         <div className="h-full flex flex-col">          
           <div className="flex-shrink-0 p-8 border-b-2 border-gray-200 ml-16 mr-16">
-            {/* Back Button and Match Percentage */}
             <div className="flex justify-between items-center mb-2">
               <button
                 className="text-gray-600 hover:text-black transition-colors"
@@ -531,12 +496,12 @@ const ApplicationFullDetails = ({ open, onClose, applicant, jobId, onStatusUpdat
                 <i className="bi bi-arrow-left text-[50px]" />
               </button>
               
-              <span className={`${matchScoreColor} text-[18px] font-bold`}>{applicant.matched || 60}% Matched</span>
+              <span className={`${matchScoreColor} text-[18px] font-bold`}>{applicant?.matched || 60}% Matched</span>
             </div>            
-            {/* Personal Info */}
+            
             <div className="flex items-center gap-4 -mb-2">
               <div className="w-[160px] h-[160px] min-w-[160px] min-h-[160px] bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center overflow-hidden shadow-lg border-4 border-white flex-shrink-0">
-                {applicant.profilePhoto || applicant.avatar ? (
+                {applicant?.profilePhoto || applicant?.avatar ? (
                   <img 
                     src={applicant.profilePhoto || applicant.avatar} 
                     alt={`${applicant.candidateName || "Applicant"}'s profile`}
@@ -547,7 +512,7 @@ const ApplicationFullDetails = ({ open, onClose, applicant, jobId, onStatusUpdat
                 )}
               </div>
               <div>
-                <h2 className="text-[24px] font-bold text-gray-800">{applicant.candidateName || "Candidate Name"}</h2>                  
+                <h2 className="text-[24px] font-bold text-gray-800">{applicant?.candidateName || "Candidate Name"}</h2>                  
                 <div className="flex items-center gap-1 text-[#6B7280] font-semibold text-[14px]">
                   <i className="bi bi-geo-alt" />
                   <span>{tempContactInfo.location}</span>
@@ -564,51 +529,73 @@ const ApplicationFullDetails = ({ open, onClose, applicant, jobId, onStatusUpdat
             </div>
           </div>
 
-          {/* Scrollable Application Status Section */}
           <div className="flex-1 overflow-y-auto p-8 ml-16 mr-16">
             <h3 className="text-[#E66F24] text-[25px] font-bold mb-6 -mt-4">Application Status</h3>
             
-            {/* Error Display */}
             {error && (
               <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
                 {error}
               </div>
             )}
             
-            {/* Loading indicator */}
             {(loading || contextLoading) && (
               <div className="text-blue-600 mb-4">
                 Updating...
               </div>
             )}
-
-            {/* Auth Token Debug Info (only in development) */}
-            {process.env.NODE_ENV === 'development' && (
-              <div className="bg-gray-100 p-2 rounded mb-4 text-xs">
-                <strong>Debug:</strong> Auth Token: {getAuthToken() ? '✅ Present' : '❌ Missing'}
-              </div>
-            )}
             
             <div className="mb-8 relative ml-2 flex flex-col">
-              {/* Timeline */}
-              {getTimelineSteps().map((step, index, timelineSteps) => (
-                <div key={step.label} className="relative z-10 flex items-stretch gap-4 min-h-[56px]">
-                  <div className="flex flex-col items-center mr-3 h-full min-h-[40px] justify-center">
-                    <div className={`w-5 h-5 rounded-full ${step.color} z-10`} />
-                    {index < timelineSteps.length - 1 && (
-                      <div className="absolute top-[20px] left-[8px] w-[4px] h-full bg-[#27AE60] z-0" />
-                    )}
-                  </div>
-                  <div className="flex flex-col justify-center h-full min-h-[40px] py-1">
-                    <div className="font-semibold text-gray-800 leading-tight">{step.label}</div>
-                    <div className="text-gray-500 text-[12px] italic leading-tight">{step.date}</div>
+              {/* Application Created */}
+              <div className="relative z-10 flex items-stretch gap-4 min-h-[56px]">
+                <div className="flex flex-col items-center mr-3 h-full min-h-[40px] justify-center">
+                  <div className="w-5 h-5 rounded-full bg-[#27AE60] z-10" />
+                  <div className="absolute top-[20px] left-[8px] w-[4px] h-full bg-[#27AE60] z-0" />
+                </div>
+                <div className="flex flex-col justify-center h-full min-h-[40px] py-1">
+                  <div className="font-semibold text-gray-800 leading-tight">Applied</div>
+                  <div className="text-gray-500 text-[12px] italic leading-tight">
+                    {appliedTimestamp.toLocaleDateString('en-US', { 
+                      month: 'short', 
+                      day: 'numeric', 
+                      year: 'numeric',
+                      hour: 'numeric',
+                      minute: '2-digit',
+                      hour12: true
+                    })}
                   </div>
                 </div>
-              ))}
+              </div>
+
+              {/* Current Status (if not applied) */}
+              {applicationStatus !== "applied" && (
+                <div className="relative z-10 flex items-stretch gap-4 min-h-[56px]">
+                  <div className="flex flex-col items-center mr-3 h-full min-h-[40px] justify-center">
+                    <div className={`w-5 h-5 rounded-full ${
+                      applicationStatus === "accepted" ? "bg-[#27AE60]" : 
+                      applicationStatus === "rejected" ? "bg-[#E74C3C]" : 
+                      "bg-[#27AE60]"
+                    } z-10`} />
+                  </div>
+                  <div className="flex flex-col justify-center h-full min-h-[40px] py-1">
+                    <div className="font-semibold text-gray-800 leading-tight">
+                      {getDisplayStatus()}
+                    </div>
+                    <div className="text-gray-500 text-[12px] italic leading-tight">
+                      {new Date().toLocaleDateString('en-US', { 
+                        month: 'short', 
+                        day: 'numeric', 
+                        year: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
             
-            {/* Interview Result Card */}
-            {isInterviewDoneAndConfirmed() && (
+            {isInterviewDoneAndConfirmed() && !isFinalStatus() && (
               <div className="bg-[#FF8032] rounded-xl p-6 mb-8 shadow-lg flex flex-col items-center">
                 <h3 className="text-white text-[16px] font-bold text-lg mb-2 w-full text-left">Interview Result</h3>
                 <p className="text-white text-[12px] font-medium mb-4 w-full text-left">
@@ -633,20 +620,20 @@ const ApplicationFullDetails = ({ open, onClose, applicant, jobId, onStatusUpdat
               </div>
             )}
             
-            {/* Status Details */}
-            <div className={`${isInterviewDoneAndConfirmed() ? 'bg-[#FEFEFF] text-[#FF8032] border shadow-lg' : 'bg-[#FF8032] text-white'} rounded-lg p-6 mb-8 ml-4 mr-4`}>
+            <div className={`${isInterviewDoneAndConfirmed() && !isFinalStatus() ? 'bg-[#FEFEFF] text-[#FF8032] border shadow-lg' : 'bg-[#FF8032] text-white'} rounded-lg p-6 mb-8 ml-4 mr-4`}>
               <div className="flex justify-between items-center mb-4">
-                <h4 className={`font-bold text-[16px] ${isInterviewDoneAndConfirmed() ? 'text-[#FF8032]' : 'text-white'}`}>Status Details</h4>
-                <span className={`font-semibold text-[12px] ${isInterviewDoneAndConfirmed() ? 'text-[#FF8032]' : 'text-white'}`}>{getDisplayStatus()}</span>
+                <h4 className={`font-bold text-[16px] ${isInterviewDoneAndConfirmed() && !isFinalStatus() ? 'text-[#FF8032]' : 'text-white'}`}>Status Details</h4>
+                <span className={`font-semibold text-[12px] ${isInterviewDoneAndConfirmed() && !isFinalStatus() ? 'text-[#FF8032]' : 'text-white'}`}>{getDisplayStatus()}</span>
               </div>
               
               {applicationStatus === "interview" ? (
                 <div>
-                  <p className={`${isInterviewDoneAndConfirmed() ? 'text-[#FF8032]' : 'text-white'} text-[12px] font-medium mb-6`}>
-                    Set a date and time for the interview.
+                  <p className={`${isInterviewDoneAndConfirmed() && !isFinalStatus() ? 'text-[#FF8032]' : 'text-white'} text-[12px] font-medium mb-6`}>
+                    {interviewExists ? "Interview details:" : "Set a date and time for the interview."}
                   </p>
-                  {isInterviewConfirmed ? (
-                    <div className={`space-y-4 mb-6 ml-8 ${isInterviewDoneAndConfirmed() ? 'text-[#FF8032]' : 'text-[#E9EDF8]'} text-[12px] font-medium`}>
+                  
+                  {interviewExists && isInterviewConfirmed ? (
+                    <div className={`space-y-4 mb-6 ml-8 ${isInterviewDoneAndConfirmed() && !isFinalStatus() ? 'text-[#FF8032]' : 'text-[#E9EDF8]'} text-[12px] font-medium`}>
                       <div className="flex">
                         <div className="w-[180px]">Job Title</div>
                         <div>{interviewData.jobTitle}</div>
@@ -684,9 +671,8 @@ const ApplicationFullDetails = ({ open, onClose, applicant, jobId, onStatusUpdat
                             }) + ' (PST)' : ''}
                         </div>
                       </div>
-                    </div>                    
-                  ) : (
-                    /* Editable Interview Form Fields */
+                    </div>
+                  ) : !interviewExists ? (
                     <div className="space-y-4 mb-6 ml-8 text-[#E9EDF8] text-[12px] font-medium">
                       <div className="flex">
                         <div className="w-[180px]">Job Title</div>
@@ -785,62 +771,63 @@ const ApplicationFullDetails = ({ open, onClose, applicant, jobId, onStatusUpdat
                         </div>
                       </div>
                     </div>
-                  )}
+                  ) : null}
                   
-                  {/* Remarks Section */}
                   <div className="mb-6">
-                    <h5 className={`${isInterviewDoneAndConfirmed() ? 'text-[#FF8032]' : 'text-[#FEFEFF]'} text-[14px] font-bold mb-3`}>Remarks</h5>
-                    <div className={`bg-white rounded-lg p-4 ${isInterviewDoneAndConfirmed() ? 'border-2 border-[#FF8032]' : ''}`}>
+                    <h5 className={`${isInterviewDoneAndConfirmed() && !isFinalStatus() ? 'text-[#FF8032]' : 'text-[#FEFEFF]'} text-[14px] font-bold mb-3`}>Remarks</h5>
+                    <div className={`bg-white rounded-lg p-4 ${isInterviewDoneAndConfirmed() && !isFinalStatus() ? 'border-2 border-[#FF8032]' : ''}`}>
                       <textarea
-                        className={`w-full ${isInterviewDoneAndConfirmed() ? 'text-[#FF8032]' : 'text-[#E66F24]'} text-[10px] font-medium leading-relaxed ml-4 mr-4 border-none resize-none outline-none bg-transparent`}
+                        className={`w-full ${isInterviewDoneAndConfirmed() && !isFinalStatus() ? 'text-[#FF8032]' : 'text-[#E66F24]'} text-[10px] font-medium leading-relaxed ml-4 mr-4 border-none resize-none outline-none bg-transparent`}
                         value={interviewData.remarks}
                         onChange={(e) => handleInterviewDataChange('remarks', e.target.value)}
-                        disabled={isInterviewConfirmed}
+                        disabled={interviewExists}
                         rows={6}
                         placeholder="Enter interview remarks..."
                       />
                     </div>                  
                   </div>  
                   
-                  <div className="ml-1 flex gap-3">
-                    {isInterviewConfirmed && !isInterviewDoneAndConfirmed() ? (
-                      <>
-                        <button 
-                          onClick={handleCancelApplication}
-                          disabled={loading || contextLoading}
-                          className="w-[167px] h-[29px] bg-white text-[#FF8032] px-5 py-1 rounded-lg font-bold text-[11px] hover:bg-gray-100 hover:text-[#E66F24] transition-colors disabled:opacity-50"
-                        >
-                          Cancel Application
-                        </button>
-                        <button 
-                          onClick={handleEditDetails}
-                          disabled={loading || contextLoading}
-                          className="w-[167px] h-[29px] bg-white text-[#FF8032] px-5 py-1 rounded-lg font-bold text-[11px] hover:bg-gray-100 hover:text-[#E66F24] transition-colors disabled:opacity-50"
-                        >
-                          Edit Details
-                        </button>
-                      </>
-                    ) : !isInterviewConfirmed ? (
-                      <>
-                        <button 
-                          onClick={handleReject}
-                          disabled={loading || contextLoading}
-                          className="w-[167px] h-[29px] bg-white text-[#FF8032] px-5 py-1 rounded-lg font-bold text-[11px] hover:bg-gray-100 hover:text-[#E66F24] transition-colors disabled:opacity-50"
-                        >
-                          Reject Application
-                        </button>
-                        <button 
-                          onClick={handleAcceptAndProceed}
-                          disabled={loading || contextLoading}
-                          className="w-[167px] h-[29px] bg-white text-[#FF8032] px-5 py-1 rounded-lg font-bold text-[11px] hover:bg-gray-100 hover:text-[#E66F24] transition-colors disabled:opacity-50"
-                        >
-                          Accept and Proceed
-                        </button>
-                      </>
-                    ) : null}
-                  </div>
+                  {!isFinalStatus() && (
+                    <div className="ml-1 flex gap-3">
+                      {interviewExists && !isInterviewDoneAndConfirmed() ? (
+                        <>
+                          <button 
+                            onClick={handleReject}
+                            disabled={loading || contextLoading}
+                            className="w-[167px] h-[29px] bg-white text-[#FF8032] px-5 py-1 rounded-lg font-bold text-[11px] hover:bg-gray-100 hover:text-[#E66F24] transition-colors disabled:opacity-50"
+                          >
+                            Cancel Application
+                          </button>
+                          <button 
+                            onClick={() => setInterviewExists(false)}
+                            disabled={loading || contextLoading}
+                            className="w-[167px] h-[29px] bg-white text-[#FF8032] px-5 py-1 rounded-lg font-bold text-[11px] hover:bg-gray-100 hover:text-[#E66F24] transition-colors disabled:opacity-50"
+                          >
+                            Edit Details
+                          </button>
+                        </>
+                      ) : !interviewExists ? (
+                        <>
+                          <button 
+                            onClick={handleReject}
+                            disabled={loading || contextLoading}
+                            className="w-[167px] h-[29px] bg-white text-[#FF8032] px-5 py-1 rounded-lg font-bold text-[11px] hover:bg-gray-100 hover:text-[#E66F24] transition-colors disabled:opacity-50"
+                          >
+                            Reject Application
+                          </button>
+                          <button 
+                            onClick={handleAcceptAndProceed}
+                            disabled={loading || contextLoading}
+                            className="w-[167px] h-[29px] bg-white text-[#FF8032] px-5 py-1 rounded-lg font-bold text-[11px] hover:bg-gray-100 hover:text-[#E66F24] transition-colors disabled:opacity-50"
+                          >
+                            Accept and Proceed
+                          </button>
+                        </>
+                      ) : null}
+                    </div>
+                  )}
                 </div>
-              ) : (
+              ) : applicationStatus === "applied" && !isFinalStatus() ? (
                 <div>
                   <p className="text-white text-[12px] mb-6">
                     Review and decide whether to move forward with this applicant. You may accept the application to proceed with the interview process, or reject the application to indicate that they will not be moving forward in the hiring process.
@@ -862,9 +849,15 @@ const ApplicationFullDetails = ({ open, onClose, applicant, jobId, onStatusUpdat
                     </button>
                   </div>
                 </div>
+              ) : (
+                <div>
+                  <p className="text-white text-[12px] mb-6">
+                    This application has been {applicationStatus}. No further actions are available.
+                  </p>
+                </div>
               )}
-            </div>            
-            {/* Tag Matches */}
+            </div>
+            
             <div className="mb-8">
               <h4 className="font-bold text-[16px] text-gray-800 mb-4">Tag Matches</h4>
               <div className="flex flex-wrap gap-2">
@@ -886,7 +879,6 @@ const ApplicationFullDetails = ({ open, onClose, applicant, jobId, onStatusUpdat
               </div>
             </div>
 
-            {/* View Resume Button */}
             <div className="mb-8 justify-center items-center flex">
               <button
                 className="w-[285px] h-[48px] bg-[#FF8032] text-white py-3 rounded-lg font-bold text-[16px] hover:bg-[#E66F24] transition-colors"
