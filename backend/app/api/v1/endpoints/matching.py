@@ -2,29 +2,29 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.services.matching_service import MatchingService
+from app.middleware.auth import get_current_applicant
 
 router = APIRouter(prefix="/matching", tags=["matching"])
 
 @router.get("/jobs")
 async def get_jobs_with_match_scores(
     db: AsyncSession = Depends(get_db),
+    current_applicant: dict = Depends(get_current_applicant),
 ):
-    """Get all jobs with match scores for current applicant"""
     try:
-        # For now, use a mock applicant_id until auth is working
-        applicant_id = 1  # Replace with real user ID when auth is ready
-        
+        applicant_id = current_applicant["db_user"].applicant_id
+        print("Applicant ID:", applicant_id)
         jobs_with_scores = await MatchingService.get_jobs_with_match_scores(
             db, applicant_id
         )
-        
+        print("Jobs with scores:", jobs_with_scores)
         return {
             "jobs": jobs_with_scores,
             "total_jobs": len(jobs_with_scores)
         }
-        
     except Exception as e:
-        return {"error": str(e)}
+        print("Error in matching endpoint:", e)
+        return {"jobs": [], "total_jobs": 0, "error": str(e)}
 
 @router.get("/applicants/{job_id}")
 async def get_applicants_with_match_scores(

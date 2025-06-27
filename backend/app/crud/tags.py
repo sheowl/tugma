@@ -5,6 +5,8 @@ from typing import List, Optional
 
 from app.models.tags import Tags, TagCategory
 from app.schemas.tags import TagCreate, TagCategoryCreate
+from app.models.applicant import ApplicantTag
+from app.models.tags import Tags  # Fixed: Tags not Tag
 
 # Fetch all tag categories
 async def get_all_categories(db: AsyncSession) -> List[TagCategory]:
@@ -40,9 +42,6 @@ async def get_tags_by_category(db: AsyncSession, category_id: int) -> List[Tags]
 async def create_applicant_tag(db: AsyncSession, applicant_id: int, tag_id: int):
     """Create an applicant tag association"""
     try:
-        from app.models.applicant import ApplicantTag
-        from app.models.tags import Tags  # Fixed: Tags not Tag
-        
         print(f"🔍 DEBUG: Creating applicant tag for applicant_id: {applicant_id}, tag_id: {tag_id}")
         
         # Check if tag exists
@@ -97,9 +96,6 @@ async def create_applicant_tag(db: AsyncSession, applicant_id: int, tag_id: int)
 async def get_applicant_tags(db: AsyncSession, applicant_id: int) -> List[dict]:
     """Get all tags for a specific applicant with tag names"""
     try:
-        from app.models.applicant import ApplicantTag
-        from app.models.tags import Tags  # Fixed: Tags not Tag
-        
         print(f"🔍 DEBUG: Getting tags for applicant_id: {applicant_id}")
         
         # Join ApplicantTag with Tags to get tag names
@@ -132,9 +128,7 @@ async def get_applicant_tags(db: AsyncSession, applicant_id: int) -> List[dict]:
 
 async def remove_applicant_tag(db: AsyncSession, applicant_id: int, tag_id: int) -> bool:
     """Remove an applicant tag association"""
-    try:
-        from app.models.applicant import ApplicantTag  # Fixed: applicant not applicants
-        
+    try:        
         print(f"🔍 DEBUG: Removing tag {tag_id} from applicant {applicant_id}")
         
         # Delete the association
@@ -158,10 +152,7 @@ async def remove_applicant_tag(db: AsyncSession, applicant_id: int, tag_id: int)
 async def update_applicant_tags(db: AsyncSession, applicant_id: int, tag_ids: List[int]) -> List[dict]:
     """Update applicant tags by replacing all existing tags with new ones"""
     try:
-        from app.models.applicant import ApplicantTag
-        from app.models.tags import Tags  # Fixed: Tags not Tag
-        
-        print(f"🔍 DEBUG: Updating tags for applicant {applicant_id} with {len(tag_ids)} tags")
+        print(f"🔍 DEBUG: Updating tags for applicant {applicant_id} with tag IDs: {tag_ids}")
         
         # Remove all existing tags for this applicant
         delete_stmt = delete(ApplicantTag).where(ApplicantTag.applicant_id == applicant_id)
@@ -174,7 +165,7 @@ async def update_applicant_tags(db: AsyncSession, applicant_id: int, tag_ids: Li
         new_tags = []
         for tag_id in tag_ids:
             # Verify tag exists
-            tag_stmt = select(Tags).where(Tags.tag_id == tag_id)  # Fixed: Tags not Tag
+            tag_stmt = select(Tags).where(Tags.tag_id == tag_id)
             tag_result = await db.execute(tag_stmt)
             tag = tag_result.scalar_one_or_none()
             
@@ -199,7 +190,7 @@ async def update_applicant_tags(db: AsyncSession, applicant_id: int, tag_ids: Li
         
         await db.commit()
         
-        print(f"✅ DEBUG: Updated applicant tags, added {len(new_tags)} new tags")
+        print(f"✅ DEBUG: Successfully updated applicant tags, added {len(new_tags)} new tags")
         return new_tags
         
     except Exception as e:
@@ -209,9 +200,7 @@ async def update_applicant_tags(db: AsyncSession, applicant_id: int, tag_ids: Li
 
 async def clear_all_applicant_tags(db: AsyncSession, applicant_id: int) -> int:
     """Remove all tags from an applicant"""
-    try:
-        from app.models.applicant import ApplicantTag  # Fixed: applicant not applicants
-        
+    try:        
         print(f"🔍 DEBUG: Clearing all tags for applicant {applicant_id}")
         
         # Delete all associations for this applicant
@@ -231,9 +220,7 @@ async def clear_all_applicant_tags(db: AsyncSession, applicant_id: int) -> int:
 # Function for job matching (returns only tag IDs)
 async def get_applicant_tag_ids(db: AsyncSession, applicant_id: int) -> List[int]:
     """Get just the tag IDs for an applicant (for jobs endpoint)"""
-    try:
-        from app.models.applicant import ApplicantTag  # Fixed: applicant not applicants
-        
+    try:        
         # Only get tags that are marked as tagged
         stmt = select(ApplicantTag.tag_id).where(
             ApplicantTag.applicant_id == applicant_id,

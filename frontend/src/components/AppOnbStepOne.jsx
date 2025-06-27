@@ -86,8 +86,6 @@ function AppOnbStepOne({
       // Update parent state with all onboarding data
       const updatedUserDetails = {
         ...userDetails,
-        preferred_worksetting: preferredWorkSetting,
-        preferred_worktype: preferredWorkType,
         skills,
         softSkills: softSkillsTags,
         certifications,

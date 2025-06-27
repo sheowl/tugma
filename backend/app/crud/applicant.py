@@ -5,7 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy import delete
 from typing import Optional, List
 from app.core.auth import get_password_hash
-from app.models.applicant import Applicant, ApplicantWorkExperience, ApplicantCertificate, ApplicantProficiency
+from app.models.applicant import Applicant, ApplicantWorkExperience, ApplicantCertificate, ApplicantProficiency, ApplicantTag
 from app.schemas.applicant import (
     ApplicantCreate,
     ApplicantUpdate,
@@ -14,6 +14,7 @@ from app.schemas.applicant import (
     ApplicantProficiencyCreate
 )
 from app.models.base import Base
+
 
 def clean_string(s: Optional[str]) -> Optional[str]:
     return s.strip() if s else s
@@ -212,4 +213,8 @@ async def update_proficiency(
         await db.refresh(prof)
         return prof
     return None
+
+async def get_applicant_tags(db: AsyncSession, applicant_id: int) -> List[dict]:
+    from app.crud.tags import get_applicant_tags as tags_getter
+    return await tags_getter(db, applicant_id)
 

@@ -148,18 +148,19 @@ const JobDetailsDrawer = ({ open, onClose, job, onApply }) => {
                     <div>
                       <h4 className="text-base font-bold mb-2 text-neutral-700">Required Skills</h4>
                       <div className="flex gap-2 flex-wrap">
-                        {tagNames && tagNames.length > 0 ? (
-                          tagNames.map((tagName, index) => (
-                            <span
-                              key={index}
-                              className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium"
-                            >
-                              {tagName}
-                            </span>
-                          ))
-                        ) : (
-                          <p className="text-sm text-gray-500 italic">No required skills specified</p>
-                        )}
+                        {job.tag_names.map((tag, idx) => (
+                          <span
+                            key={idx}
+                            className={`px-2 py-1 rounded-full text-xs ${
+                              applicantTags.includes(tag) ? "bg-green-200 text-green-800" : "bg-gray-200 text-gray-700"
+                            }`}
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                      <div className="mt-2 font-bold text-[#2A4D9B]">
+                        Match Score: {job.match_score}%
                       </div>
                     </div>
 

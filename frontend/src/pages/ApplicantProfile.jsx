@@ -3,9 +3,11 @@ import { useState, useEffect } from "react";
 import ApplicantHeader from "../components/ApplicantHeader";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../services/supabaseClient";
+import { useTags } from "../context/TagsContext";
 
 function ApplicantProfile() {
   const { user, loading } = useAuth();
+  const { getTagsByCategories, flatTagMapping } = useTags();
   const [isEditMode, setIsEditMode] = useState(false);
   const [profile, setProfile] = useState(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
@@ -16,6 +18,10 @@ function ApplicantProfile() {
   const [proficiencyData, setProficiencyData] = useState([]);
   const [applicantTags, setApplicantTags] = useState([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
+
+  // ADD THESE MISSING STATE VARIABLES:
+  const [technicalSkills, setTechnicalSkills] = useState([]);
+  const [softSkills, setSoftSkills] = useState([]);
 
   // Keep existing state...
   const [zoomedCertificate, setZoomedCertificate] = useState(null);
@@ -80,13 +86,36 @@ function ApplicantProfile() {
 
   const fetchApplicantTags = async (token, applicantId) => {
     try {
+      // Get applicant's tags
       const response = await fetch(`http://localhost:8000/api/v1/tags/applicant/${applicantId}/tags`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      
       if (response.ok) {
-        const data = await response.json();
-        setApplicantTags(data);
-        console.log("Applicant tags fetched:", data);
+        const applicantTags = await response.json();
+        console.log("Raw applicant tags fetched:", applicantTags);
+        
+        // Get all available tags with category info
+        const allTagsResponse = await fetch(`http://localhost:8000/api/v1/tags`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        if (allTagsResponse.ok) {
+          const allTags = await allTagsResponse.json();
+          console.log("All available tags:", allTags);
+          
+          // Enrich applicant tags with category information
+          const enrichedTags = applicantTags.map(appTag => {
+            const fullTag = allTags.find(tag => tag.tag_id === appTag.tag_id);
+            return {
+              ...appTag,
+              category_id: fullTag?.category_id || null
+            };
+          });
+          
+          setApplicantTags(enrichedTags);
+          console.log("Enriched applicant tags with categories:", enrichedTags);
+        }
       }
     } catch (error) {
       console.error("Failed to fetch tags:", error);
@@ -96,14 +125,14 @@ function ApplicantProfile() {
   // ADD: Data processing functions
   const getCategoryNameById = (categoryId) => {
     const categoryMap = {
-      1: "Programming Languages",
-      2: "Web Development", 
-      3: "AI/ML/Data Science",
-      4: "Databases",
+      1: "Web Development",        // ✅ Fixed - was Programming Languages
+      2: "Programming Languages",  // ✅ Fixed - was Web Development  
+      3: "Databases",             // ✅ Fixed - was AI/ML/Data Science
+      4: "AI/ML/Data Science",    // ✅ Fixed - was Databases
       5: "DevOps",
-      6: "Cybersecurity",
-      7: "Mobile Development",
-      8: "Soft Skills"
+      7: "Cybersecurity", 
+      8: "Mobile Development",
+      9: "Soft Skills"
     };
     return categoryMap[categoryId] || "Other";
   };
@@ -131,31 +160,41 @@ function ApplicantProfile() {
   const groupProficiencyByCategory = (proficiencyData, tags) => {
     const grouped = {};
     
-    proficiencyData.forEach(prof => {
+    // Filter out soft skills (category_id: 8) before processing
+    const technicalProficiencyData = proficiencyData.filter(prof => prof.category_id !== 8);
+    
+    technicalProficiencyData.forEach(prof => {
       const categoryName = getCategoryNameById(prof.category_id);
       const level = getProficiencyLevel(prof.proficiency);
       
-      // Get tags for this category - simplified approach
-      const categoryTags = tags.filter(tag => tag.tag_name).map(tag => tag.tag_name);
+      // Get tags for this specific category ID directly from applicant tags
+      const categoryTags = tags.filter(tag => tag.category_id === prof.category_id);
+      const matchingTags = categoryTags.map(tag => tag.tag_name);
 
-      grouped[categoryName] = {
-        label: categoryName,
-        level: level.toLowerCase(),
-        tags: categoryTags.slice(0, 5) // Limit to 5 tags per category
-      };
+      if (matchingTags.length > 0) { // Only add if there are tags
+        grouped[categoryName] = {
+          label: categoryName,
+          level: level.toLowerCase(),
+          tags: matchingTags.slice(0, 5) // Limit to 5 tags per category
+        };
+      }
     });
     
     return Object.values(grouped);
   };
 
-  const getSoftSkillTags = (tags) => {
-    // Filter tags that are soft skills
-    const softSkillKeywords = ['communication', 'leadership', 'teamwork', 'management', 'collaboration', 'problem solving'];
-    return tags.filter(tag => 
-      softSkillKeywords.some(keyword => 
-        tag.tag_name.toLowerCase().includes(keyword)
-      )
-    ).map(tag => ({ label: tag.tag_name }));
+  const getSoftSkillsFromTags = (tags) => {
+    // Get tags organized by categories from TagsContext
+    const tagsByCategories = getTagsByCategories();
+    const softSkillsFromContext = tagsByCategories["Soft Skills"] || [];
+    
+    // Filter applicant tags that match soft skills category
+    const applicantTagNames = tags.map(tag => tag.tag_name);
+    const matchingSoftSkills = softSkillsFromContext
+      .filter(tag => applicantTagNames.includes(tag.tag_name))
+      .map(tag => ({ label: tag.tag_name }));
+    
+    return matchingSoftSkills;
   };
 
   // Existing functions...
@@ -307,6 +346,18 @@ const CertificateCard = ({ image, title, description, onClick }) => {
     if (user) fetchAllData();
   }, [user]);
 
+  useEffect(() => {
+    if (applicantTags.length > 0 && proficiencyData.length > 0) {
+      // Process technical skills (excluding soft skills)
+      const groupedTechnical = groupProficiencyByCategory(proficiencyData, applicantTags);
+      setTechnicalSkills(groupedTechnical);
+      
+      // Process soft skills separately
+      const softSkillsData = getSoftSkillsFromTags(applicantTags);
+      setSoftSkills(softSkillsData);
+    }
+  }, [applicantTags, proficiencyData]);
+
   if (loading || isLoadingProfile || isLoadingData) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -320,8 +371,6 @@ const CertificateCard = ({ image, title, description, onClick }) => {
 
   // Process the real data
   const experienceData = formatWorkExperience(workExperience);
-  const technicalSkills = groupProficiencyByCategory(proficiencyData, applicantTags);
-  const softSkills = getSoftSkillTags(applicantTags);
 
   // Map profile fields to your layout
   const contactInfo = [
@@ -568,6 +617,7 @@ const CertificateCard = ({ image, title, description, onClick }) => {
 
               <hr className="border-t border-gray-300 my-4" />
 
+              {/* Technical Skills Section - NO SOFT SKILLS HERE */}
               <div className="text-xl font-semibold text-neutral-700">Technical Skills</div>
               {technicalSkills.length > 0 ? (
                 <div className="mt-4 space-y-4">
@@ -588,6 +638,7 @@ const CertificateCard = ({ image, title, description, onClick }) => {
 
               <hr className="border-t border-gray-300 my-4" />
 
+              {/* Soft Skills Section - SEPARATE, NO PROFICIENCY */}
               <div className="text-xl font-semibold text-neutral-700">Soft Skills</div>
               {softSkills.length > 0 ? (
                 <div className="flex flex-wrap gap-2 mt-2">

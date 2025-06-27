@@ -6,6 +6,7 @@ import ApplicantCertCard from "./ApplicantCertCard";
 import StepProgressFooter from "./StepProgressFooter";
 import { flattenUserDetails, mapWorkSettingToEnum, mapWorkTypeToEnum } from "../utils/userUtils"; 
 import { supabase } from "../services/supabaseClient";
+import { useTags } from "../context/TagsContext";
 
 // FIXED: Updated category map to match your segment titles exactly
 const categoryMap = {
@@ -30,6 +31,53 @@ function AppOnbStepTwo({ step, segment, onNext, onBack, onSkip, userDetails, set
   const [preferredWorkType, setPreferredWorkType] = useState("");
   const popupRef = useRef(null);
   const navigate = useNavigate();
+  // Get tags by categories from context
+  const { getTagsByCategories, loading: tagsLoading, flatTagMapping } = useTags();
+  const tagsByCategories = getTagsByCategories();
+  
+  // Build tagNameToId mapping from context
+  const tagNameToId = {};
+  Object.entries(flatTagMapping).forEach(([id, name]) => {
+    tagNameToId[name] = parseInt(id);
+  });
+
+  // Get tags for each category dynamically
+  const getProgrammingLanguageTags = () => {
+    return tagsByCategories["Programming Languages"] || [];
+  };
+
+  const getWebDevelopmentTags = () => {
+    return tagsByCategories["Web Development"] || [];
+  };
+
+  const getAiMlDataScienceTags = () => {
+    return tagsByCategories["AI/ML/Data Science"] || [];
+  };
+
+  const getDatabaseTags = () => {
+    return tagsByCategories["Databases"] || [];
+  };
+
+  const getDevOpsTags = () => {
+    return tagsByCategories["DevOps"] || [];
+  };
+
+  const getCybersecurityTags = () => {
+    return tagsByCategories["Cybersecurity"] || [];
+  };
+
+  const getMobileDevelopmentTags = () => {
+    return tagsByCategories["Mobile Development"] || [];
+  };
+
+  const getSoftSkillsTags = () => {
+    return tagsByCategories["Soft Skills"] || [];
+  };
+
+  // Add this debug logging in AppOnbStepTwo
+  console.log("🏷️ Tags by categories:", tagsByCategories);
+  console.log("🏷️ Programming Languages tags:", getProgrammingLanguageTags());
+  console.log("🏷️ Web Development tags:", getWebDevelopmentTags());
 
   const handleAddCertification = (certification) => {
     if (certification) {
@@ -58,7 +106,10 @@ function AppOnbStepTwo({ step, segment, onNext, onBack, onSkip, userDetails, set
         preferred_worksetting: mapWorkSettingToEnum(preferredWorkSetting),
         preferred_worktype: mapWorkTypeToEnum(preferredWorkType),
       };
-
+      setUserDetails(updatedUserDetails);
+      await saveUserDetails(flattenUserDetails(updatedUserDetails));
+      console.log("Updated userDetails with work settings and types:", updatedUserDetails);
+      
       console.log("Step 1: Saving main applicant info...");
       await saveUserDetails(flattenUserDetails(updatedUserDetails));
       console.log("Step 1: Main applicant info saved");
@@ -116,6 +167,24 @@ function AppOnbStepTwo({ step, segment, onNext, onBack, onSkip, userDetails, set
         }
       } else {
         console.log("Step 4: No proficiency data found");
+      }
+
+      // After proficiency is saved
+      if (skills && skills.length > 0) {
+        console.log("Saving technical skills...", skills);
+        await saveApplicantTags(skills, false); // false = replace all tags
+        console.log("Technical skills tags saved!");
+      } else {
+        console.log("No technical skills selected, skipping tag save.");
+      }
+
+      // ADD soft skills to existing tags (don't replace)
+      if (softSkillsTags && softSkillsTags.length > 0) {
+        console.log("Adding soft skills to existing tags...", softSkillsTags);
+        await saveApplicantTags(softSkillsTags, true); // true = add to existing tags
+        console.log("Soft skills tags added!");
+      } else {
+        console.log("No soft skills selected, skipping soft skills save.");
       }
 
       console.log("ALL ONBOARDING DATA SAVED SUCCESSFULLY!");
@@ -429,6 +498,47 @@ const saveProficiency = async (proficiencyArr) => {
   }
 };
 
+  const saveApplicantTags = async (skills, isAdditional = false) => {
+    console.log("🏷️ Saving applicant tags...");
+    console.log("🏷️ Selected skills:", skills);
+    console.log("🏷️ Is additional tags:", isAdditional);
+    
+    const { data: { session } } = await supabase.auth.getSession();
+    const accessToken = session?.access_token;
+    
+    if (!accessToken) throw new Error("No access token");
+
+    // Map skill/tag names to tag IDs
+    const tagIds = skills.map(name => tagNameToId[name]).filter(id => id !== undefined);
+    console.log("🏷️ Mapped tag IDs:", tagIds);
+
+    // Use different endpoints based on whether this is additional tags
+    const endpoint = isAdditional 
+      ? "http://localhost:8000/api/v1/tags/applicant/me/add-tags"  // ADD tags
+      : "http://localhost:8000/api/v1/tags/applicant/me";         // REPLACE tags
+
+    const method = isAdditional ? "POST" : "PUT";
+
+    console.log(`🏷️ Using ${method} ${endpoint}`);
+
+    const response = await fetch(endpoint, {
+      method: method,
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ tag_ids: tagIds }),
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("🏷️ Failed to save tags:", errorText);
+      throw new Error(`Failed to save applicant tags: ${errorText}`);
+    }
+    
+    console.log("🏷️ Tags saved successfully!");
+  };
+
   const handleSkip = () => {
     if (step === 2 && segment === 9) {
       setPreferredWorkSetting("");
@@ -436,47 +546,6 @@ const saveProficiency = async (proficiencyArr) => {
     }
     onSkip();
   };
-
-  const programmingLanguageTags = [
-    "Python", "Java", "JavaScript", "C++", "C#", "Go",
-    "Rust", "PHP", "TypeScript", "Ruby", "Kotlin", "Swift", "R", "Bash/Shell"
-  ];
-
-  const webDevelopmentTags = [
-    "HTML", "CSS", "Tailwind CSS", "React", "Vue", 
-    "Next", "Svelte", "Express", "Bootstrap", "Angular"
-  ];
-
-  const aiMlDataScienceTags = [
-    "TensorFlow", "PyTorch", "NumPy", "Keras", "Pandas",
-    "Scikit-learn", "Jupyter Notebooks", "Matplotlib/Seaborn",
-    "OpenCV", "Natural Language Processing", "Model Deployment (e.g., ONNX)"
-  ];
-
-  const databaseTags = [
-    "MySQL", "PostgreSQL", "MongoDB", "SQLite", "Cassandra",
-    "DynamoDB", "Redis", "Firebase"
-  ];
-
-  const devOpsTags = [
-    "AWS", "Docker", "Apache", "Microsoft Azure",
-    "Kubernetes", "Terraform", "NGINX",
-    "Google Cloud Platform (GCP)", "Linux Server Management", "CI/CD (GitHub Actions, Jenkins, etc.)"
-  ];
-
-  const cybersecurityTags = [
-    "Penetration Testing", "Metasploit", "OWASP Top 10", 
-    "Wireshark", "Security Auditing", "Network Security", "SIEM (e.g., Splunk)"
-  ];
-
-  const mobileDevelopmentTags = [
-    "React Native", "Flutter", "Android (Java/Kotlin)", "iOS (Swift)", "Dart"
-  ];
-
-  const softSkillsTagsList = [
-    "Communication", "Leadership", "Team Collaboration", "Time Management",
-    "Problem Solving", "Adaptability", "Critical Thinking"
-  ];
 
   const Header = () => (
     <div className="relative w-full mb-4">
@@ -535,7 +604,7 @@ const saveProficiency = async (proficiencyArr) => {
               title="Programming Languages"
               skills={skills}
               setSkills={setSkills}
-              tags={programmingLanguageTags}
+              tags={getProgrammingLanguageTags().map(tag => tag.tag_name)} // ✅ Correct - maps to tag names
               selectedProficiency={proficiency}
               setProficiency={setProficiency}
             />
@@ -549,7 +618,7 @@ const saveProficiency = async (proficiencyArr) => {
               title="Web Development"
               skills={skills}
               setSkills={setSkills}
-              tags={webDevelopmentTags}
+              tags={getWebDevelopmentTags().map(tag => tag.tag_name)} // ✅ Correct - maps to tag names
               selectedProficiency={proficiency}
               setProficiency={setProficiency}
             />
@@ -563,7 +632,7 @@ const saveProficiency = async (proficiencyArr) => {
               title="AI/ML and Data Science"
               skills={skills}
               setSkills={setSkills}
-              tags={aiMlDataScienceTags}
+              tags={getAiMlDataScienceTags().map(tag => tag.tag_name)} // ✅ Correct - maps to tag names
               selectedProficiency={proficiency}
               setProficiency={setProficiency}
             />
@@ -577,7 +646,7 @@ const saveProficiency = async (proficiencyArr) => {
               title="Databases"
               skills={skills}
               setSkills={setSkills}
-              tags={databaseTags}
+              tags={getDatabaseTags().map(tag => tag.tag_name)} // ✅ Correct - maps to tag names
               selectedProficiency={proficiency}
               setProficiency={setProficiency}
             />
@@ -591,7 +660,7 @@ const saveProficiency = async (proficiencyArr) => {
               title="DevOps"
               skills={skills}
               setSkills={setSkills}
-              tags={devOpsTags}
+              tags={getDevOpsTags().map(tag => tag.tag_name)} // ✅ Correct - maps to tag names
               selectedProficiency={proficiency}
               setProficiency={setProficiency}
             />
@@ -605,7 +674,7 @@ const saveProficiency = async (proficiencyArr) => {
               title="Cybersecurity"
               skills={skills}
               setSkills={setSkills}
-              tags={cybersecurityTags}
+              tags={getCybersecurityTags().map(tag => tag.tag_name)} // ✅ Correct - maps to tag names
               selectedProficiency={proficiency}
               setProficiency={setProficiency}
             />
@@ -619,7 +688,7 @@ const saveProficiency = async (proficiencyArr) => {
               title="Mobile Development"
               skills={skills}
               setSkills={setSkills}
-              tags={mobileDevelopmentTags}
+              tags={getMobileDevelopmentTags().map(tag => tag.tag_name)} // ✅ Correct - maps to tag names
               selectedProficiency={proficiency}
               setProficiency={setProficiency}
             />
@@ -633,7 +702,7 @@ const saveProficiency = async (proficiencyArr) => {
               title="Soft Skills"
               skills={softSkillsTags}
               setSkills={setSoftSkillsTags}
-              tags={softSkillsTagsList}
+              tags={getSoftSkillsTags().map(tag => tag.tag_name)}
               showProficiency={false}
             />
           </div>
@@ -724,3 +793,4 @@ const saveProficiency = async (proficiencyArr) => {
 }
 
 export default AppOnbStepTwo;
+

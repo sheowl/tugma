@@ -11,6 +11,8 @@ export default function TechnicalSkills({
 }) {
   const [openLevel, setOpenLevel] = useState(null);
 
+  console.log(`🏷️ TechnicalSkills for ${title}:`, tags);
+
   const toggleTag = (tag) => {
     if (skills.includes(tag)) {
       setSkills(skills.filter((skill) => skill !== tag));

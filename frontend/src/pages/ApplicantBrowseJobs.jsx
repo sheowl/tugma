@@ -97,7 +97,15 @@ useEffect(() => {
         const fetchJobs = async () => {
             setLoadingJobs(true);
             try {
-                const res = await fetch("http://localhost:8000/api/v1/jobs/");
+                const { data: { session } } = await supabase.auth.getSession();
+                const accessToken = session?.access_token;
+                
+                if (!accessToken) return;
+
+                const res = await fetch("http://localhost:8000/api/v1/matching/jobs", {
+                    headers: { Authorization: `Bearer ${accessToken}` },
+                });
+                
                 const data = await res.json();
                 
                 console.log("Fetched raw jobs data:", data);
@@ -228,7 +236,7 @@ const handleCloseSuccess = () => {
     setDrawerOpen(false); // Close the drawer after successful application
 };
 
-    // Update the mapJobDataForApplicant function
+// Update the mapJobDataForApplicant function
 const mapJobDataForApplicant = (job) => {
     console.log('Mapping job data for applicant:', job);
     
@@ -259,21 +267,20 @@ const mapJobDataForApplicant = (job) => {
         'internship': 'Internship'
     };
 
-    // FIXED: Get tag names for job_tags array
+    // Get tag names for job_tags array
     const tagNames = tagsLoading ? [] : getTagNamesByIds(job.job_tags || []);
-    console.log('Resolved tag names for job:', job.job_id, tagNames);
 
     return {
         // Core identifiers
         id: job.job_id,
         job_id: job.job_id,
         
-        // Basic info - NOW USING RESOLVED DATA FROM BACKEND
+        // Basic info
         jobTitle: job.job_title,
         job_title: job.job_title,
-        companyName: job.company_name || "Company Name",  // RESOLVED FROM BACKEND
-        company_name: job.company_name || "Company Name",  // RESOLVED FROM BACKEND
-        location: job.location || job.company_location || "Location",  // RESOLVED FROM BACKEND
+        companyName: job.company_name || "Company Name",
+        company_name: job.company_name || "Company Name",
+        location: job.location || job.company_location || "Location",
         description: job.description || "",
         
         // Work setup and type
@@ -294,14 +301,14 @@ const mapJobDataForApplicant = (job) => {
         availablePositions: job.position_count || 1,
         position_count: job.position_count || 1,
         
-        // Tags - FIXED: Include both formats
-        tags: tagNames.map(name => ({ label: name, matched: true })),
+        // Tags
+        tags: tagNames.map(name => ({ label: name, matched: true })), // for Card
         job_tags: job.job_tags || [],
-        tag_names: tagNames, // FIXED: Include resolved tag names
+        tag_names: tagNames, // resolved tag names
         
-        // Category and proficiency - NOW USING RESOLVED DATA
+        // Category and proficiency
         required_category_id: job.required_category_id,
-        category_name: job.category_name || "General",  // RESOLVED FROM BACKEND
+        category_name: job.category_name || "General",
         required_proficiency: job.required_proficiency,
         proficiency: job.required_proficiency,
         
@@ -314,10 +321,10 @@ const mapJobDataForApplicant = (job) => {
         matchScore: job.match_score || 0,
         match_score: job.match_score || 0,
         
-        // Company info - NOW USING RESOLVED DATA FROM BACKEND
-        company_description: job.company_description || "",  // RESOLVED FROM BACKEND
-        companyDescription: job.company_description || "",  // RESOLVED FROM BACKEND
-        company_location: job.company_location || "",  // RESOLVED FROM BACKEND
+        // Company info
+        company_description: job.company_description || "",
+        companyDescription: job.company_description || "",
+        company_location: job.company_location || "",
     };
 };
 

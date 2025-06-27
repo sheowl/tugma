@@ -19,6 +19,7 @@ function Card({
   salaryFrequency = "Monthly",
   companyDescription,
   onViewDetails,
+  tags = [],
 }) {
 
   const jobData = {
@@ -77,6 +78,15 @@ function Card({
               <i className="bi bi-briefcase-fill text-[#2A4D9B]" />
               <span>{employmentType}</span>
             </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="font-bold text-[#2A4D9B]">{matchScore}% Match</span>
+          <div>
+            {tags.map((tag) => (
+              <span key={tag.label} className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">{tag.label}</span>
+            ))}
           </div>
         </div>
       </div>

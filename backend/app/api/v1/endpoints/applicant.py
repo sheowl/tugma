@@ -21,6 +21,7 @@ from app.schemas.applicant import (
 from app.crud import applicant as crud
 from app.crud import application as application_crud
 from app.schemas.application import JobApplicationOut
+from app.schemas.tags import TagIdsRequest
 from app.core.database import get_db
 
 
@@ -208,9 +209,18 @@ async def save_onboarding_details(
     applicant_info = Depends(get_current_applicant)
 ):
     applicant = applicant_info["db_user"]
-    print("Saving onboarding details for:", applicant.applicant_id)
-    updated_applicant = await crud.update_applicant(db, applicant, applicant_update)
-    return updated_applicant
+    print("=== [ONBOARDING] ===")
+    print("Saving onboarding details for applicant_id:", applicant.applicant_id)
+    print("Received applicant_update dict:", applicant_update.dict())
+    try:
+        updated_applicant = await crud.update_applicant(db, applicant, applicant_update)
+        print("Updated applicant object:", updated_applicant)
+        print("preferred_worksetting after update:", updated_applicant.preferred_worksetting)
+        print("preferred_worktype after update:", updated_applicant.preferred_worktype)
+        return updated_applicant
+    except Exception as e:
+        print("❌ Error during onboarding save:", e)
+        raise
 
 # Get applicant by ID
 @router.get("/{applicant_id}", response_model=ApplicantOut)
@@ -269,4 +279,6 @@ async def get_certificates(applicant_id: int, db: AsyncSession = Depends(get_db)
 @router.get("/{applicant_id}/proficiency", response_model=List[ApplicantProficiencyOut])
 async def get_applicant_proficiency(applicant_id: int, db: AsyncSession = Depends(get_db)):
     return await crud.get_applicant_proficiency(db, applicant_id)
+
+
 
