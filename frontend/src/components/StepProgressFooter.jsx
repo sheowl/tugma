@@ -28,7 +28,7 @@ export default function StepProgressFooter({ step, segment, onContinue, onSkip }
         </div>
       </div>
       <div className="flex gap-4">
-        {step === 2 && (
+        {(step === 1 || step === 2) && (
           <button
             onClick={onSkip}
             className="w-[192px] px-6 py-3 text-[#2A4D9B] font-bold rounded-md hover:bg-[#E9EDF8]"

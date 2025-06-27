@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AuthService from '../services/AuthService';
+import { supabase } from '../services/supabaseClient'; // Adjust the import based on your project structure
 
 const AuthContext = createContext();
 
@@ -11,11 +12,20 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const currentUser = AuthService.getCurrentUser();
-    const currentUserType = AuthService.getUserType();
-    setUser(currentUser);
-    setUserType(currentUserType);
-    setLoading(false);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user || null);
+      setLoading(false);
+    });
+
+    // On mount, check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user || null);
+      setLoading(false);
+    });
+
+    return () => {
+      subscription?.unsubscribe();
+    };
   }, []);
 
   // Company authentication methods
@@ -111,7 +121,12 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{
+      user,
+      userType,
+      loading,
+      // ...other helpers
+    }}>
       {children}
     </AuthContext.Provider>
   );

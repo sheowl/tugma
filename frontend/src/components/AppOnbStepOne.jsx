@@ -46,7 +46,7 @@ function AppOnbStepOne({
   // Fetch user details on component mount
   useEffect(() => {
     const loadUserDetails = async () => {
-      const data = await fetchUserDetails(); // Fetch data from mock or real source
+      const data = await fetchUserDetails(false); // or simply fetchUserDetails()
       setUserDetails(data);
     };
     loadUserDetails();
@@ -78,23 +78,27 @@ function AppOnbStepOne({
   };
 
   const handleContinue = async () => {
-    if (segment === 9) {
-      // Validate selection
+    if (step === 2 && segment === 9) {
       if (!preferredWorkSetting || !preferredWorkType) {
         alert("Please select both work setting and work type.");
         return;
       }
-      // Update userDetails (or whatever state you use)
-      setUserDetails(prev => ({
-        ...prev,
+      // Update parent state with all onboarding data
+      const updatedUserDetails = {
+        ...userDetails,
         preferred_worksetting: preferredWorkSetting,
         preferred_worktype: preferredWorkType,
-      }));
-      // Optionally save to backend here
-      await saveUserDetails(flattenUserDetails(userDetails));
+        skills,
+        softSkills: softSkillsTags,
+        certifications,
+        proficiency,
+      };
+      setUserDetails(updatedUserDetails);
+      await saveUserDetails(flattenUserDetails(updatedUserDetails));
       onNext();
+    } else if (step === 2 && segment === 10) {
+      navigate("/ApplicantProfile");
     } else {
-      // ...handle other segments
       onNext();
     }
   };

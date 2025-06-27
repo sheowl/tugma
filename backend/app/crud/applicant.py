@@ -5,12 +5,13 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy import delete
 from typing import Optional, List
 from app.core.auth import get_password_hash
-from app.models.applicant import Applicant, ApplicantWorkExperience, ApplicantCertificate
+from app.models.applicant import Applicant, ApplicantWorkExperience, ApplicantCertificate, ApplicantProficiency
 from app.schemas.applicant import (
     ApplicantCreate,
     ApplicantUpdate,
     ApplicantWorkExperienceCreate,
-    ApplicantCertificateCreate
+    ApplicantCertificateCreate,
+    ApplicantProficiencyCreate
 )
 from app.models.base import Base
 
@@ -106,7 +107,7 @@ async def delete_applicant(db: AsyncSession, applicant_id: int):
     await db.execute(interview_stmt)
     
     # 7. Delete any applicant tags
-    from app.models.applicant import ApplicantTag, ApplicantProficiency
+    from app.models.applicant import ApplicantTag
     tag_stmt = delete(ApplicantTag).where(
         ApplicantTag.applicant_id == applicant_id
     )
@@ -155,4 +156,42 @@ async def add_certificate(db: AsyncSession, applicant_id: int, certificate: Appl
 async def get_applicant_certificates(db: AsyncSession, applicant_id: int):
     result = await db.execute(select(ApplicantCertificate).where(ApplicantCertificate.applicant_id == applicant_id))
     return result.scalars().all()
+
+
+# --- Proficiency ---
+async def create_proficiency(db: AsyncSession, applicant_id: int, proficiency: ApplicantProficiencyCreate):
+    prof = ApplicantProficiency(
+        applicant_id=applicant_id,
+        category_id=proficiency.category_id,
+        proficiency=proficiency.proficiency
+    )
+    db.add(prof)
+    await db.commit()
+    await db.refresh(prof)
+    return prof
+
+async def get_applicant_proficiency(db: AsyncSession, applicant_id: int):
+    result = await db.execute(select(ApplicantProficiency).where(ApplicantProficiency.applicant_id == applicant_id))
+    return result.scalars().all()
+
+async def update_proficiency(
+    db: AsyncSession,
+    applicant_id: int,
+    category_id: int,
+    new_proficiency: int
+):
+    from app.models.applicant import ApplicantProficiency
+    result = await db.execute(
+        select(ApplicantProficiency).where(
+            ApplicantProficiency.applicant_id == applicant_id,
+            ApplicantProficiency.category_id == category_id
+        )
+    )
+    prof = result.scalars().first()
+    if prof:
+        prof.proficiency = new_proficiency
+        await db.commit()
+        await db.refresh(prof)
+        return prof
+    return None
 

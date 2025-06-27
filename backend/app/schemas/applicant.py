@@ -107,3 +107,17 @@ class ApplicantLogin(BaseModel):
 class ApplicantOnboardingStatus(BaseModel):
     needs_onboarding: bool
     completed_fields: dict[str, bool]
+
+# Applicant Proficiency
+class ApplicantProficiencyBase(BaseModel):
+    category_id: int  
+    proficiency: int  
+
+class ApplicantProficiencyCreate(ApplicantProficiencyBase):
+    pass
+
+class ApplicantProficiencyOut(ApplicantProficiencyBase):
+    applicant_id: int
+
+    class Config:
+        from_attributes = True  # For Pydantic v2

@@ -66,8 +66,7 @@ export default function JobDetailsDrawer({ open, onClose, job, onApply }) {
                     {/* Salary */}
                     <div className="flex items-center gap-2 mb-6">
                       <p className="text-2xl font-bold">₱{job.salaryRangeLow}K - ₱{job.salaryRangeHigh}K</p>
-                      <p className="text-base font-normal text-gray-500">{job.salaryFrequency.toLowerCase()}</p>
-                    </div>
+                      <p className="text-base font-normal text-gray-500">{(job.salaryFrequency || "monthly").toLowerCase()}</p>                    </div>
                     {/* Tags */}
                     <div className="flex gap-2 mb-6">
                       <span className="px-2 py-1 bg-indigo-50 rounded text-xs font-semibold text-neutral-700">
@@ -95,9 +94,13 @@ export default function JobDetailsDrawer({ open, onClose, job, onApply }) {
                     <div className="mb-6">
                       <h4 className="text-base font-bold mb-2 text-neutral-700">Tag Matches</h4>
                       <div className="flex gap-2 flex-wrap">
-                        {job.tags.map((tag, index) => (
-                          <Tag key={index} label={tag.label} matched={tag.matched} />
-                        ))}
+                        {job.tags && Array.isArray(job.tags) && job.tags.length > 0 ? (
+                          job.tags.map((tag, index) => (
+                            <Tag key={index} label={tag.label} matched={tag.matched} />
+                          ))
+                        ) : (
+                          <p className="text-sm text-gray-500">No tags available</p>
+                        )}
                       </div>
                     </div>
                     {/* Apply Button */}

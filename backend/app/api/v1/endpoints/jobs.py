@@ -9,7 +9,18 @@ from app.schemas.jobs import JobCreate, JobUpdate, JobOut, CompanyJobsResponse
 from app.crud import jobs as crud
 from app.middleware.auth import get_current_company
 
-router = APIRouter()
+router = APIRouter(prefix="/jobs", tags=["jobs"])
+
+#====================== Root Routes ================
+# Create a job (public)
+@router.post("/", response_model=JobOut)
+async def create_job(job_in: JobCreate, db: AsyncSession = Depends(get_db)):
+    return await crud.create_job(db, job_in)
+
+# Get all jobs (public)
+@router.get("/", response_model=List[JobOut])
+async def get_all_jobs(db: AsyncSession = Depends(get_db)):
+    return await crud.get_all_jobs(db)
 
 #====================== Authenticated Routes (MUST BE FIRST) ================
 
@@ -222,16 +233,6 @@ async def delete_my_job(
         raise HTTPException(status_code=400, detail=str(e))
 
 #====================== Public Routes (AFTER SPECIFIC ROUTES) ===============
-
-# Create a job (public)
-@router.post("/", response_model=JobOut)
-async def create_job(job_in: JobCreate, db: AsyncSession = Depends(get_db)):
-    return await crud.create_job(db, job_in)
-
-# Get all jobs (public)
-@router.get("/", response_model=List[JobOut])
-async def get_all_jobs(db: AsyncSession = Depends(get_db)):
-    return await crud.get_all_jobs(db)
 
 # Get all jobs for a company (public)
 @router.get("/company/{company_id}", response_model=List[JobOut])
