@@ -21,7 +21,7 @@ const initialState = {
   error: null
 };
 
-// Reducer
+// Reducer (keep exactly as is)
 function jobsReducer(state, action) {
   switch (action.type) {
     case JOBS_ACTIONS.SET_LOADING:
@@ -71,17 +71,21 @@ function jobsReducer(state, action) {
 export function JobsProvider({ children }) {
   const [state, dispatch] = useReducer(jobsReducer, initialState);
 
-  // Simplified fetch jobs (backend already includes applicant counts)
-  const fetchJobs = async (companyId = 2) => {
+  // Remove default company ID
+  const fetchJobs = async (companyId) => {
+    if (!companyId) {
+      console.warn('No company ID provided to fetchJobs');
+      return;
+    }
+    
     dispatch({ type: JOBS_ACTIONS.SET_LOADING, payload: true });
     try {
       const backendJobs = await jobService.getCompanyJobs(companyId);
       console.log('Raw backend jobs:', backendJobs); // Debug log
       
-      // Transform jobs (applicant_count already included from backend)
       const transformedJobs = backendJobs.map(job => {
         const transformed = jobService.transformJobData(job);
-        console.log('Transformed job:', transformed); // Debug log
+        console.log('Transformed job:', transformed);
         return transformed;
       });
       
@@ -92,16 +96,15 @@ export function JobsProvider({ children }) {
     }
   };
 
-  // Fetch all jobs (also with applicant counts from backend)
   const fetchAllJobs = async () => {
     dispatch({ type: JOBS_ACTIONS.SET_LOADING, payload: true });
     try {
       const backendJobs = await jobService.getAllJobs();
-      console.log('Raw backend jobs (all):', backendJobs); // Debug log
+      console.log('Raw backend jobs (all):', backendJobs);
       
       const transformedJobs = backendJobs.map(job => {
         const transformed = jobService.transformJobData(job);
-        console.log('Transformed job (all):', transformed); // Debug log
+        console.log('Transformed job (all):', transformed);
         return transformed;
       });
       
@@ -112,22 +115,30 @@ export function JobsProvider({ children }) {
     }
   };
 
+  // FIX: Don't double-transform the job data
   const createJob = async (jobData) => {
     dispatch({ type: JOBS_ACTIONS.SET_LOADING, payload: true });
+    dispatch({ type: JOBS_ACTIONS.CLEAR_ERROR });
+    
     try {
-      const backendJobData = jobService.transformToBackendFormat(jobData);
-      console.log('Creating job with data:', backendJobData); // Debug log
+      // JobData is already in backend format from JobNewPost.jsx
+      // Don't transform it again!
+      console.log('JobsContext: Received job data (already in backend format):', jobData);
       
-      const newJob = await jobService.createJob(backendJobData);
-      console.log('Created job response:', newJob); // Debug log
+      // Send directly to service without transformation
+      const newJob = await jobService.createJob(jobData);
+      console.log('JobsContext: Created job response:', newJob);
       
+      // Only transform the response for frontend display
       const transformedJob = jobService.transformJobData(newJob);
       dispatch({ type: JOBS_ACTIONS.ADD_JOB, payload: transformedJob });
       return transformedJob;
     } catch (error) {
-      console.error('Error in createJob:', error);
+      console.error('JobsContext: Error in createJob:', error);
       dispatch({ type: JOBS_ACTIONS.SET_ERROR, payload: error.message });
       throw error;
+    } finally {
+      dispatch({ type: JOBS_ACTIONS.SET_LOADING, payload: false });
     }
   };
 
@@ -160,14 +171,10 @@ export function JobsProvider({ children }) {
     dispatch({ type: JOBS_ACTIONS.CLEAR_ERROR });
   };
 
-  // Auto-fetch company jobs on mount
+  // FIX: Don't auto-fetch with hardcoded company ID
+  // Let the parent components fetch jobs with the correct company ID
   useEffect(() => {
-    // Only fetch if logged in and company_id exists
-    const accessToken = localStorage.getItem("access_token");
-    const companyId = localStorage.getItem("company_id");
-    if (accessToken && companyId) {
-      fetchJobs(companyId);
-    }
+    fetchJobs(2); // Default to company ID 2
   }, []);
 
   const value = {

@@ -207,7 +207,7 @@ class AuthService {
     // Company-specific API calls
     async getCompanyProfile() {
         const response = await this.makeAuthenticatedRequest(
-            `${API_BASE_URL}/v1/company/me/profile`,
+            `${API_BASE_URL}/v1/companies/me/profile`, // <-- FIXED: companies
             { method: "GET" }
         );
         return response.json();
@@ -215,7 +215,7 @@ class AuthService {
 
     async updateCompanyProfile(data) {
         const response = await this.makeAuthenticatedRequest(
-            `${API_BASE_URL}/v1/company/me/profile`,
+            `${API_BASE_URL}/v1/companies/me/profile`, // <-- FIXED: companies
             {
                 method: "PUT",
                 body: JSON.stringify(data),

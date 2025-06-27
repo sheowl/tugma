@@ -8,7 +8,7 @@ from app.schemas.tags import TagCreate, TagOut, TagCategoryCreate, TagCategoryOu
 from app.core.database import get_db
 from app.crud import tags as crud
 
-router = APIRouter(prefix="/tags", tags=["tags"])
+router = APIRouter()
 
 # === TAG CATEGORY ROUTES ===
 

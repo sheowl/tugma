@@ -54,7 +54,8 @@ const Employer_SignIn = () => {
       <div className="absolute top-8 left-4 pl-4 sm:top-12 sm:left-16 sm:pl-12 md:top-20 md:left-40 md:pl-24">
         <img src={TugmaLogo} alt="Logo" className="w-40 h-16 sm:w-60 sm:h-20 md:w-[192px] md:h-[60px]" />
       </div>
-      <div className="flex flex-col items-center bg-[#FFF7F2] justify-center w-[615px] h-[650px] px-2 sm:px-4 md:px-8 rounded-xl md:rounded-3xl mx-auto py-2 sm:py-3 md:py-4 mt-2 md:mt-4">
+      <div className="flex flex-col items-center bg-[#FFF7F2] justify-center w-[615px] h-[650px] px-2 sm:px-4 md:px-8 
+      rounded-xl md:rounded-3xl mx-auto py-2 sm:py-3 md:py-4 mt-2 md:mt-4 shadow-all-around">
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#E66F24] mb-10 md:mb-12 text-center">
           Log in to Tugma
         </h1>

@@ -1,72 +1,119 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import Card from '../components/Card.jsx';
+import { useCompany } from "../context/CompanyContext";
 import EmployerSideBar from "../components/EmployerSideBar";
 import EmployerApplicantHeader from "../components/EmployerApplicantHeader";
 import EmpCard from "../components/EmpCard";
+import ApplicationFullDetails from "../components/ApplicationFullDetails";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 
 const EmployerApplicants = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  
+  // Use CompanyContext for backend operations
+  const { getJobApplicants, loading, error, clearError } = useCompany();
+  
   const [applicants, setApplicants] = useState([]);
   const [sortBy, setSortBy] = useState('best');
-  const [selectedJobNumber, setSelectedJobNumber] = useState(1);
+  const [selectedJobNumber, setSelectedJobNumber] = useState(null); // Start with null
+  const [openDropdownId, setOpenDropdownId] = useState(null);
+  const [selectedApplicant, setSelectedApplicant] = useState(null);
+  const [showApplicationDetails, setShowApplicationDetails] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState("");
   
-  // Get job posts data from navigation state or fallback to mock data
+  // Get job posts data from navigation state
   const jobPostsData = location.state?.jobPosts || [];
+  const selectedJob = location.state?.selectedJob;
+  const selectedJobId = location.state?.selectedJobId;
 
   useEffect(() => {
-    // If no job posts data is passed, redirect back to job posts page
-    if (!jobPostsData || jobPostsData.length === 0) {
-      navigate('/employerjobposts');
-      return;
-    }
+    loadApplicantsData();
+  }, [selectedJobNumber]);
 
-    // Generate applicants for each job post    // Generate applicants for each job post
-    const generateApplicantsForJobs = () => {
-      const candidatePool = [
-        { name: "Juan Dela Cruz", role: "Software Engineer", skills: ["React", "Node.js", "CSS", "HTML", "JavaScript"] },
-        { name: "Maria Santos", role: "Frontend Developer", skills: ["Vue.js", "Sass", "HTML", "JavaScript"] },
-        { name: "Pedro Ramirez", role: "Backend Developer", skills: ["Python", "Django", "REST API", "PostgreSQL"] },
-        { name: "Ana Garcia", role: "Data Analyst", skills: ["Python", "SQL", "Pandas", "Excel"] },
-        { name: "Carlos Lopez", role: "Marketing Specialist", skills: ["SEO", "Google Ads", "Social Media", "Analytics"] },
-        { name: "Isabella Rodriguez", role: "UI/UX Designer", skills: ["Figma", "Adobe XD", "Photoshop", "Sketch"] },
-      ];
+  const loadApplicantsData = async () => {
+    try {
+      setIsLoading(true);
+      setFetchError("");
+      clearError();
 
-      const allApplicants = [];
+      // If no job posts data is passed, redirect back to job posts page
+      if (!jobPostsData || jobPostsData.length === 0) {
+        navigate('/employerjobposts');
+        return;
+      }
+
+      // Set the selected job if provided, otherwise default to first
+      let jobIdToFetch = selectedJobNumber;
       
-      jobPostsData.forEach((job, index) => {
-        // Generate 2-5 applicants per job
-        const numApplicants = Math.floor(Math.random() * 4) + 2;
-        
-        for (let i = 0; i < numApplicants; i++) {
-          const candidate = candidatePool[Math.floor(Math.random() * candidatePool.length)];
-          allApplicants.push({
-            id: `${job.id}-${i}`,
-            jobNumber: job.id,
-            jobTitle: job.jobTitle,
-            matched: Math.floor(Math.random() * 51) + 50, // 50-100% match
-            isNew: Math.random() > 0.5,
-            candidateName: candidate.name,
-            role: candidate.role,
-            skills: candidate.skills,
-            moreSkillsCount: Math.floor(Math.random() * 3),
-            appliedDaysAgo: Math.floor(Math.random() * 10) + 1,
-          });
-        }
-      });
-      
-      return allApplicants;
-    };
+      // Priority order for job ID selection:
+      // 1. selectedJobId from navigation (when coming from specific job)
+      // 2. Current selectedJobNumber state
+      // 3. First job in jobPostsData array
+      if (selectedJobId && selectedJobNumber === null) {
+        jobIdToFetch = selectedJobId;
+        setSelectedJobNumber(selectedJobId);
+        console.log(`🔍 EmployerApplicants: Using selectedJobId from navigation: ${selectedJobId}`);
+      } else if (selectedJobNumber) {
+        jobIdToFetch = selectedJobNumber;
+        console.log(`🔍 EmployerApplicants: Using current selectedJobNumber: ${selectedJobNumber}`);
+      } else if (jobPostsData.length > 0) {
+        jobIdToFetch = jobPostsData[0].id;
+        setSelectedJobNumber(jobPostsData[0].id);
+        console.log(`🔍 EmployerApplicants: Using first job from jobPostsData: ${jobPostsData[0].id}`);
+      }
 
-    setApplicants(generateApplicantsForJobs());
-    
-    // Set the first job as selected by default
-    if (jobPostsData.length > 0) {
-      setSelectedJobNumber(jobPostsData[0].id);
+      if (!jobIdToFetch) {
+        setFetchError("No valid job ID found");
+        return;
+      }
+
+      console.log(`🔍 EmployerApplicants: Final job ID to fetch: ${jobIdToFetch}`);
+
+      // Fetch applicants from backend
+      const response = await getJobApplicants(jobIdToFetch);
+      
+      console.log('📋 Applicants response:', response);
+
+      // Transform backend applicants data to frontend format
+      const transformedApplicants = (response.applicants || []).map((applicant, index) => ({
+        id: applicant.applicant_id || `${jobIdToFetch}-${index}`,
+        jobNumber: jobIdToFetch,
+        jobTitle: response.job_title || 'Job Post',
+        matched: Math.floor(Math.random() * 51) + 50, // Mock match score for now
+        isNew: new Date() - new Date(applicant.application_created_at) < 24 * 60 * 60 * 1000, // New if applied within last 24 hours
+        candidateName: applicant.name || 'Unknown Applicant',
+        role: 'Applicant', // Default role since backend doesn't provide this yet
+        email: applicant.email,
+        phoneNumber: applicant.phone_number,
+        location: applicant.location,
+        applicationCreatedAt: applicant.application_created_at,
+        status: applicant.status || 'pending',
+        skills: [], // Mock skills since backend doesn't provide this yet
+        moreSkillsCount: 0,
+        appliedDaysAgo: calculateDaysAgo(applicant.application_created_at),
+      }));
+
+      setApplicants(transformedApplicants);
+      
+    } catch (error) {
+      console.error("❌ Error loading applicants:", error);
+      setFetchError(error.message || "Failed to load applicants. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
-  }, [jobPostsData, navigate]);
+  };
+
+  // Helper function to calculate days ago
+  const calculateDaysAgo = (createdAt) => {
+    if (!createdAt) return 0;
+    const created = new Date(createdAt);
+    const now = new Date();
+    const diffTime = Math.abs(now - created);
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
+
   // Get available job IDs from the passed job posts data
   const jobNumbers = jobPostsData.map(job => job.id).sort((a, b) => a - b);
   const currentIndex = jobNumbers.indexOf(selectedJobNumber);
@@ -87,18 +134,81 @@ const EmployerApplicants = () => {
     return 0;
   });
 
+  const handleDropdownToggle = (applicantId) => {
+    setOpenDropdownId(openDropdownId === applicantId ? null : applicantId);
+  };
+
+  const handleViewFullApplicant = (applicant) => {
+    setSelectedApplicant(applicant);
+    setShowApplicationDetails(true);
+  };
+
+  const handleJobChange = (newJobId) => {
+    console.log(`🔍 EmployerApplicants: Changing job to ID: ${newJobId}`);
+    setSelectedJobNumber(newJobId);
+    setApplicants([]); // Clear current applicants while loading new ones
+  };
+
+  // Loading state
+  if (isLoading && applicants.length === 0) {
+    return (
+      <div className="min-h-screen bg-[#FF8032] flex items-start overflow-hidden">
+        <EmployerSideBar />
+        <div className="flex-1 h-screen bg-[#FEFEFF] rounded-tl-[40px] overflow-y-auto p-2 sm:p-4 md:p-6 shadow-md w-full max-w-full">
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-[#FF8032] mx-auto"></div>
+              <div className="text-lg font-semibold text-gray-600 mt-4">Loading applicants...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (fetchError || error) {
+    return (
+      <div className="min-h-screen bg-[#FF8032] flex items-start overflow-hidden">
+        <EmployerSideBar />
+        <div className="flex-1 h-screen bg-[#FEFEFF] rounded-tl-[40px] overflow-y-auto p-2 sm:p-4 md:p-6 shadow-md w-full max-w-full">
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center text-red-500">
+              <div className="text-lg font-semibold mb-4">Error Loading Applicants</div>
+              <div className="mb-4">{fetchError || error}</div>
+              <button 
+                onClick={() => loadApplicantsData()}
+                className="bg-[#FF8032] text-white px-6 py-2 rounded-lg hover:bg-[#E66F24] transition"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#FF8032] flex items-start overflow-hidden">
       <EmployerSideBar />
-      <div className="flex-1 h-screen bg-white rounded-tl-[40px] overflow-y-auto p-2 sm:p-4 md:p-6 shadow-md w-full max-w-full">        <EmployerApplicantHeader
+      <div className="flex-1 h-screen bg-[#FEFEFF] rounded-tl-[40px] overflow-y-auto p-2 sm:p-4 md:p-6 shadow-md w-full max-w-full">        
+        <EmployerApplicantHeader
           onSortChange={setSortBy}
           selectedSort={sortBy}
           jobPostNumber={selectedJobNumber}
           totalApplicants={filteredApplicants.length}
           jobTitle={currentJob?.jobTitle || 'Job Post'}
+          jobNumbers={jobNumbers}
+          onJobChange={handleJobChange}
         />
         <div className="pl-[112px] pr-[118px] mt-10 mb-10 flex flex-wrap gap-[33px] justify-center">
-          {sortedApplicants.length > 0 ? (
+          {isLoading ? (
+            <div className="text-center text-gray-600 w-full">
+              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#FF8032] mx-auto mb-4"></div>
+              <div>Loading applicants...</div>
+            </div>
+          ) : sortedApplicants.length > 0 ? (            
             sortedApplicants.map(applicant => (
               <EmpCard
                 key={applicant.id}
@@ -106,104 +216,36 @@ const EmployerApplicants = () => {
                 isNew={applicant.isNew}
                 candidateName={applicant.candidateName}
                 role={applicant.role}
+                email={applicant.email}
+                phoneNumber={applicant.phoneNumber}
+                location={applicant.location}
                 skills={applicant.skills}
                 moreSkillsCount={applicant.moreSkillsCount}
                 appliedDaysAgo={applicant.appliedDaysAgo}
                 actionLabel="Action"
                 onAction={val => {}}
+                dropdownOpen={openDropdownId === applicant.id}
+                onDropdownToggle={() => handleDropdownToggle(applicant.id)}
+                onViewFull={() => handleViewFullApplicant(applicant)}
               />
             ))
           ) : (
-            <div>No applicants found.</div>
+            <div className="text-center text-gray-600 w-full py-16">
+              <div className="text-lg font-semibold mb-2">No applicants found</div>
+              <div>This job hasn't received any applications yet.</div>
+            </div>
           )}
         </div>
-        {/* Navigation Bar */}
-        <div
-          className="bg-white/80 py-4 flex justify-center items-center gap-6 z-50"
-          style={{
-            position: 'fixed',
-            left: '337px', // match sidebar width
-            bottom: 0,
-            right: 0,
-            WebkitBackdropFilter: 'blur(12px)',
-            backdropFilter: 'blur(12px)',
-          }}
-        >
-          <button
-            className="w-10 h-10 flex items-center justify-center text-[#FF8032] bg-white hover:bg-[#FF8032]/10 transition disabled:opacity-50 disabled:cursor-not-allowed p-0"
-            style={{
-              minWidth: 40,
-              minHeight: 40,
-              width: 40,
-              height: 40,
-            }}
-            onClick={() => setSelectedJobNumber(jobNumbers[currentIndex - 1])}
-            disabled={currentIndex === 0}
-            aria-label="Previous"
-          >
-            <FiChevronLeft size={28} />
-          </button>
-          <div className="flex gap-2">
-            {(() => {
-              let start = Math.max(0, currentIndex - 1);
-              let end = Math.min(jobNumbers.length, start + 3);
-              if (end - start < 3 && start > 0) {
-                start = Math.max(0, end - 3);
-              }
-              return jobNumbers.slice(start, end).map((num, idx) => {
-                const isCurrent = num === selectedJobNumber;
-                return (
-                  <button
-                    key={num}
-                    className="flex items-center justify-center rounded-lg transition-all duration-200 bg-white"
-                    style={{
-                      width: isCurrent ? 32 : 24,
-                      height: isCurrent ? 32 : 24,
-                      minWidth: isCurrent ? 32 : 24,
-                      minHeight: isCurrent ? 32 : 24,
-                      border: isCurrent ? '4px solid #FF8032' : '2px solid #FF8032',
-                      boxShadow: isCurrent ? '0 2px 8px #E66F24' : undefined,
-                      position: 'relative',
-                      padding: 0,
-                    }}
-                    onClick={() => setSelectedJobNumber(num)}
-                    aria-label={`Go to job post`}
-                  >
-                    <span
-                      style={{
-                        display: 'block',
-                        width: 18,
-                        height: 18,
-                        borderRadius: 6,
-                        background: isCurrent ? '#FF8032' : 'transparent',
-                        border: isCurrent ? '4px solid #FF8032' : '4px solid transparent',
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                      }}
-                    />
-                  </button>
-                );
-              });
-            })()}
-          </div>
-          <button
-            className="w-10 h-10 flex items-center justify-center text-[#FF8032] bg-white hover:bg-[#FF8032]/10 transition disabled:opacity-50 disabled:cursor-not-allowed p-0"
-            style={{
-              minWidth: 40,
-              minHeight: 40,
-              width: 40,
-              height: 40,
-            }}
-            onClick={() => setSelectedJobNumber(jobNumbers[currentIndex + 1])}
-            disabled={currentIndex === jobNumbers.length - 1}
-            aria-label="Next"
-          >
-            <FiChevronRight size={28} />
-          </button>
-        </div>
       </div>
+      
+      {/* Application Full Details Modal */}
+      {selectedApplicant && (
+        <ApplicationFullDetails 
+          open={showApplicationDetails}
+          onClose={() => setShowApplicationDetails(false)}
+          applicant={selectedApplicant}
+        />
+      )}
     </div>
   );
 };

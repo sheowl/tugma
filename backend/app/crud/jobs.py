@@ -2,6 +2,7 @@
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy import text, func, desc  # Add func and desc imports
 from app.models.jobs import Job
 from app.schemas.jobs import JobCreate, JobUpdate
 from typing import List, Optional
@@ -44,4 +45,60 @@ async def delete_job(db: AsyncSession, job_id: int) -> bool:
         await db.commit()
         return True
     return False
+
+async def get_applicant_count_by_job(db: AsyncSession, job_id: int) -> int:
+    """Get the count of applicants for a specific job"""
+    try:
+        # Use the correct table name and ORM approach like in company.py
+        from app.models.application import JobApplication
+        
+        result = await db.execute(
+            select(func.count(JobApplication.applicant_id)).where(
+                JobApplication.job_id == job_id
+            )
+        )
+        count = result.scalar() or 0
+        print(f"🔍 DEBUG: Found {count} applicants for job {job_id}")
+        return count
+        
+    except Exception as e:
+        print(f"❌ DEBUG: Error getting applicant count for job {job_id}: {e}")
+        import traceback
+        traceback.print_exc()
+        return 0
+
+async def get_applicants_by_job(db: AsyncSession, job_id: int):
+    """Get all applicants for a specific job with their details"""
+    try:
+        # Use the correct table names and ORM approach
+        from app.models.application import JobApplication
+        from app.models.applicant import Applicant
+        
+        result = await db.execute(
+            select(
+                JobApplication.applicant_id,
+                JobApplication.job_id,
+                JobApplication.created_at.label('application_created_at'),
+                JobApplication.status,
+                Applicant.first_name,
+                Applicant.last_name,
+                Applicant.applicant_email.label('email'),
+                Applicant.contact_number.label('phone_number'),
+                Applicant.current_address.label('location')
+            )
+            .select_from(JobApplication)
+            .join(Applicant, JobApplication.applicant_id == Applicant.applicant_id)
+            .where(JobApplication.job_id == job_id)
+            .order_by(desc(JobApplication.created_at))
+        )
+        
+        applicants = result.fetchall()
+        print(f"🔍 DEBUG: Found {len(applicants)} applicants for job {job_id}")
+        return applicants
+        
+    except Exception as e:
+        print(f"❌ DEBUG: Error getting applicants for job {job_id}: {e}")
+        import traceback
+        traceback.print_exc()
+        return []
 

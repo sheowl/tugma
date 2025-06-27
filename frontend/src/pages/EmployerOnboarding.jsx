@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useCompany } from '../context/CompanyContext';
 
 const EmployerOnboarding = () => {
   const navigate = useNavigate();
@@ -14,8 +15,17 @@ const EmployerOnboarding = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  // Use AuthContext methods
-  const { isEmployer, getOnboardingStatus, completeOnboarding, isAuthenticated } = useAuth();
+  // Use AuthContext for authentication only
+  const { isEmployer, isAuthenticated } = useAuth();
+
+  // Use CompanyContext for company operations
+  const { 
+    getOnboardingStatus, 
+    completeOnboarding,
+    loading: companyLoading,
+    error: companyError,
+    clearError
+  } = useCompany();
 
   useEffect(() => {
     checkOnboardingAndRedirect();
@@ -34,7 +44,11 @@ const EmployerOnboarding = () => {
         return;
       }
 
-      // Check onboarding status using AuthContext method
+      // Clear any previous errors
+      setError('');
+      clearError();
+
+      // Check onboarding status using CompanyContext method
       const status = await getOnboardingStatus();
 
       if (!status.needs_onboarding) {
@@ -46,7 +60,7 @@ const EmployerOnboarding = () => {
       }
     } catch (error) {
       console.error('Error checking onboarding status:', error);
-      setError('Failed to load onboarding status. Please try again.');
+      setError(error.message || 'Failed to load onboarding status. Please try again.');
       setIsLoading(false);
     }
   };
@@ -68,6 +82,7 @@ const EmployerOnboarding = () => {
 
   const handleContinue = async () => {
     setError('');
+    clearError(); // Clear any previous company errors
     
     // Basic validation
     if (!formData.location || !formData.description || !formData.company_size) {
@@ -87,10 +102,10 @@ const EmployerOnboarding = () => {
 
       console.log('Submitting onboarding data:', mappedData);
 
-      // Use AuthContext method to complete onboarding
+      // Use CompanyContext method to complete onboarding
       const result = await completeOnboarding(mappedData);
       
-      if (result.company) {
+      if (result.company || result.success !== false) {
         console.log('Onboarding completed successfully:', result);
         // Onboarding successful - redirect to homepage
         navigate('/employerhomepage');
@@ -125,6 +140,7 @@ const EmployerOnboarding = () => {
     { value: 'large', label: 'Large Corporation' }
   ];
 
+<<<<<<<<< Temporary merge branch 1
   // Loading state while checking onboarding status
   if (isLoading) {
     return (
@@ -136,6 +152,9 @@ const EmployerOnboarding = () => {
       </div>
     );
   }
+
+  // Combine errors from both contexts
+  const displayError = error || companyError;
 
   return (
     <div className="min-h-screen bg-[#FEFEFF]">         
@@ -162,9 +181,20 @@ const EmployerOnboarding = () => {
         </div>
 
         {/* Error Message */}
-        {error && (
+        {displayError && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-8 max-w-4xl mx-auto">
-            {error}
+            <div className="flex items-center justify-between">
+              <span>{displayError}</span>
+              <button 
+                onClick={() => {
+                  setError('');
+                  clearError();
+                }}
+                className="ml-4 text-red-700 hover:text-red-900 font-semibold"
+              >
+                ✕
+              </button>
+            </div>
           </div>
         )}
         
@@ -257,14 +287,14 @@ const EmployerOnboarding = () => {
         <div className="flex justify-end max-w-4xl mx-auto mt-8">
           <button
             onClick={handleContinue}
-            disabled={isSubmitting}
+            disabled={isSubmitting || companyLoading}
             className={`font-semibold px-8 py-3 rounded-[8px] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#FF8032] focus:ring-offset-2 text-[14px] ${
-              isSubmitting
+              isSubmitting || companyLoading
                 ? 'bg-gray-400 cursor-not-allowed text-white'
                 : 'bg-[#FF8032] hover:bg-[#e6722d] text-white'
             }`}
           >
-            {isSubmitting ? (
+            {isSubmitting || companyLoading ? (
               <div className="flex items-center">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                 Completing...
@@ -279,8 +309,8 @@ const EmployerOnboarding = () => {
         <div className="flex justify-center mt-4">
           <button
             onClick={() => navigate('/employerhomepage')}
-            disabled={isSubmitting}
-            className="text-sm text-[#FF8032] hover:text-[#e6722d] underline"
+            disabled={isSubmitting || companyLoading}
+            className="text-sm text-[#FF8032] hover:text-[#e6722d] underline disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Skip for now
           </button>

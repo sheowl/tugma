@@ -1,5 +1,6 @@
 import React from "react";
 import SaveButton from "./SaveButton";
+import ApplicantApplicationTimeline from "./ApplicantApplicationTimeline";
 
 function truncate(text, maxLength = 80) {
   if (!text) return "";
@@ -32,7 +33,8 @@ function ApplicantTracker({
     salaryRangeLow,
     salaryRangeHigh,
     salaryFrequency,
-    companyDescription
+    companyDescription,
+    status
   };
 
   let matchScoreColor = "text-[#27AE60]";
@@ -41,6 +43,27 @@ function ApplicantTracker({
   } else if (matchScore < 75) {
     matchScoreColor = "text-[#F5B041]";
   }
+
+  const getStatusDescription = (status) => {
+    switch (status) {
+      case "applied":
+        return "You have applied for this job.";
+      case "rejected-at-applied":
+        return "Your application was rejected at the applied stage.";
+      case "interview":
+        return "You are scheduled for an interview.";
+      case "rejected-after-interview":
+        return "You were rejected after the interview.";
+      case "standby":
+        return "You are on standby for further updates.";
+      case "accepted":
+        return "Congratulations! You have been accepted for this job.";
+      case "rejected":
+        return "You were rejected after the interview.";
+      default:
+        return "Status not available.";
+    }
+  };
 
   const getTimelineSteps = () => {
     switch (status) {
@@ -81,22 +104,23 @@ function ApplicantTracker({
           { label: "For Interview", date: "02/13/25; 10:00 AM", color: "bg-[#27AE60]" },
           { label: "Rejected", date: "02/13/25; 11:30 AM", color: "bg-[#E74C3C]" },
         ];  
-        
-        
+
       default:
         return [];
     }
   };
 
+
   const timelineSteps = getTimelineSteps();
 
   return (
-    <div className="bg-white shadow-all-around rounded-[20px] p-6 max-w-[500px] h-[300px] flex flex-row justify-between gap-6">
+    <div className="bg-white shadow-all-around rounded-[20px] p-6 max-w-[500px] h-[310px] flex flex-row justify-between 
+    gap-6 transition transform duration-300 ease-in-out hover:scale-102">
       {/* Left Column */}
       <div className="flex flex-col justify-between w-3/5">
         <div className="flex justify-between items-center">
           <div className={`text-end text-xl font-bold leading-tight ${matchScoreColor}`}>
-            <div className="text-base">{matchScore}% <span className="text-base font-bold">Matched</span></div>
+            <div className="text-base justify-end">{matchScore}% <span className="text-base font-bold">Matched</span></div>
           </div>
         </div>
 
@@ -134,31 +158,16 @@ function ApplicantTracker({
           </div>
         </div>
       </div>
-  {/* <div className="w-[1px] bg-gray-300 shadow-md mx-2 rounded"></div> */}
-
+    
       {/* Right Column - Timeline */}
-      <div className="w-2/5 flex flex-col justify-between pl-4">
-        <h3 className="text-[#2A4D9B] font-bold text-base text-right mb-4">Application Status</h3>
-        
-        <div className="relative flex-grow ml-3">
-        {timelineSteps.map((step, index) => (
-          <div key={index} className="relative z-10 flex items-start last:mb-0">
-            {/* Dot and connecting line */}
-            <div className="flex flex-col items-center mr-3">
-              <div className={`w-5 h-5 rounded-full ${step.color}`} />
-              {index < timelineSteps.length - 1 && (
-                <div className="w-[4px] h-[44px] bg-[#27AE60]" />
-              )}
-            </div>
-            {/* Label + date */}
-            <div>
-              <p className="font-bold text-sm">{step.label}</p>
-              <p className="text-[10px] text-[#676767]">{step.date}</p>
-            </div>
-          </div>
-        ))}
-      </div>
+      <div
+        className="w-2/5 flex flex-col pl-4 h-[310px] py-6 -mt-6"
+        style={{
+          boxShadow: "-6px 0px 12px -4px rgba(0, 0, 0, 0.12)"
+        }}
+      >
 
+        <ApplicantApplicationTimeline status={status} />
 
         <button
           onClick={() => onViewDetails(jobData)}

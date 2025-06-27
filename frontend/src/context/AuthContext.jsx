@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AuthService from '../services/AuthService';
-import CompanyService from '../services/CompanyService';
 import { supabase } from '../services/supabaseClient';
 
 const AuthContext = createContext();
@@ -88,50 +87,6 @@ export const AuthProvider = ({ children }) => {
   const isApplicant = () => userType === 'applicant';
   const isAuthenticated = () => !!user && !!userType;
 
-  // Company-specific methods
-  const getCompanyProfile = async () => {
-    if (!isEmployer()) {
-      throw new Error('Only employers can access company profile');
-    }
-    return await AuthService.getCompanyProfile();
-  };
-
-  const updateCompanyProfile = async (data) => {
-    if (!isEmployer()) {
-      throw new Error('Only employers can update company profile');
-    }
-    return await AuthService.updateCompanyProfile(data);
-  };
-
-  const completeOnboarding = async (data) => {
-    if (!isEmployer()) {
-      throw new Error('Only employers can complete onboarding');
-    }
-    return await CompanyService.completeOnboarding(data);
-  };
-
-  const getOnboardingStatus = async () => {
-    if (!isEmployer()) {
-      throw new Error('Only employers can check onboarding status');
-    }
-    return await CompanyService.getOnboardingStatus();
-  };
-
-  // Company dashboard methods
-  const getDashboardStats = async () => {
-    if (!isEmployer()) {
-      throw new Error('Only employers can access dashboard stats');
-    }
-    return await CompanyService.getDashboardStats();
-  };
-
-  const getRecentApplicants = async (limit = 3) => {
-    if (!isEmployer()) {
-      throw new Error('Only employers can access recent applicants');
-    }
-    return await CompanyService.getRecentApplicants(limit);
-  };
-
   const value = {
     // State
     user,
@@ -155,16 +110,6 @@ export const AuthProvider = ({ children }) => {
     isEmployer,
     isApplicant,
     isAuthenticated,
-    
-    // Company profile methods
-    getCompanyProfile,
-    updateCompanyProfile,
-    completeOnboarding,
-    getOnboardingStatus,
-    
-    // Company dashboard methods
-    getDashboardStats,
-    getRecentApplicants,
   };
 
   return (

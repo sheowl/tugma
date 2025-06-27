@@ -95,7 +95,7 @@ async def get_company_dashboard_stats(db: AsyncSession, company_id: int) -> Dict
         "pending_reviews": pending_reviews
     }
 
-async def get_recent_applicants(db: AsyncSession, company_id: int, limit: int = 3) -> List[Dict]:
+async def get_recent_applicants(db: AsyncSession, company_id: int) -> List[Dict]:
     """Get recent applicants for a company with their application details"""
     
     print(f"🔍 DEBUG: Getting recent applicants for company_id: {company_id}")
@@ -118,7 +118,6 @@ async def get_recent_applicants(db: AsyncSession, company_id: int, limit: int = 
             .join(Applicant, JobApplication.applicant_id == Applicant.applicant_id)
             .where(Job.company_id == company_id)
             .order_by(desc(JobApplication.created_at))
-            .limit(limit)
         )
         
         applications = result.fetchall()
