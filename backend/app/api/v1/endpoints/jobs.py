@@ -2,12 +2,16 @@
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 from typing import List
 
 from app.core.database import get_db
 from app.schemas.jobs import JobCreate, JobUpdate, JobOut, CompanyJobsResponse
 from app.crud import jobs as crud
 from app.middleware.auth import get_current_company
+from app.models.jobs import Job, JobTag
+from app.models.tags import Tags, TagCategory
+from app.models.company import Company
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
@@ -19,8 +23,87 @@ async def create_job(job_in: JobCreate, db: AsyncSession = Depends(get_db)):
 
 # Get all jobs (public)
 @router.get("/", response_model=List[JobOut])
-async def get_all_jobs(db: AsyncSession = Depends(get_db)):
-    return await crud.get_all_jobs(db)
+async def get_all_jobs(
+    db: AsyncSession = Depends(get_db),
+    skip: int = 0,
+    limit: int = 100
+):
+    """Get all jobs with basic information first, then resolve relationships"""
+    try:
+        print(f"🔍 DEBUG: Fetching all jobs with skip={skip}, limit={limit}")
+        
+        # Start with a simple query to get jobs only
+        query = select(Job).where(
+            Job.date_added.isnot(None)  # Only active jobs
+        ).offset(skip).limit(limit)
+        
+        result = await db.execute(query)
+        jobs = result.scalars().all()
+        
+        print(f"🔍 DEBUG: Found {len(jobs)} jobs")
+        
+        jobs_with_details = []
+        for job in jobs:
+            try:
+                # Get company information
+                company_query = select(Company).where(Company.company_id == job.company_id)
+                company_result = await db.execute(company_query)
+                company = company_result.scalar_one_or_none()
+                
+                # Get category information if exists
+                category_name = None
+                if job.required_category_id:
+                    category_query = select(TagCategory.category_name).where(
+                        TagCategory.category_id == job.required_category_id
+                    )
+                    category_result = await db.execute(category_query)
+                    category_name = category_result.scalar_one_or_none()
+                
+                # Get job tags
+                tag_query = select(JobTag.tag_id).where(JobTag.job_id == job.job_id)
+                tag_result = await db.execute(tag_query)
+                job_tags = [tag_row for tag_row in tag_result.scalars().all()]
+                
+                # Build complete job data with safe defaults
+                job_data = {
+                    "job_id": job.job_id,
+                    "job_title": job.job_title or "Untitled Job",
+                    "company_id": job.company_id,
+                    "company_name": company.company_name if company else "Unknown Company",
+                    "company_location": company.location if company else "Unknown Location",
+                    "company_description": company.description if company else "",
+                    "location": company.location if company else "Unknown Location",
+                    "salary_min": int(job.salary_min) if job.salary_min else 0,
+                    "salary_max": int(job.salary_max) if job.salary_max else 0,
+                    "salary_frequency": "monthly",
+                    "setting": job.setting or "onsite",
+                    "work_type": job.work_type or "fulltime",
+                    "description": job.description or "No description available",
+                    "position_count": int(job.position_count) if job.position_count else 1,
+                    "required_category_id": job.required_category_id,
+                    "category_name": category_name or "General",
+                    "required_proficiency": int(job.required_proficiency) if job.required_proficiency else 1,
+                    "job_tags": job_tags,
+                    "created_at": job.created_at.isoformat() if job.created_at else None,
+                    "date_added": job.date_added.isoformat() if job.date_added else None
+                }
+                
+                print(f"🔍 DEBUG: Processed job {job.job_id}: {job.job_title}")
+                jobs_with_details.append(JobOut(**job_data))
+                
+            except Exception as job_error:
+                print(f"❌ DEBUG: Error processing job {job.job_id}: {job_error}")
+                # Continue with next job instead of failing entirely
+                continue
+        
+        print(f"🔍 DEBUG: Successfully processed {len(jobs_with_details)} jobs")
+        return jobs_with_details
+        
+    except Exception as e:
+        print(f"❌ DEBUG: Error in get_all_jobs: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Failed to fetch jobs: {str(e)}")
 
 #====================== Authenticated Routes (MUST BE FIRST) ================
 
@@ -33,6 +116,7 @@ async def get_my_company_jobs_with_total(
     """Get all jobs posted by the current authenticated company with total count and applicant counts"""
     try:
         company_id = current_company["db_user"].company_id
+        company_name = current_company["db_user"].company_name
         
         print(f"🔍 DEBUG: Getting jobs for company_id: {company_id}")
         
@@ -40,35 +124,52 @@ async def get_my_company_jobs_with_total(
         
         print(f"🔍 DEBUG: Found {len(jobs)} jobs")
         
-        # Convert to JobOut objects with simplified job tags
+        # Convert to JobOut objects with resolved category names
         jobs_out = []
         for job in jobs:
             # Get applicant count for this job
             applicant_count = await crud.get_applicant_count_by_job(db, job.job_id)
             
-            # Get job tags for this job (now just array of tag IDs)
+            # Get job tags for this job
             job_tags = await crud.get_job_tags(db, job.job_id)
             
-            # Build job dict with simplified structure
+            # FIXED: Resolve category name from required_category_id
+            category_name = "General"  # Default fallback
+            if job.required_category_id:
+                category_query = select(TagCategory.category_name).where(
+                    TagCategory.category_id == job.required_category_id
+                )
+                category_result = await db.execute(category_query)
+                resolved_category = category_result.scalar_one_or_none()
+                if resolved_category:
+                    category_name = resolved_category
+            
+            # Build job dict with resolved category name
             job_dict = {
                 "job_id": job.job_id,
                 "job_title": job.job_title,
                 "company_id": job.company_id,
+                "company_name": company_name,
+                "company_location": current_company["db_user"].location or "Unknown Location",
+                "company_description": current_company["db_user"].description or "",
+                "location": current_company["db_user"].location or "Unknown Location",
                 "salary_min": int(job.salary_min) if job.salary_min else 0,
                 "salary_max": int(job.salary_max) if job.salary_max else 0,
+                "salary_frequency": "monthly",
                 "setting": job.setting,
                 "work_type": job.work_type,
                 "description": job.description,
-                "date_added": job.date_added,
-                "created_at": job.created_at,
+                "date_added": job.date_added.isoformat() if job.date_added else None,
+                "created_at": job.created_at.isoformat() if job.created_at else None,
                 "position_count": int(job.position_count) if job.position_count else 1,
                 "required_category_id": int(job.required_category_id) if job.required_category_id else None,
+                "category_name": category_name,  # FIXED: Now resolved from database
                 "required_proficiency": int(job.required_proficiency) if job.required_proficiency else None,
                 "applicant_count": applicant_count,
-                "job_tags": job_tags  # Now just array of tag IDs
+                "job_tags": job_tags
             }
             
-            print(f"🔍 DEBUG: Processing job {job.job_id} - applicants: {applicant_count}, tags: {job_tags}")
+            print(f"🔍 DEBUG: Processing job {job.job_id} - category: {category_name}, applicants: {applicant_count}, tags: {job_tags}")
             
             jobs_out.append(JobOut(**job_dict))
         
@@ -97,12 +198,12 @@ async def create_my_job(
 ):
     """Create a new job for the current authenticated company"""
     try:
-        # Match the pattern from company.py
         company_id = current_company["db_user"].company_id
+        company_name = current_company["db_user"].company_name
         
         print(f"🔍 DEBUG: Creating job for company_id: {company_id}")
         print(f"🔍 DEBUG: Input salary_min: {job_in.salary_min}, salary_max: {job_in.salary_max}")
-        print(f"🔍 DEBUG: Job tag IDs: {job_in.job_tags}")  # Now just tag IDs
+        print(f"🔍 DEBUG: Job tag IDs: {job_in.job_tags}")
         
         # Set the company_id in the job data and ensure proper integer conversion
         job_data = job_in.model_dump()
@@ -114,34 +215,50 @@ async def create_my_job(
         
         print(f"🔍 DEBUG: Processed salary_min: {job_data['salary_min']}, salary_max: {job_data['salary_max']}")
         
-        # Create the job with the modified data (tags will be set to required=True automatically)
+        # Create the job with the modified data
         job_create = JobCreate(**job_data)
         new_job = await crud.create_job(db, job_create)
         
         # Get the job tags for the response
         job_tags = await crud.get_job_tags(db, new_job.job_id)
         
-        print(f"🔍 DEBUG: Job created successfully: {new_job.job_id}")
-        print(f"🔍 DEBUG: Created job salary_min: {new_job.salary_min}, salary_max: {new_job.salary_max}")
-        print(f"🔍 DEBUG: Job tags created: {len(job_tags)} (all set to required=True)")
+        # FIXED: Resolve category name from required_category_id
+        category_name = "General"  # Default fallback
+        if new_job.required_category_id:
+            category_query = select(TagCategory.category_name).where(
+                TagCategory.category_id == new_job.required_category_id
+            )
+            category_result = await db.execute(category_query)
+            resolved_category = category_result.scalar_one_or_none()
+            if resolved_category:
+                category_name = resolved_category
         
-        # Return job with tags (all will have is_required=True)
+        print(f"🔍 DEBUG: Job created successfully: {new_job.job_id}")
+        print(f"🔍 DEBUG: Created job category resolved: {category_name}")
+        
+        # Return job with resolved category name
         job_out_dict = {
             "job_id": new_job.job_id,
             "job_title": new_job.job_title,
             "company_id": new_job.company_id,
+            "company_name": company_name,
+            "company_location": current_company["db_user"].location or "Unknown Location",
+            "company_description": current_company["db_user"].description or "",
+            "location": current_company["db_user"].location or "Unknown Location",
             "salary_min": int(new_job.salary_min) if new_job.salary_min else 0,
             "salary_max": int(new_job.salary_max) if new_job.salary_max else 0,
+            "salary_frequency": "monthly",
             "setting": new_job.setting,
             "work_type": new_job.work_type,
             "description": new_job.description,
-            "date_added": new_job.date_added,
-            "created_at": new_job.created_at,
+            "date_added": new_job.date_added.isoformat() if new_job.date_added else None,
+            "created_at": new_job.created_at.isoformat() if new_job.created_at else None,
             "position_count": int(new_job.position_count) if new_job.position_count else 1,
             "required_category_id": int(new_job.required_category_id) if new_job.required_category_id else None,
+            "category_name": category_name,  # FIXED: Now resolved from database
             "required_proficiency": int(new_job.required_proficiency) if new_job.required_proficiency else None,
             "applicant_count": 0,  # New job has no applicants yet
-            "job_tags": job_tags  # Now just array of tag IDs
+            "job_tags": job_tags
         }
         
         return JobOut(**job_out_dict)
@@ -162,6 +279,7 @@ async def get_my_job_details(
     """Get details of a specific job posted by the current authenticated company"""
     try:
         company_id = current_company["db_user"].company_id
+        company_name = current_company["db_user"].company_name
         
         print(f"🔍 DEBUG: Getting job {job_id} for company_id: {company_id}")
         
@@ -177,24 +295,43 @@ async def get_my_job_details(
         job_tags = await crud.get_job_tags(db, job_id)
         applicant_count = await crud.get_applicant_count_by_job(db, job_id)
         
-        # Build response with tags
+        # FIXED: Resolve category name from required_category_id
+        category_name = "General"  # Default fallback
+        if job.required_category_id:
+            category_query = select(TagCategory.category_name).where(
+                TagCategory.category_id == job.required_category_id
+            )
+            category_result = await db.execute(category_query)
+            resolved_category = category_result.scalar_one_or_none()
+            if resolved_category:
+                category_name = resolved_category
+        
+        # Build response with resolved category name
         job_out_dict = {
             "job_id": job.job_id,
             "job_title": job.job_title,
             "company_id": job.company_id,
+            "company_name": company_name,
+            "company_location": current_company["db_user"].location or "Unknown Location",
+            "company_description": current_company["db_user"].description or "",
+            "location": current_company["db_user"].location or "Unknown Location",
             "salary_min": int(job.salary_min) if job.salary_min else 0,
             "salary_max": int(job.salary_max) if job.salary_max else 0,
+            "salary_frequency": "monthly",
             "setting": job.setting,
             "work_type": job.work_type,
             "description": job.description,
-            "date_added": job.date_added,
-            "created_at": job.created_at,
+            "date_added": job.date_added.isoformat() if job.date_added else None,
+            "created_at": job.created_at.isoformat() if job.created_at else None,
             "position_count": int(job.position_count) if job.position_count else 1,
             "required_category_id": int(job.required_category_id) if job.required_category_id else None,
+            "category_name": category_name,  # FIXED: Now resolved from database
             "required_proficiency": int(job.required_proficiency) if job.required_proficiency else None,
             "applicant_count": applicant_count,
-            "job_tags": job_tags  # Now just array of tag IDs
+            "job_tags": job_tags
         }
+        
+        print(f"🔍 DEBUG: Job {job_id} category resolved: {category_name}")
         
         return JobOut(**job_out_dict)
         
@@ -217,9 +354,10 @@ async def update_my_job(
     """Update a specific job posted by the current authenticated company"""
     try:
         company_id = current_company["db_user"].company_id
+        company_name = current_company["db_user"].company_name
         
         print(f"🔍 DEBUG: Updating job {job_id} for company_id: {company_id}")
-        print(f"🔍 DEBUG: Job tag IDs to update: {job_update.job_tags}")  # Now just tag IDs
+        print(f"🔍 DEBUG: Job tag IDs to update: {job_update.job_tags}")
         
         # First check if the job exists and belongs to the current company
         job = await crud.get_job_by_id(db, job_id)
@@ -229,7 +367,7 @@ async def update_my_job(
         if job.company_id != company_id:
             raise HTTPException(status_code=403, detail="Access denied. This job doesn't belong to your company")
         
-        # Update the job (tags will be set to required=True automatically)
+        # Update the job
         updated_job = await crud.update_job(db, job_id, job_update)
         if not updated_job:
             raise HTTPException(status_code=404, detail="Job not found")
@@ -238,26 +376,43 @@ async def update_my_job(
         job_tags = await crud.get_job_tags(db, job_id)
         applicant_count = await crud.get_applicant_count_by_job(db, job_id)
         
-        print(f"🔍 DEBUG: Job updated successfully: {job_id}")
-        print(f"🔍 DEBUG: Updated job tags: {len(job_tags)} (all set to required=True)")
+        # FIXED: Resolve category name from required_category_id
+        category_name = "General"  # Default fallback
+        if updated_job.required_category_id:
+            category_query = select(TagCategory.category_name).where(
+                TagCategory.category_id == updated_job.required_category_id
+            )
+            category_result = await db.execute(category_query)
+            resolved_category = category_result.scalar_one_or_none()
+            if resolved_category:
+                category_name = resolved_category
         
-        # Build response with updated tags
+        print(f"🔍 DEBUG: Job updated successfully: {job_id}")
+        print(f"🔍 DEBUG: Updated job category resolved: {category_name}")
+        
+        # Build response with resolved category name
         job_out_dict = {
             "job_id": updated_job.job_id,
             "job_title": updated_job.job_title,
             "company_id": updated_job.company_id,
+            "company_name": company_name,
+            "company_location": current_company["db_user"].location or "Unknown Location",
+            "company_description": current_company["db_user"].description or "",
+            "location": current_company["db_user"].location or "Unknown Location",
             "salary_min": int(updated_job.salary_min) if updated_job.salary_min else 0,
             "salary_max": int(updated_job.salary_max) if updated_job.salary_max else 0,
+            "salary_frequency": "monthly",
             "setting": updated_job.setting,
             "work_type": updated_job.work_type,
             "description": updated_job.description,
-            "date_added": updated_job.date_added,
-            "created_at": updated_job.created_at,
+            "date_added": updated_job.date_added.isoformat() if updated_job.date_added else None,
+            "created_at": updated_job.created_at.isoformat() if updated_job.created_at else None,
             "position_count": int(updated_job.position_count) if updated_job.position_count else 1,
             "required_category_id": int(updated_job.required_category_id) if updated_job.required_category_id else None,
+            "category_name": category_name,  # FIXED: Now resolved from database
             "required_proficiency": int(updated_job.required_proficiency) if updated_job.required_proficiency else None,
             "applicant_count": applicant_count,
-            "job_tags": job_tags  # Now just array of tag IDs
+            "job_tags": job_tags
         }
         
         return JobOut(**job_out_dict)

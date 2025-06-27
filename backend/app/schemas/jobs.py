@@ -35,13 +35,30 @@ class JobUpdate(BaseModel):
     job_tags: Optional[List[int]] = None
     # Remove date_added and created_at from updates - these should be immutable
 
-class JobOut(JobBase):
+class JobOut(BaseModel):
     job_id: int
+    job_title: str
     company_id: int
-    applicant_count: Optional[int] = 0
-    job_tags: List[int] = []  # Simple array of tag IDs
+    company_name: str  # ADD: Resolved company name
+    company_location: Optional[str] = None  # ADD: Resolved company location
+    company_description: Optional[str] = None  # ADD: Resolved company description
+    location: Optional[str] = None  # Job location (use company location)
+    salary_min: Optional[int] = 0
+    salary_max: Optional[int] = 0
+    salary_frequency: Optional[str] = "monthly"
+    setting: Optional[str] = None
+    work_type: Optional[str] = None
+    description: Optional[str] = None
+    position_count: Optional[int] = 1
+    required_category_id: Optional[int] = None
+    category_name: Optional[str] = None  # ADD: Resolved category name
+    required_proficiency: Optional[int] = 1
+    job_tags: Optional[List[int]] = []
+    created_at: Optional[str] = None
+    date_added: Optional[str] = None
 
-    model_config = {"from_attributes": True}
+    class Config:
+        from_attributes = True
 
 class CompanyJobsResponse(BaseModel):
     jobs: List[JobOut]

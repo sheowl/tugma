@@ -2,10 +2,48 @@ import React, { useState } from "react";
 import SaveButton from "./SaveButton";
 import Tag from "./JobSkillTag";
 import CompanyDetails from "./CompanyDetails";
+import { useTags } from "../context/TagsContext";
 
-export default function JobDetailsDrawer({ open, onClose, job, onApply }) {
-  const [companyDetailsOpen, setCompanyDetailsOpen] = useState(false); // State for CompanyDetails drawer
+const JobDetailsDrawer = ({ open, onClose, job, onApply }) => {
+  const [companyDetailsOpen, setCompanyDetailsOpen] = useState(false);
+  const { getTagNamesByIds } = useTags();
 
+  if (!job) return null;
+
+  console.log("JobDetailsDrawer received job:", job);
+
+  // Extract job data - now with resolved company information
+  const jobData = {
+    job_id: job.job_id || job.id,
+    job_title: job.job_title || job.jobTitle,
+    company_name: job.company_name || job.companyName, // RESOLVED
+    company_description: job.company_description || job.companyDescription || "", // RESOLVED
+    company_location: job.company_location || job.location, // RESOLVED
+    location: job.location || job.company_location,
+    setting: job.setting || job.workSetup,
+    work_type: job.work_type || job.employmentType,
+    description: job.description,
+    salary_min: job.salary_min || job.salaryRangeLow,
+    salary_max: job.salary_max || job.salaryRangeHigh,
+    salary_frequency: job.salary_frequency || job.salaryFrequency || "monthly",
+    position_count: job.position_count || job.availablePositions || 1,
+    required_category_id: job.required_category_id,
+    category_name: job.category_name || "General", // RESOLVED
+    required_proficiency: job.required_proficiency || job.proficiency,
+    job_tags: job.job_tags || [],
+    created_at: job.created_at || job.createdAt,
+  };
+
+  // Get tag names from tag IDs
+  const tagNames = job.tag_names || getTagNamesByIds(jobData.job_tags) || [];
+  console.log("Tag names for drawer:", tagNames);
+  console.log("Company data:", {
+    name: jobData.company_name,
+    description: jobData.company_description,
+    location: jobData.company_location,
+  });
+
+  // Match score color logic
   let matchScoreColor = "text-[#27AE60]";
   if (job && job.matchScore < 50) {
     matchScoreColor = "text-[#E74C3C]";
@@ -49,65 +87,95 @@ export default function JobDetailsDrawer({ open, onClose, job, onApply }) {
                   {/* Header */}
                   <div className="space-y-4">
                     <div className="mb-4">
-                      <span className={`text-2xl font-bold ${matchScoreColor}`}>{job.matchScore}% Matched</span>
-                      <h2 className="text-4xl font-bold mt-1 ">{job.jobTitle}</h2>
+                      <span className={`text-2xl font-bold ${matchScoreColor}`}>
+                        {job.matchScore || 0}% Matched
+                      </span>
+                      <h2 className="text-4xl font-bold mt-1">{jobData.job_title}</h2>
 
                       <div className="flex items-center">
-                        <h3 className="text-xl font-semibold text-[#676767]">{job.companyName}</h3>
+                        <h3 className="text-xl font-semibold text-[#676767]">{jobData.company_name}</h3>
                         <i
                           className="bi bi-info-circle text-[19px] ml-2 cursor-pointer text-gray-500"
                           title="Company Information"
-                          onClick={() => setCompanyDetailsOpen(true)} // Open CompanyDetails drawer
+                          onClick={() => setCompanyDetailsOpen(true)}
                         />
                       </div>
 
-                      <p className="text-base text-[#676767]">{job.location}</p>
+                      <p className="text-base text-[#676767]">{jobData.location}</p>
                     </div>
+
                     {/* Salary */}
                     <div className="flex items-center gap-2 mb-6">
-                      <p className="text-2xl font-bold">₱{job.salaryRangeLow}K - ₱{job.salaryRangeHigh}K</p>
-                      <p className="text-base font-normal text-gray-500">{(job.salaryFrequency || "monthly").toLowerCase()}</p>                    </div>
-                    {/* Tags */}
+                      <p className="text-2xl font-bold">
+                        ₱{job.salaryRangeLow || 0}K - ₱{job.salaryRangeHigh || 0}K
+                      </p>
+                      <p className="text-base font-normal text-gray-500">
+                        {jobData.salary_frequency}
+                      </p>
+                    </div>
+
+                    {/* Work Setup Tags */}
                     <div className="flex gap-2 mb-6">
-                      <span className="px-2 py-1 bg-indigo-50 rounded text-xs font-semibold text-neutral-700">
+                      <span className="px-3 py-1 bg-indigo-50 rounded text-xs font-semibold text-neutral-700">
                         <i className="bi bi-geo-alt-fill text-[#2A4D9B] mr-1" />
-                        {job.workSetup}
+                        {job.workSetup || jobData.setting}
                       </span>
-                      <span className="px-2 py-1 bg-indigo-50 rounded text-xs font-semibold text-neutral-700">
+                      <span className="px-3 py-1 bg-indigo-50 rounded text-xs font-semibold text-neutral-700">
                         <i className="bi bi-briefcase-fill text-[#2A4D9B] mr-1" />
-                        {job.employmentType}
+                        {job.employmentType || jobData.work_type}
                       </span>
                     </div>
                   </div>
-                  {/* Description */}
+
+                  {/* Job Content */}
                   <div className="space-y-12">
-                    <div className="gap-2">
-                      <h4 className="text-base font-bold mb-1 text-neutral-700">Job Description</h4>
-                      <p className="text-sm text-[#676767]">{job.description}</p>
+                    {/* Job Description */}
+                    <div>
+                      <h4 className="text-base font-bold mb-2 text-neutral-700">Job Description</h4>
+                      <p className="text-sm text-[#676767] whitespace-pre-line">{jobData.description}</p>
                     </div>
-                    <p className="text-md text-[#676767] font-medium mb-6">
-                      {job?.availablePositions > 1
-                        ? `${job.availablePositions} available positions`
-                        : `${job?.availablePositions || 0} available position`}
-                    </p>
-                    {/* Tag Matches */}
-                    <div className="mb-6">
-                      <h4 className="text-base font-bold mb-2 text-neutral-700">Tag Matches</h4>
+
+                    {/* Available Positions */}
+                    <div>
+                      <p className="text-md text-[#676767] font-medium mb-6">
+                        {jobData.position_count > 1
+                          ? `${jobData.position_count} available positions`
+                          : `${jobData.position_count || 1} available position`}
+                      </p>
+                    </div>
+
+                    {/* Required Skills/Tags */}
+                    <div>
+                      <h4 className="text-base font-bold mb-2 text-neutral-700">Required Skills</h4>
                       <div className="flex gap-2 flex-wrap">
-                        {job.tags && Array.isArray(job.tags) && job.tags.length > 0 ? (
-                          job.tags.map((tag, index) => (
-                            <Tag key={index} label={tag.label} matched={tag.matched} />
+                        {tagNames && tagNames.length > 0 ? (
+                          tagNames.map((tagName, index) => (
+                            <span
+                              key={index}
+                              className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium"
+                            >
+                              {tagName}
+                            </span>
                           ))
                         ) : (
-                          <p className="text-sm text-gray-500">No tags available</p>
+                          <p className="text-sm text-gray-500 italic">No required skills specified</p>
                         )}
                       </div>
                     </div>
+
+                    {/* Company Description */}
+                    {jobData.company_description && (
+                      <div>
+                        <h4 className="text-base font-bold mb-2 text-neutral-700">About the Company</h4>
+                        <p className="text-sm text-[#676767]">{jobData.company_description}</p>
+                      </div>
+                    )}
+
                     {/* Apply Button */}
-                    <div className="w-full flex justify-center">
+                    <div className="w-full flex justify-center pt-6">
                       <button
                         className="w-[262px] bg-[#2A4D9B] text-white font-bold py-3 rounded-[10px] hover:bg-[#1f3c7b] transition-colors"
-                        onClick={onApply}
+                        onClick={() => onApply(jobData)}
                       >
                         Apply Now
                       </button>
@@ -116,22 +184,22 @@ export default function JobDetailsDrawer({ open, onClose, job, onApply }) {
                 </>
               ) : (
                 <div className="flex-1 flex items-center justify-center text-gray-400">
-                  {/* Optionally, show nothing or a placeholder */}
+                  Loading job details...
                 </div>
               )}
             </div>
           </div>
         </div>
-
-        {/* Footer mask */}
       </div>
 
       {/* CompanyDetails Drawer */}
       <CompanyDetails
         open={companyDetailsOpen}
-        onClose={() => setCompanyDetailsOpen(false)} // Close the drawer
-        job={job} // Pass the job details
+        onClose={() => setCompanyDetailsOpen(false)}
+        job={job}
       />
     </>
   );
-}
+};
+
+export default JobDetailsDrawer;

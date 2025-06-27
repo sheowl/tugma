@@ -10,6 +10,7 @@ import ApplicantNotification from '../components/ApplicantNotification';
 import ApplicantHeader from '../components/ApplicantHeader'; // Add this import
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../services/supabaseClient'; // Add this import
+import { useTags } from '../context/TagsContext';
 
 function ApplicantBrowseJobs() {
     const [drawerOpen, setDrawerOpen] = useState(false);
@@ -33,6 +34,7 @@ function ApplicantBrowseJobs() {
 
     const navigate = useNavigate();
     const { user, loading } = useAuth(); // Get user and loading from Auth context
+    const { getTagNamesByIds, loading: tagsLoading } = useTags();
 
     // Auth check: redirect if not logged in
     useEffect(() => {
@@ -47,6 +49,7 @@ function ApplicantBrowseJobs() {
   { title: "Job Title", company: "Company Name", status: "Waitlisted", timeAgo: "3 hours ago" },
   
 ];
+
 
 // Replace the mock firstName fetch with real user data
 useEffect(() => {
@@ -96,52 +99,83 @@ useEffect(() => {
             try {
                 const res = await fetch("http://localhost:8000/api/v1/jobs/");
                 const data = await res.json();
-                setJobs(Array.isArray(data) ? data : []); // <-- Ensure jobs is always an array
+                
+                console.log("Fetched raw jobs data:", data);
+                
+                // Handle different response formats
+                let jobsArray = [];
+                if (data.jobs && Array.isArray(data.jobs)) {
+                    jobsArray = data.jobs;
+                } else if (Array.isArray(data)) {
+                    jobsArray = data;
+                }
+                
+                // FIXED: Map the data properly BEFORE setting to state
+                const mappedJobs = jobsArray.map(job => mapJobDataForApplicant(job));
+                
+                console.log("Mapped jobs for applicant:", mappedJobs);
+                setJobs(mappedJobs);
             } catch (err) {
                 console.error("Failed to fetch jobs:", err);
-                setJobs([]); // <-- Set to empty array on error
+                setJobs([]);
             } finally {
                 setLoadingJobs(false);
             }
         };
         fetchJobs();
-    }, []);
+    }, [tagsLoading]); // Add tagsLoading as dependency
 
     const filteredJobs = useMemo(() => {
-        const startTime = performance.now(); // Start timing
+        const startTime = performance.now();
         
         let filtered = [...jobs];
 
-        // Apply modality filter
+        // Apply modality filter - handle both field names
         if (selectedModality) {
-            filtered = filtered.filter((job) => job.setting === selectedModality);
+            filtered = filtered.filter((job) => {
+                const setting = job.setting || job.workSetup;
+                return setting?.toLowerCase() === selectedModality.toLowerCase();
+            });
         }
 
-        // Apply work type filter
+        // Apply work type filter - handle both field names  
         if (selectedWorkType) {
-            filtered = filtered.filter((job) => job.work_type === selectedWorkType);
+            filtered = filtered.filter((job) => {
+                const workType = job.work_type || job.employmentType;
+                return workType?.toLowerCase() === selectedWorkType.toLowerCase();
+            });
         }
 
-        // Apply search filter
+        // Apply search filter - handle both field names
         if (searchQuery.trim()) {
             const searchTerm = searchQuery.toLowerCase().trim();
-            filtered = filtered.filter(job =>
-                job.job_title.toLowerCase().includes(searchTerm) ||
-                job.company_name.toLowerCase().includes(searchTerm)
-            );
+            filtered = filtered.filter(job => {
+                const title = job.job_title || job.jobTitle || '';
+                const company = job.company_name || job.companyName || '';
+                return title.toLowerCase().includes(searchTerm) ||
+                       company.toLowerCase().includes(searchTerm);
+            });
         }
 
-        // Apply sorting
+        // Apply sorting - handle both field names
         if (selectedSort === "best") {
             filtered = filtered.sort((a, b) => (b.match_score || 0) - (a.match_score || 0));
         } else if (selectedSort === "recent") {
-            filtered = filtered.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+            filtered = filtered.sort((a, b) => {
+                const dateA = new Date(a.created_at || a.createdAt || 0);
+                const dateB = new Date(b.created_at || b.createdAt || 0);
+                return dateB - dateA;
+            });
         } else if (selectedSort === "oldest") {
-            filtered = filtered.sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
+            filtered = filtered.sort((a, b) => {
+                const dateA = new Date(a.created_at || a.createdAt || 0);
+                const dateB = new Date(b.created_at || b.createdAt || 0);
+                return dateA - dateB;
+            });
         }
 
-        const endTime = performance.now(); // End timing
-        const timeTaken = ((endTime - startTime) / 1000).toFixed(2); // Convert to seconds
+        const endTime = performance.now();
+        const timeTaken = ((endTime - startTime) / 1000).toFixed(2);
         setSortTime(`${timeTaken} secs`);
 
         return filtered;
@@ -192,6 +226,99 @@ const handleCancel = () => {
 const handleCloseSuccess = () => {
     setShowSuccessModal(false);
     setDrawerOpen(false); // Close the drawer after successful application
+};
+
+    // Update the mapJobDataForApplicant function
+const mapJobDataForApplicant = (job) => {
+    console.log('Mapping job data for applicant:', job);
+    
+    // Calculate days ago
+    const dateAdded = new Date(job.created_at || job.date_added);
+    const now = new Date();
+    const diffTime = Math.abs(now - dateAdded);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    // Format salary for display
+    const formatSalary = (amount) => {
+        if (!amount) return 0;
+        const num = typeof amount === 'string' ? parseInt(amount) : amount;
+        return num >= 1000 ? Math.floor(num / 1000) : num;
+    };
+
+    // Map work settings and types to display values
+    const settingMap = {
+        'onsite': 'On-site',
+        'hybrid': 'Hybrid', 
+        'remote': 'Remote'
+    };
+
+    const workTypeMap = {
+        'fulltime': 'Full-time',
+        'part-time': 'Part-time',
+        'contractual': 'Contractual',
+        'internship': 'Internship'
+    };
+
+    // FIXED: Get tag names for job_tags array
+    const tagNames = tagsLoading ? [] : getTagNamesByIds(job.job_tags || []);
+    console.log('Resolved tag names for job:', job.job_id, tagNames);
+
+    return {
+        // Core identifiers
+        id: job.job_id,
+        job_id: job.job_id,
+        
+        // Basic info - NOW USING RESOLVED DATA FROM BACKEND
+        jobTitle: job.job_title,
+        job_title: job.job_title,
+        companyName: job.company_name || "Company Name",  // RESOLVED FROM BACKEND
+        company_name: job.company_name || "Company Name",  // RESOLVED FROM BACKEND
+        location: job.location || job.company_location || "Location",  // RESOLVED FROM BACKEND
+        description: job.description || "",
+        
+        // Work setup and type
+        workSetup: settingMap[job.setting] || job.setting || 'On-site',
+        setting: job.setting,
+        employmentType: workTypeMap[job.work_type] || job.work_type || 'Full-time',
+        work_type: job.work_type,
+        
+        // Salary
+        salaryRangeLow: formatSalary(job.salary_min),
+        salaryRangeHigh: formatSalary(job.salary_max),
+        salary_min: job.salary_min,
+        salary_max: job.salary_max,
+        salaryFrequency: job.salary_frequency || "monthly",
+        salary_frequency: job.salary_frequency || "monthly",
+        
+        // Position info
+        availablePositions: job.position_count || 1,
+        position_count: job.position_count || 1,
+        
+        // Tags - FIXED: Include both formats
+        tags: tagNames.map(name => ({ label: name, matched: true })),
+        job_tags: job.job_tags || [],
+        tag_names: tagNames, // FIXED: Include resolved tag names
+        
+        // Category and proficiency - NOW USING RESOLVED DATA
+        required_category_id: job.required_category_id,
+        category_name: job.category_name || "General",  // RESOLVED FROM BACKEND
+        required_proficiency: job.required_proficiency,
+        proficiency: job.required_proficiency,
+        
+        // Dates
+        created_at: job.created_at,
+        createdAt: job.created_at,
+        postedDaysAgo: diffDays,
+        
+        // Match score
+        matchScore: job.match_score || 0,
+        match_score: job.match_score || 0,
+        
+        // Company info - NOW USING RESOLVED DATA FROM BACKEND
+        company_description: job.company_description || "",  // RESOLVED FROM BACKEND
+        companyDescription: job.company_description || "",  // RESOLVED FROM BACKEND
+        company_location: job.company_location || "",  // RESOLVED FROM BACKEND
+    };
 };
 
     return (
@@ -371,17 +498,23 @@ const handleCloseSuccess = () => {
                         filteredJobs.map((job) => (
                             <Card
                                 key={job.job_id || job.id}
-                                jobTitle={job.job_title}
-                                companyName={job.company_name}
+                                jobTitle={job.job_title || job.jobTitle}
+                                companyName={job.company_name || job.companyName}
                                 location={job.location}
-                                matchScore={job.match_score || 0}
-                                workSetup={job.setting}
-                                employmentType={job.work_type}
+                                matchScore={job.match_score || 0} // Set to 0 for now
+                                workSetup={job.setting || job.workSetup}
+                                employmentType={job.work_type || job.employmentType}
                                 description={job.description}
-                                salaryRangeLow={job.salary_min}
-                                salaryRangeHigh={job.salary_max}
-                                tags={job.tags || []}
+                                salaryRangeLow={job.salary_min || job.salaryRangeLow}
+                                salaryRangeHigh={job.salary_max || job.salaryRangeHigh}
+                                tags={job.job_tags || job.tags || []} // Handle both formats
                                 onViewDetails={() => {
+                                    console.log("=== JOB DETAILS DEBUG ===");
+                                    console.log("Selected job for details:", job);
+                                    console.log("Job tags:", job.job_tags);
+                                    console.log("Tag names:", job.tag_names);
+                                    console.log("Company name:", job.company_name);
+                                    console.log("Description:", job.description);
                                     setSelectedJob(job);
                                     setDrawerOpen(true);
                                 }}
