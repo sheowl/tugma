@@ -107,12 +107,16 @@ function AppOnbStepTwo({ step, segment, onNext, onBack, onSkip, userDetails, set
         preferred_worktype: mapWorkTypeToEnum(preferredWorkType),
       };
       setUserDetails(updatedUserDetails);
-      await saveUserDetails(flattenUserDetails(updatedUserDetails));
-      console.log("Updated userDetails with work settings and types:", updatedUserDetails);
-      
+
       console.log("Step 1: Saving main applicant info...");
-      await saveUserDetails(flattenUserDetails(updatedUserDetails));
+      const dataToSend = flattenUserDetails(updatedUserDetails);
+      console.log("🔍 Data being sent to API:", dataToSend);
+      console.log("🔍 Work setting in payload:", dataToSend.preferred_worksetting);
+      console.log("🔍 Work type in payload:", dataToSend.preferred_worktype);
+      await saveUserDetails(dataToSend);
       console.log("Step 1: Main applicant info saved");
+
+      console.log("Updated userDetails with work settings and types:", updatedUserDetails);
 
       // Save work experiences
       const workExpsToSave = userDetails.workExperiences || [];
