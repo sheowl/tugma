@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://127.0.0.1:8000/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api/v1';
 
 class TagService {
   async getAllCategories() {
@@ -7,7 +7,6 @@ class TagService {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          // Add auth headers if needed
         },
       });
 
@@ -26,11 +25,10 @@ class TagService {
 
   async getAllTags() {
     try {
-      const response = await fetch(`${API_BASE_URL}/tags/`, {
+      const response = await fetch(`${API_BASE_URL}/tags`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          // Add auth headers if needed
         },
       });
 
@@ -108,6 +106,17 @@ class TagService {
       flatMapping[category.category_id] = category.category_name;
     });
     return flatMapping;
+  }
+
+  // Helper method to get tag name by ID
+  getTagNameById(tagId, flatTagMapping) {
+    return flatTagMapping[tagId] || `Tag ${tagId}`;
+  }
+
+  // Helper method to get multiple tag names by IDs
+  getTagNamesByIds(tagIds, flatTagMapping) {
+    if (!Array.isArray(tagIds)) return [];
+    return tagIds.map(id => this.getTagNameById(id, flatTagMapping));
   }
 }
 

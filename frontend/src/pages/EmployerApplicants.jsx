@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useCompany } from "../context/CompanyContext";
+import { useTags } from "../context/TagsContext"; // Added for dynamic tags
 import EmployerSideBar from "../components/EmployerSideBar";
 import EmployerApplicantHeader from "../components/EmployerApplicantHeader";
 import EmpCard from "../components/EmpCard";
@@ -13,6 +14,9 @@ const EmployerApplicants = () => {
   
   // Use CompanyContext for backend operations
   const { getJobApplicants, loading, error, clearError } = useCompany();
+  
+  // Use TagsContext for dynamic tag display
+  const { getTagNamesByIds, loading: tagsLoading } = useTags();
   
   const [applicants, setApplicants] = useState([]);
   const [sortBy, setSortBy] = useState('best');
@@ -77,23 +81,32 @@ const EmployerApplicants = () => {
       console.log('📋 Applicants response:', response);
 
       // Transform backend applicants data to frontend format
-      const transformedApplicants = (response.applicants || []).map((applicant, index) => ({
-        id: applicant.applicant_id || `${jobIdToFetch}-${index}`,
-        jobNumber: jobIdToFetch,
-        jobTitle: response.job_title || 'Job Post',
-        matched: Math.floor(Math.random() * 51) + 50, // Mock match score for now
-        isNew: new Date() - new Date(applicant.application_created_at) < 24 * 60 * 60 * 1000, // New if applied within last 24 hours
-        candidateName: applicant.name || 'Unknown Applicant',
-        role: 'Applicant', // Default role since backend doesn't provide this yet
-        email: applicant.email,
-        phoneNumber: applicant.phone_number,
-        location: applicant.location,
-        applicationCreatedAt: applicant.application_created_at,
-        status: applicant.status || 'pending',
-        skills: [], // Mock skills since backend doesn't provide this yet
-        moreSkillsCount: 0,
-        appliedDaysAgo: calculateDaysAgo(applicant.application_created_at),
-      }));
+      const transformedApplicants = (response.applicants || []).map((applicant, index) => {
+        // Get tag names from tag IDs
+        const tagNames = getTagNamesByIds(applicant.applicant_tags || []);
+        
+        return {
+          id: applicant.applicant_id || `${jobIdToFetch}-${index}`,
+          jobNumber: jobIdToFetch,
+          jobTitle: response.job_title || 'Job Post',
+          matched: applicant.match_score || 0, // Use actual match score from backend
+          isNew: new Date() - new Date(applicant.application_created_at) < 24 * 60 * 60 * 1000, // New if applied within last 24 hours
+          candidateName: applicant.name || 'Unknown Applicant',
+          role: 'Applicant', // Default role since backend doesn't provide this yet
+          email: applicant.applicant_email || 'N/A', // Use applicant_email from backend
+          phoneNumber: applicant.phone_number || 'N/A',
+          location: applicant.location || 'N/A',
+          applicationCreatedAt: applicant.application_created_at,
+          status: applicant.status || 'applied',
+          skills: tagNames.slice(0, 3), // Show first 3 tags as skills
+          moreSkillsCount: Math.max(0, tagNames.length - 3), // Count of remaining tags
+          appliedDaysAgo: calculateDaysAgo(applicant.application_created_at),
+          // Add new fields from backend
+          applicantTags: applicant.applicant_tags || [], // Array of tag IDs
+          tagNames: tagNames, // Array of tag names for display
+          matchScore: applicant.match_score || 0 // Actual match score
+        };
+      });
 
       setApplicants(transformedApplicants);
       
@@ -127,7 +140,8 @@ const EmployerApplicants = () => {
   // Sort applicants based on sortBy
   const sortedApplicants = [...filteredApplicants].sort((a, b) => {
     if (sortBy === 'best') {
-      return b.matched - a.matched;
+      // Sort by actual match score (descending)
+      return (b.matchScore || 0) - (a.matchScore || 0);
     } else if (sortBy === 'recent') {
       return a.appliedDaysAgo - b.appliedDaysAgo;
     }
@@ -203,7 +217,7 @@ const EmployerApplicants = () => {
           onJobChange={handleJobChange}
         />
         <div className="pl-[112px] pr-[118px] mt-10 mb-10 flex flex-wrap gap-[33px] justify-center">
-          {isLoading ? (
+          {isLoading || tagsLoading ? (
             <div className="text-center text-gray-600 w-full">
               <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#FF8032] mx-auto mb-4"></div>
               <div>Loading applicants...</div>
@@ -212,21 +226,24 @@ const EmployerApplicants = () => {
             sortedApplicants.map(applicant => (
               <EmpCard
                 key={applicant.id}
-                matched={applicant.matched}
+                matched={applicant.matchScore} // Use actual match score
                 isNew={applicant.isNew}
                 candidateName={applicant.candidateName}
                 role={applicant.role}
                 email={applicant.email}
                 phoneNumber={applicant.phoneNumber}
                 location={applicant.location}
-                skills={applicant.skills}
-                moreSkillsCount={applicant.moreSkillsCount}
+                skills={applicant.skills} // Dynamic skills from tags
+                moreSkillsCount={applicant.moreSkillsCount} // Count from tags
                 appliedDaysAgo={applicant.appliedDaysAgo}
                 actionLabel="Action"
                 onAction={val => {}}
                 dropdownOpen={openDropdownId === applicant.id}
                 onDropdownToggle={() => handleDropdownToggle(applicant.id)}
                 onViewFull={() => handleViewFullApplicant(applicant)}
+                // Pass additional data for potential future use
+                applicantTags={applicant.applicantTags}
+                tagNames={applicant.tagNames}
               />
             ))
           ) : (

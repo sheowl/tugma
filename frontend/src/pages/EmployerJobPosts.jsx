@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useCompany } from '../context/CompanyContext';
+import { useTags } from '../context/TagsContext'; // Import Tags Context
 import { useNavigate } from "react-router-dom";
 import JobCard from '../components/JobCard.jsx';
 import EmployerSideBar from "../components/EmployerSideBar";
@@ -22,7 +23,7 @@ const filterOptions = [
   {
     group: "By Modality",
     options: [
-      { label: "On-site", value: "on-site" },
+      { label: "On-site", value: "onsite" },
       { label: "Hybrid", value: "hybrid" },
       { label: "Remote", value: "remote" },
     ],
@@ -30,7 +31,7 @@ const filterOptions = [
   {
     group: "By Work Type",
     options: [
-      { label: "Full-Time", value: "full-time" },
+      { label: "Full-Time", value: "fulltime" },
       { label: "Contractual", value: "contractual" },
       { label: "Part-Time", value: "part-time" },
       { label: "Internship", value: "internship" },
@@ -89,6 +90,19 @@ const EmployerJobPosts = () => {
     clearError
   } = useCompany();
 
+  // Use TagContext for tag operations
+  const {
+    tags,
+    categories,
+    flatTagMapping,
+    categoryMapping,
+    loading: tagLoading,
+    error: tagError,
+    getTagNameById,
+    getTagNamesByIds,
+    getCategoryNameById
+  } = useTags();
+
   useEffect(() => {
     checkAuthAndLoadData();
   }, []);
@@ -116,6 +130,82 @@ const EmployerJobPosts = () => {
     }
   };
 
+  // Enhanced job mapping function to handle new backend structure
+  const mapJobData = (job, companyData) => {
+    console.log('Mapping job data:', job);
+    
+    // Calculate days ago
+    const dateAdded = new Date(job.created_at || job.date_added);
+    const now = new Date();
+    const diffTime = Math.abs(now - dateAdded);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    // Format salary range
+    const formatSalary = (amount) => {
+      if (!amount) return 0;
+      const num = typeof amount === 'string' ? parseInt(amount) : amount;
+      return num >= 1000 ? `${(num / 1000).toFixed(0)}k` : num.toString();
+    };
+
+    const salaryMin = formatSalary(job.salary_min);
+    const salaryMax = formatSalary(job.salary_max);
+    const salaryRange = salaryMin && salaryMax ? `₱${salaryMin} - ₱${salaryMax}` : 'Salary not specified';
+
+    // Map work settings and types to display values
+    const settingMap = {
+      'onsite': 'On-site',
+      'hybrid': 'Hybrid', 
+      'remote': 'Remote'
+    };
+
+    const workTypeMap = {
+      'fulltime': 'Full-time',
+      'part-time': 'Part-time',
+      'contractual': 'Contractual',
+      'internship': 'Internship'
+    };
+
+    // Get category name
+    const categoryName = getCategoryNameById(job.required_category_id) || 'General';
+
+    // Get tag names for job_tags array
+    const tagNames = getTagNamesByIds(job.job_tags || []);
+
+    const mappedJob = {
+      id: job.job_id,
+      jobTitle: job.job_title,
+      companyName: companyData?.company_name || 'Company Name',
+      location: companyData?.location || 'Location',
+      type: settingMap[job.setting] || job.setting || 'On-site',
+      employment: workTypeMap[job.work_type] || job.work_type || 'Full-time',
+      description: job.description || '',
+      status: 'Active', // Default status since not provided by backend
+      salaryMin: parseInt(job.salary_min) || 0,
+      salaryMax: parseInt(job.salary_max) || 0,
+      salaryRange: salaryRange,
+      availablePositions: job.position_count || 1,
+      applicantCount: job.applicant_count || 0,
+      category: categoryName,
+      proficiency: job.required_proficiency || 1,
+      dateAdded: job.date_added,
+      createdAt: job.created_at,
+      postedDaysAgo: diffDays,
+      company_id: job.company_id,
+      // New fields for dynamic tags
+      job_tags: job.job_tags || [], // Array of tag IDs
+      tag_names: tagNames, // Array of tag names for display
+      required_category_id: job.required_category_id,
+      // Backend field mappings for forms
+      setting: job.setting, // Keep original backend values
+      work_type: job.work_type,
+      // Additional computed fields
+      isActive: true, // Since we don't have status from backend yet
+    };
+
+    console.log('Mapped job:', mappedJob);
+    return mappedJob;
+  };
+
   const loadJobsAndCompanyData = async () => {
     try {
       setIsLoading(true);
@@ -128,79 +218,37 @@ const EmployerJobPosts = () => {
         getCompanyProfile()
       ]);
 
-      // Map backend attributes to frontend attributes
-      const mapJobData = (job) => {
-        // Helper function to format salary range for display only
-        const formatSalary = (salary) => {
-          if (!salary || salary < 1000) return "1K"; // Floor salary to 1000
-          return `${Math.floor(salary / 1000)}K`; // Convert to "K" format
-        };
+      console.log('Jobs response:', jobsResponse);
+      console.log('Profile response:', profileResponse);
 
-        return {
-          id: job.job_id, // Backend: job_id → Frontend: id
-          jobTitle: job.job_title, // Backend: job_title → Frontend: jobTitle
-          companyName: profileResponse.company_name || "Company Name", // Use company info
-          location: profileResponse.location || "Location not specified", // Use company location
-          type: job.setting, // Backend: setting → Frontend: type
-          employment: job.work_type, // Backend: work_type → Frontend: employment
-          description: job.description || "No description available",
-          status: job.status || "Active",
-
-          // Keep raw salary values for editing
-          salaryMin: parseInt(job.salary_min, 10) || 0, // Keep as numbers for editing
-          salaryMax: parseInt(job.salary_max, 10) || 0, // Keep as numbers for editing
-          
-          // Formatted salary for display
-          salaryMinDisplay: formatSalary(parseInt(job.salary_min, 10)), 
-          salaryMaxDisplay: formatSalary(parseInt(job.salary_max, 10)),
-          salaryRange: `${formatSalary(parseInt(job.salary_min, 10))} - ${formatSalary(parseInt(job.salary_max, 10))}`, // Combined range for display
-
-          // Position mapping
-          availablePositions: parseInt(job.position_count, 10) || 0, // Parse position_count
-
-          // Add applicant count from backend
-          applicantCount: parseInt(job.applicant_count, 10) || 0, // Backend: applicant_count → Frontend: applicantCount
-
-          // Category and proficiency mapping
-          category: parseInt(job.required_category_id, 10) || "Not specified", // Parse required_category_id
-          proficiency: parseInt(job.required_proficiency, 10) || "Not specified", // Parse required_proficiency
-
-          // Dates
-          dateAdded: job.date_added,
-          createdAt: job.created_at,
-          postedDaysAgo: calculateDaysAgo(job.created_at),
-
-          // Additional fields
-          company_id: job.company_id,
-        };
-      };
-
-      // Helper function to calculate days ago
-      const calculateDaysAgo = (createdAt) => {
-        if (!createdAt) return 0;
-        const created = new Date(createdAt);
-        const now = new Date();
-        const diffTime = Math.abs(now - created);
-        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      };
-
-      // Update jobs data with mapping
+      // Update jobs data with new mapping
       if (jobsResponse.jobs) {
-        const mappedJobs = jobsResponse.jobs.map(mapJobData);
+        const mappedJobs = jobsResponse.jobs.map(job => mapJobData(job, jobsResponse.company_info || profileResponse));
         setJobPosts(mappedJobs);
         setTotalJobs(jobsResponse.total || mappedJobs.length);
+        
+        // Update company info from jobs response if available
+        if (jobsResponse.company_info) {
+          setCompanyInfo({
+            name: jobsResponse.company_info.company_name || 'Company Name',
+            type: formatCompanyType(jobsResponse.company_info.company_size) || 'Company Type',
+            location: jobsResponse.company_info.location || 'Company Location',
+          });
+        }
       } else if (Array.isArray(jobsResponse)) {
-        const mappedJobs = jobsResponse.map(mapJobData);
+        const mappedJobs = jobsResponse.map(job => mapJobData(job, profileResponse));
         setJobPosts(mappedJobs);
         setTotalJobs(mappedJobs.length);
       }
 
-      // Update company info
-      setCompanyInfo({
-        name: profileResponse.company_name || 'Company Name',
-        type: formatCompanyType(profileResponse.company_size) || 'Company Type',
-        location: profileResponse.location || 'Company Location',
-    });
+      // Update company info from profile if not already set
+      if (profileResponse && !jobsResponse.company_info) {
+        setCompanyInfo({
+          name: profileResponse.company_name || 'Company Name',
+          type: formatCompanyType(profileResponse.company_size) || 'Company Type',
+          location: profileResponse.location || 'Company Location',
+        });
+      }
 
     } catch (error) {
       console.error("Error loading jobs and company data:", error);
@@ -255,9 +303,24 @@ const EmployerJobPosts = () => {
   };  
   
   const handleEditJob = (jobData) => {
-    console.log('Editing job:', jobData); // Debug log
-    setJobToEdit(jobData); // Set both for consistency
-    setSelectedJob(jobData); // Pass the complete job object
+    console.log('Editing job:', jobData);
+    
+    // Ensure we pass the complete backend data structure
+    const jobDataForEdit = {
+      ...jobData,
+      // Add backend field mappings
+      job_title: jobData.jobTitle,
+      salary_min: jobData.salaryMin,
+      salary_max: jobData.salaryMax,
+      setting: jobData.setting, // This should already be correct
+      work_type: jobData.work_type, // This should already be correct
+      position_count: jobData.availablePositions,
+      required_category_id: jobData.required_category_id,
+      required_proficiency: jobData.proficiency,
+      job_tags: jobData.job_tags || []
+    };
+    
+    setSelectedJob(jobDataForEdit);
     setShowEditModal(true);
   };
 
@@ -342,6 +405,8 @@ const EmployerJobPosts = () => {
         createdAt: jobData.createdAt,
         postedDaysAgo: jobData.postedDaysAgo,
         company_id: jobData.company_id,
+        job_tags: jobData.job_tags, // Include tag IDs
+        tag_names: jobData.tag_names, // Include tag names
       };
       
       navigationState.selectedJob = serializableJobData;
@@ -383,25 +448,19 @@ const EmployerJobPosts = () => {
   const getFilteredAndSortedJobs = () => {
     let filteredJobs = jobPosts;
 
-    // Apply filters
+    // Apply filters - Updated to match new backend values
     if (selectedModality) {
       filteredJobs = filteredJobs.filter(job => {
-        const jobType = job.type?.toLowerCase() || job.modality?.toLowerCase();
-        return jobType === selectedModality || 
-               (selectedModality === 'on-site' && jobType === 'on-site') ||
-               (selectedModality === 'hybrid' && jobType === 'hybrid') ||
-               (selectedModality === 'remote' && jobType === 'remote');
+        const jobSetting = job.setting?.toLowerCase();
+        return jobSetting === selectedModality;
       });
     }
 
     if (selectedWorkType) {
       filteredJobs = filteredJobs.filter(job => {
-        const jobEmployment = job.employment?.toLowerCase() || job.work_type?.toLowerCase();
-        return jobEmployment === selectedWorkType ||
-               (selectedWorkType === 'full-time' && jobEmployment === 'full-time') ||
-               (selectedWorkType === 'part-time' && jobEmployment === 'part-time') ||
-               (selectedWorkType === 'contractual' && jobEmployment === 'contractual') ||
-               (selectedWorkType === 'internship' && jobEmployment === 'internship');
+        const jobWorkType = job.work_type?.toLowerCase();
+        return jobWorkType === selectedWorkType || 
+               (selectedWorkType === 'part-time' && jobWorkType === 'part-time');
       });
     }
 
@@ -415,9 +474,9 @@ const EmployerJobPosts = () => {
     const sortedJobs = [...filteredJobs].sort((a, b) => {
       switch (selectedSort) {
         case 'az':
-          return (a.jobTitle || a.job_title || '').localeCompare(b.jobTitle || b.job_title || '');
+          return (a.jobTitle || '').localeCompare(b.jobTitle || '');
         case 'za':
-          return (b.jobTitle || b.job_title || '').localeCompare(a.jobTitle || a.job_title || '');
+          return (b.jobTitle || '').localeCompare(a.jobTitle || '');
         case 'newest':
           return (a.postedDaysAgo || 0) - (b.postedDaysAgo || 0);
         case 'oldest':
@@ -436,8 +495,8 @@ const EmployerJobPosts = () => {
     loadJobsAndCompanyData();
   };
 
-  // Loading state (combine both loading states)
-  if (isLoading || companyLoading) {
+  // Loading state (combine all loading states)
+  if (isLoading || companyLoading || tagLoading) {
     return (
       <div className="min-h-screen bg-[#FF8032] flex items-start overflow-hidden">
         <EmployerSideBar />
@@ -453,8 +512,8 @@ const EmployerJobPosts = () => {
     );
   }
 
-  // Combine errors from both sources
-  const displayError = error || companyError;
+  // Combine errors from all sources
+  const displayError = error || companyError || tagError;
 
   const sortContent = (
     <div className="flex flex-col">
@@ -564,9 +623,6 @@ const EmployerJobPosts = () => {
     );
   }
 
-  // Debug: Show what company profile contains
-  console.log('Company profile in EmployerJobPosts:', companyProfile);
-
   return (
     <div className="min-h-screen bg-[#FF8032] flex items-start overflow-hidden">
       <EmployerSideBar />
@@ -649,7 +705,7 @@ const EmployerJobPosts = () => {
             getFilteredAndSortedJobs().map(job => (                
             <JobCard
                 key={job.id}
-                {...job} // Pass all job properties including applicantCount
+                {...job} // Pass all job properties including applicantCount and tag data
                 onViewDetails={handleViewJobDetails}
                 onViewApplicants={handleViewApplicants}
                 dropdownOpen={openDropdownId === job.id}
@@ -704,7 +760,7 @@ const EmployerJobPosts = () => {
         <EmployerPostingDetails
           open={postingDetailsOpen}
           onClose={() => setPostingDetailsOpen(false)}
-          job={selectedJob} // This now includes applicantCount
+          job={selectedJob} // This now includes applicantCount and tag data
           onEdit={handleEditJob}
         />
       </div>
