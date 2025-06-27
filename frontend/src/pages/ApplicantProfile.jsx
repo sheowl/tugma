@@ -10,6 +10,14 @@ function ApplicantProfile() {
   const [profile, setProfile] = useState(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
 
+  // NEW: State for real data
+  const [workExperience, setWorkExperience] = useState([]);
+  const [certificates, setCertificates] = useState([]);
+  const [proficiencyData, setProficiencyData] = useState([]);
+  const [applicantTags, setApplicantTags] = useState([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
+
+  // Keep existing state...
   const [zoomedCertificate, setZoomedCertificate] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeField, setActiveField] = useState(""); 
@@ -21,26 +29,152 @@ function ApplicantProfile() {
   });
 
   const [profileImage, setProfileImage] = useState(
-  localStorage.getItem("profileImage") || null
-);
+    localStorage.getItem("profileImage") || null
+  );
 
-const handleProfileImageChange = (e) => {
-  const file = e.target.files[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setProfileImage(reader.result);
-      localStorage.setItem("profileImage", reader.result); // Persist image
+  // ADD: Fetch functions for real data
+  const fetchWorkExperience = async (token) => {
+    try {
+      const response = await fetch("http://localhost:8000/api/v1/applicants/me/experience", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setWorkExperience(data);
+        console.log("Work experience fetched:", data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch work experience:", error);
+    }
+  };
+
+  const fetchCertificates = async (token) => {
+    try {
+      const response = await fetch("http://localhost:8000/api/v1/applicants/me/certificates", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setCertificates(data);
+        console.log("Certificates fetched:", data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch certificates:", error);
+    }
+  };
+
+  const fetchProficiency = async (token) => {
+    try {
+      const response = await fetch("http://localhost:8000/api/v1/applicants/me/proficiency", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setProficiencyData(data);
+        console.log("Proficiency data fetched:", data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch proficiency data:", error);
+    }
+  };
+
+  const fetchApplicantTags = async (token, applicantId) => {
+    try {
+      const response = await fetch(`http://localhost:8000/api/v1/tags/applicant/${applicantId}/tags`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setApplicantTags(data);
+        console.log("Applicant tags fetched:", data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch tags:", error);
+    }
+  };
+
+  // ADD: Data processing functions
+  const getCategoryNameById = (categoryId) => {
+    const categoryMap = {
+      1: "Programming Languages",
+      2: "Web Development", 
+      3: "AI/ML/Data Science",
+      4: "Databases",
+      5: "DevOps",
+      6: "Cybersecurity",
+      7: "Mobile Development",
+      8: "Soft Skills"
     };
-    reader.readAsDataURL(file);
-  }
-};
+    return categoryMap[categoryId] || "Other";
+  };
 
-const handleRemoveImage = () => {
-  setProfileImage(null);
-  localStorage.removeItem("profileImage");
-};
+  const getProficiencyLevel = (proficiencyValue) => {
+    const levelMap = {
+      1: "Novice",
+      2: "Advanced Beginner", 
+      3: "Competent",
+      4: "Proficient",
+      5: "Expert"
+    };
+    return levelMap[proficiencyValue] || "Unknown";
+  };
 
+  const formatWorkExperience = (experiences) => {
+    return experiences.map(exp => ({
+      title: exp.position,
+      company: exp.company,
+      date: `${new Date(exp.start_date).toLocaleDateString()} - ${exp.end_date ? new Date(exp.end_date).toLocaleDateString() : 'Present'}`,
+      responsibilities: exp.description ? exp.description.split(';').filter(r => r.trim()) : []
+    }));
+  };
+
+  const groupProficiencyByCategory = (proficiencyData, tags) => {
+    const grouped = {};
+    
+    proficiencyData.forEach(prof => {
+      const categoryName = getCategoryNameById(prof.category_id);
+      const level = getProficiencyLevel(prof.proficiency);
+      
+      // Get tags for this category - simplified approach
+      const categoryTags = tags.filter(tag => tag.tag_name).map(tag => tag.tag_name);
+
+      grouped[categoryName] = {
+        label: categoryName,
+        level: level.toLowerCase(),
+        tags: categoryTags.slice(0, 5) // Limit to 5 tags per category
+      };
+    });
+    
+    return Object.values(grouped);
+  };
+
+  const getSoftSkillTags = (tags) => {
+    // Filter tags that are soft skills
+    const softSkillKeywords = ['communication', 'leadership', 'teamwork', 'management', 'collaboration', 'problem solving'];
+    return tags.filter(tag => 
+      softSkillKeywords.some(keyword => 
+        tag.tag_name.toLowerCase().includes(keyword)
+      )
+    ).map(tag => ({ label: tag.tag_name }));
+  };
+
+  // Existing functions...
+  const handleProfileImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfileImage(reader.result);
+        localStorage.setItem("profileImage", reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setProfileImage(null);
+    localStorage.removeItem("profileImage");
+  };
 
   const getButtonClass = (field) => {
   if (!isEditMode) {
@@ -58,11 +192,11 @@ const handleRemoveImage = () => {
 
 
   const truncate = (text, maxLength) => {
-  if (!text) return "";
-  return text.length > maxLength ? text.slice(0, maxLength) + "..." : text;
-};
+    if (!text) return "";
+    return text.length > maxLength ? text.slice(0, maxLength) + "..." : text;
+  };
 
- const ProgressBar = ({ label, level, tags = [] }) => {
+  const ProgressBar = ({ label, level, tags = [] }) => {
     const getSkillLevel = () => {
       switch (level.toLowerCase()) {
         case "novice":
@@ -132,39 +266,69 @@ const CertificateCard = ({ image, title, description, onClick }) => {
   );
 };
 
-
-
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchAllData = async () => {
       if (!user) return;
+      
       setIsLoadingProfile(true);
+      setIsLoadingData(true);
 
-      // Example: Fetch from your backend API
-      const token = (await supabase.auth.getSession()).data.session.access_token;
-      const res = await fetch("http://localhost:8000/api/v1/applicants/me", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
-
-      if (res.status !== 200) setProfile(null);
-      else setProfile(data);
-
-      setIsLoadingProfile(false);
+      try {
+        const token = (await supabase.auth.getSession()).data.session.access_token;
+        
+        // Fetch profile first
+        const profileResponse = await fetch("http://localhost:8000/api/v1/applicants/me", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        if (profileResponse.ok) {
+          const profileData = await profileResponse.json();
+          setProfile(profileData);
+          console.log("Profile data fetched:", profileData);
+          
+          // Fetch all other data in parallel
+          await Promise.all([
+            fetchWorkExperience(token),
+            fetchCertificates(token),
+            fetchProficiency(token),
+            fetchApplicantTags(token, profileData.applicant_id)
+          ]);
+        } else {
+          setProfile(null);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setIsLoadingProfile(false);
+        setIsLoadingData(false);
+      }
     };
 
-    if (user) fetchProfile();
+    if (user) fetchAllData();
   }, [user]);
 
-  if (loading || isLoadingProfile) {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+  if (loading || isLoadingProfile || isLoadingData) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2A4D9B] mx-auto mb-4"></div>
+          <div>Loading profile data...</div>
+        </div>
+      </div>
+    );
   }
+
+  // Process the real data
+  const experienceData = formatWorkExperience(workExperience);
+  const technicalSkills = groupProficiencyByCategory(proficiencyData, applicantTags);
+  const softSkills = getSoftSkillTags(applicantTags);
 
   // Map profile fields to your layout
   const contactInfo = [
     { label: "Full Name", value: (profile?.first_name || "") + " " + (profile?.last_name || "") },
     { label: "Location", value: profile?.current_address || "" },
     { label: "Contact Number", value: profile?.contact_number || "" },
-    { label: "Email", value: profile?.applicant_email || "" },
+    { label: "Email", value: profile?.email || profile?.applicant_email || "" },
   ];
 
   const personalInfoLeft = [
@@ -181,45 +345,6 @@ const CertificateCard = ({ image, title, description, onClick }) => {
     { label: "Field", value: profile?.field || "" },
   ];
 
-  const experienceData = [
-    {
-      title: "Senior Graphic Designer",
-      company: "Canva Philippines",
-      date: "JANUARY 2024 - MAY 2025",
-      responsibilities: [
-        "Ano kanina pa ako nakababad dito oh? Baka pwede mo namang...huy ano raw?",
-        "Ganto pala tong laro na to? naka...ay may hamaliway...",
-        "Kyle huwag naman tayong ganito oh...pag-usapan naman natin to pls...",
-      ],
-    },
-  ];
-
-  const technicalSkills = [
-    { label: "Programming Languages", level: "novice", tags: ["JavaScript", "Python", "Java"] },
-    { label: "Web Development", level: "Advanced beginner", tags: ["HTML", "CSS", "React"] },
-    { label: "AI/ML/Data Science", level: "competent", tags: ["TensorFlow", "PyTorch", "Pandas"] },
-    { label: "Database", level: "proficient", tags: ["MySQL", "MongoDB", "PostgreSQL"] },
-    { label: "DevOps", level: "expert", tags: ["Docker", "Kubernetes", "CI/CD"] },
-    { label: "Cybersecurity", level: "expert", tags: ["Network Security", "Penetration Testing", "Cryptography"] },
-    { label: "Mobile Development", level: "novice", tags: ["Flutter", "React Native", "Dart"] },
-  ];
-
-  const softSkills = [
-    { label: "Communication"},
-    { label: "Teamwork" },
-    { label: "Problem Solving" }, 
-  ];
-
-  const certificates = [
-  {
-    title: "Title of Certificate",
-    description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,",
-    image: "", // Add a URL to certificate image if available
-  },
-];
-  {/* HARD CODED INFORMATION ENDS HERE */}
-
   return (
     <div className="min-h-screen bg-[#2A4D9B] flex items-start overflow-hidden">
       <ApplicantSideBar />
@@ -228,10 +353,10 @@ const CertificateCard = ({ image, title, description, onClick }) => {
       <div className="flex-1 h-screen bg-white rounded-tl-[40px] overflow-y-auto p-6 shadow-md font-montserrat">
         {/* Header */}
         <ApplicantHeader
-            title="User Profile"
-            showProfile={false}
-            showSearchBar={false}
-          />
+          title="User Profile"
+          showProfile={false}
+          showSearchBar={false}
+        />
 
         {/* Profile Content */}
         <div className="flex flex-col space-y-7 justify-center items-center w-full">
@@ -269,18 +394,18 @@ const CertificateCard = ({ image, title, description, onClick }) => {
                   )}
                 </div>
 
-                {/* Upload icon */}
-                <div className="absolute bottom-0 right-2 w-8 h-8 bg-white border border-[#2A4D9B] rounded-full flex items-center justify-center text-[#2A4D9B] text-xl">
-                  <i className="bi bi-plus"></i>
-                </div>
+                    {/* Upload icon */}
+                    <div className="absolute bottom-0 right-2 w-8 h-8 bg-white border border-[#2A4D9B] rounded-full flex items-center justify-center text-[#2A4D9B] text-xl">
+                      <i className="bi bi-plus"></i>
+                    </div>
 
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleProfileImageChange}
-                  className="hidden"
-                />
-              </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleProfileImageChange}
+                      className="hidden"
+                    />
+                  </label>
 
                {/* Delete button (only if image exists) */}
               {profileImage && (
@@ -329,7 +454,6 @@ const CertificateCard = ({ image, title, description, onClick }) => {
                 </div>
               ))}
 
-
               {/* Buttons */}
               <div className="flex gap-4 mt-4">
                 <button
@@ -346,7 +470,6 @@ const CertificateCard = ({ image, title, description, onClick }) => {
                 >
                   <i className="bi bi-github"></i> GitHub
                 </button>
-
 
                 <button
                   className={`${getButtonClass("linkedin")} px-4 py-2 rounded-md flex items-center gap-2`}
@@ -446,6 +569,7 @@ const CertificateCard = ({ image, title, description, onClick }) => {
               <hr className="border-t border-gray-300 my-4" />
 
               <div className="text-xl font-semibold text-neutral-700">Technical Skills</div>
+              {technicalSkills.length > 0 ? (
                 <div className="mt-4 space-y-4">
                   {technicalSkills.map((skill, index) => (
                     <ProgressBar
@@ -456,77 +580,96 @@ const CertificateCard = ({ image, title, description, onClick }) => {
                     />
                   ))}
                 </div>
+              ) : (
+                <div className="text-gray-500 text-sm italic mt-4">
+                  No technical skills proficiency data available.
+                </div>
+              )}
 
               <hr className="border-t border-gray-300 my-4" />
 
               <div className="text-xl font-semibold text-neutral-700">Soft Skills</div>
+              {softSkills.length > 0 ? (
                 <div className="flex flex-wrap gap-2 mt-2">
-                {softSkills.map((skill, index) => (
-                  <span
-                    key={index}
-                    className="text-xs text-neutral-700 font-semibold bg-[#EFEEEE] py-1 px-3 rounded-full"
-                  >
-                    {skill.label}
-                  </span>
-                ))}
+                  {softSkills.map((skill, index) => (
+                    <span
+                      key={index}
+                      className="text-xs text-neutral-700 font-semibold bg-[#EFEEEE] py-1 px-3 rounded-full"
+                    >
+                      {skill.label}
+                    </span>
+                  ))}
                 </div>
+              ) : (
+                <div className="text-gray-500 text-sm italic mt-2">
+                  No soft skills data available.
+                </div>
+              )}
             </div>
           </div>
 
+          {/* Certifications Section */}
           <div className="w-full max-w-[976px] h-auto rounded-[20px] shadow-all-around bg-white p-10 overflow-visible">
             <div className="text-2xl font-bold text-neutral-700 mb-8">Certifications</div>
-            <div className="flex flex-row gap-6 justify-start overflow-x-auto overflow-visible relative">
-              {certificates.map((cert, idx) => (
-              <CertificateCard
-                key={idx}
-                title={cert.title}
-                description={cert.description}
-                image={cert.image}
-                onClick={() => setZoomedCertificate(cert)}
-              />
-            ))}
-            </div>
-          </div>
-
-      </div>
-    </div>
-    
-    {isModalOpen && (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-        <div className="bg-white rounded-xl p-6 w-[400px] shadow-lg">
-          <h2 className="text-lg font-semibold mb-4">
-            Link to your {activeField.charAt(0).toUpperCase() + activeField.slice(1)} Profile
-          </h2>
-          <input
-            type="text"
-            className="w-full border border-gray-300 rounded-md px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-[#2A4D9B]"
-            placeholder={`https://${activeField}.com/yourusername`}
-            value={linkValues[activeField]}
-            onChange={(e) =>
-              setLinkValues({ ...linkValues, [activeField]: e.target.value })
-            }
-          />
-          <div className="flex justify-end gap-2">
-            <button
-              className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md"
-              onClick={() => setIsModalOpen(false)}
-            >
-              Cancel
-            </button>
-            <button
-              className="bg-[#2A4D9B] text-white px-4 py-2 rounded-md"
-              onClick={() => {
-                console.log(`${activeField} saved:`, linkValues[activeField]);
-                setIsModalOpen(false);
-              }}
-            >
-              Add
-            </button>
+            {certificates.length > 0 ? (
+              <div className="flex flex-row gap-6 justify-start overflow-x-auto overflow-visible relative">
+                {certificates.map((cert, idx) => (
+                  <CertificateCard
+                    key={idx}
+                    title={cert.certificate_name}
+                    description={cert.certificate_description || "No description available"}
+                    image={cert.certificate_file_url}
+                    onClick={() => setZoomedCertificate(cert)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-gray-500 text-sm italic">
+                No certificates added yet.
+              </div>
+            )}
           </div>
         </div>
       </div>
-    )}
-=  </div>
+      
+      {/* Modal for editing links */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white rounded-xl p-6 w-[400px] shadow-lg">
+            <h2 className="text-lg font-semibold mb-4">
+              Link to your {activeField.charAt(0).toUpperCase() + activeField.slice(1)} Profile
+            </h2>
+            <input
+              type="text"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-[#2A4D9B]"
+              placeholder={`https://${activeField}.com/yourusername`}
+              value={linkValues[activeField]}
+              onChange={(e) =>
+                setLinkValues({ ...linkValues, [activeField]: e.target.value })
+              }
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md"
+                onClick={() => setIsModalOpen(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="bg-[#2A4D9B] text-white px-4 py-2 rounded-md"
+                onClick={() => {
+                  console.log(`${activeField} saved:`, linkValues[activeField]);
+                  setIsModalOpen(false);
+                }}
+              >
+                Add
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
+
 export default ApplicantProfile;

@@ -8,17 +8,7 @@ from app.schemas.tags import TagCreate, TagOut, TagCategoryCreate, TagCategoryOu
 from app.core.database import get_db
 from app.crud import tags as crud
 
-router = APIRouter()
-
-# === TAG CATEGORY ROUTES ===
-
-@router.get("/categories", response_model=List[TagCategoryOut])
-async def get_all_categories(db: AsyncSession = Depends(get_db)):
-    return await crud.get_all_categories(db)
-
-@router.post("/categories", response_model=TagCategoryOut)
-async def create_category(category: TagCategoryCreate, db: AsyncSession = Depends(get_db)):
-    return await crud.create_category(db, category)
+router = APIRouter(prefix="/tags", tags=["tags"])
 
 # === TAG ROUTES ===
 
@@ -33,6 +23,17 @@ async def create_tag(tag: TagCreate, db: AsyncSession = Depends(get_db)):
 @router.get("/category/{category_id}", response_model=List[TagOut])
 async def get_tags_by_category(category_id: int, db: AsyncSession = Depends(get_db)):
     return await crud.get_tags_by_category(db, category_id)
+
+# === TAG CATEGORY ROUTES ===
+
+@router.get("/categories", response_model=List[TagCategoryOut])
+async def get_all_categories(db: AsyncSession = Depends(get_db)):
+    return await crud.get_all_categories(db)
+
+@router.post("/categories", response_model=TagCategoryOut)
+async def create_category(category: TagCategoryCreate, db: AsyncSession = Depends(get_db)):
+    return await crud.create_category(db, category)
+
 
 # === APPLICANT TAG ROUTES (NO AUTHENTICATION FOR TESTING) ===
 

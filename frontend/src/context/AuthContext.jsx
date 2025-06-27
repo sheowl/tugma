@@ -1,10 +1,16 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '../services/supabaseClient';
 import AuthService from '../services/AuthService';
-import { supabase } from '../services/supabaseClient'; // Adjust the import based on your project structure
 
 const AuthContext = createContext();
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -12,23 +18,36 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user || null);
+    // Get initial session
+    const getInitialSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        setUser(session.user);
+        setUserType(session.user.user_metadata?.user_type || null);
+      }
       setLoading(false);
-    });
-
-    // On mount, check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user || null);
-      setLoading(false);
-    });
-
-    return () => {
-      subscription?.unsubscribe();
     };
+
+    getInitialSession();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (session?.user) {
+          setUser(session.user);
+          setUserType(session.user.user_metadata?.user_type || null);
+        } else {
+          setUser(null);
+          setUserType(null);
+        }
+        setLoading(false);
+      }
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  // Company authentication methods
+  // Company authentication methods using Supabase
   const companyLogin = async (company_email, password) => {
     const result = await AuthService.companyLogin(company_email, password);
     if (result.success) {
@@ -47,7 +66,7 @@ export const AuthProvider = ({ children }) => {
     return result;
   };
 
-  // Applicant authentication methods
+  // Applicant authentication methods using Supabase
   const applicantLogin = async (email, password) => {
     const result = await AuthService.applicantLogin(email, password);
     if (result.success) {
@@ -66,34 +85,24 @@ export const AuthProvider = ({ children }) => {
     return result;
   };
 
-  // Generic login method (backwards compatibility)
-  const login = async (identifier, password, type = 'company') => {
-    if (type === 'company') {
-      return await companyLogin(identifier, password);
-    } else {
-      return await applicantLogin(identifier, password);
-    }
-  };
-
-  // Generic register method (backwards compatibility)
-  const register = async (userData, type = 'company') => {
-    if (type === 'company') {
-      return await companySignup(userData.email, userData.password, userData.company_name);
-    } else {
-      return await applicantSignup(userData.email, userData.password, userData);
-    }
-  };
-
-  const logout = () => {
-    AuthService.logout();
+  const logout = async () => {
+    await AuthService.logout();
     setUser(null);
     setUserType(null);
   };
 
-  // Helper methods
-  const isEmployer = () => userType === 'employer';
-  const isApplicant = () => userType === 'applicant';
-  const isAuthenticated = () => !!user && !!userType;
+  // Check functions using Supabase session
+  const isAuthenticated = () => {
+    return !!user;
+  };
+
+  const isEmployer = () => {
+    return userType === 'employer' || user?.user_metadata?.user_type === 'employer';
+  };
+
+  const isApplicant = () => {
+    return userType === 'applicant' || user?.user_metadata?.user_type === 'applicant';
+  };
 
   const value = {
     // State
@@ -102,9 +111,8 @@ export const AuthProvider = ({ children }) => {
     loading,
     
     // Authentication methods
-    login,
-    register,
     logout,
+    isAuthenticated,
     
     // Company-specific methods
     companyLogin,
@@ -117,17 +125,7 @@ export const AuthProvider = ({ children }) => {
     // Helper methods
     isEmployer,
     isApplicant,
-    isAuthenticated,
   };
 
-  return (
-    <AuthContext.Provider value={{
-      user,
-      userType,
-      loading,
-      // ...other helpers
-    }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

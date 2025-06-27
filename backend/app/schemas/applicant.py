@@ -66,6 +66,7 @@ class ApplicantOut(BaseModel):
 # Applicant Work Experience
 class ApplicantWorkExperienceBase(BaseModel):
     company: str
+    position: str
     start_date: Optional[date] = None
     end_date: Optional[date] = None
     description: Optional[str] = None
@@ -83,6 +84,7 @@ class ApplicantWorkExperienceOut(ApplicantWorkExperienceBase):
 class ApplicantCertificateBase(BaseModel):
     certificate_name: str
     certificate_description: Optional[str] = None
+    certificate_file_url: Optional[str] = None  # URL to the certificate file
 
 class ApplicantCertificateCreate(ApplicantCertificateBase):
     pass

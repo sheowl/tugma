@@ -147,11 +147,29 @@ async def get_applicant_experience(db: AsyncSession, applicant_id: int):
 
 # --- Certificates ---
 async def add_certificate(db: AsyncSession, applicant_id: int, certificate: ApplicantCertificateCreate):
-    cert = ApplicantCertificate(applicant_id=applicant_id, **certificate.dict())
-    db.add(cert)
-    await db.commit()
-    await db.refresh(cert)
-    return cert
+    """Add a certificate for an applicant"""
+    print(f"CRUD: Adding certificate for applicant {applicant_id}")
+    print(f"CRUD: Certificate data: {certificate}")
+    
+    # FIXED: Include certificate_file_url
+    db_certificate = ApplicantCertificate(
+        applicant_id=applicant_id,
+        certificate_name=certificate.certificate_name,
+        certificate_description=certificate.certificate_description,
+        certificate_file_url=certificate.certificate_file_url  # ADD THIS FIELD
+    )
+    
+    db.add(db_certificate)
+    
+    try:
+        await db.commit()
+        await db.refresh(db_certificate)
+        print(f"✅ CRUD: Certificate saved successfully")
+        return db_certificate
+    except Exception as e:
+        print(f"❌ CRUD: Error saving certificate: {e}")
+        await db.rollback()
+        raise e
 
 async def get_applicant_certificates(db: AsyncSession, applicant_id: int):
     result = await db.execute(select(ApplicantCertificate).where(ApplicantCertificate.applicant_id == applicant_id))

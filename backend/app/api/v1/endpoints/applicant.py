@@ -64,17 +64,61 @@ async def add_certificate_to_me(
     )
     return new_cert
 
+@router.get("/me/certificates", response_model=List[ApplicantCertificateOut])
+async def get_my_certificates(
+    db: AsyncSession = Depends(get_db),
+    applicant_info = Depends(get_current_applicant)
+):
+    db_applicant = applicant_info["db_user"]
+    return await crud.get_applicant_certificates(db, db_applicant.applicant_id)
+
 @router.post("/me/proficiency", response_model=ApplicantProficiencyOut)
 async def add_proficiency_to_me(
     proficiency: ApplicantProficiencyCreate,
     db: AsyncSession = Depends(get_db),
     applicant_info = Depends(get_current_applicant)
 ):
+    """Add a proficiency for the authenticated applicant."""
     db_applicant = applicant_info["db_user"]
-    new_prof = await crud.create_proficiency(
-        db, applicant_id=db_applicant.applicant_id, proficiency=proficiency
+    
+    print(f"🎯 Adding proficiency for applicant {db_applicant.applicant_id}")
+    print(f"📊 Category ID: {proficiency.category_id}")
+    print(f"📊 Proficiency level: {proficiency.proficiency}")
+    
+    # Check if proficiency already exists
+    from sqlalchemy import select
+    from app.models.applicant import ApplicantProficiency
+    
+    existing_result = await db.execute(
+        select(ApplicantProficiency).where(
+            ApplicantProficiency.applicant_id == db_applicant.applicant_id,
+            ApplicantProficiency.category_id == proficiency.category_id
+        )
     )
-    return new_prof
+    existing_prof = existing_result.scalars().first()
+    
+    if existing_prof:
+        print(f"⚠️ Proficiency already exists for category {proficiency.category_id}")
+        print(f"⚠️ Existing proficiency: {existing_prof.proficiency}")
+        print(f"⚠️ Requested proficiency: {proficiency.proficiency}")
+        
+        # Update existing instead of creating new
+        existing_prof.proficiency = proficiency.proficiency
+        await db.commit()
+        await db.refresh(existing_prof)
+        print(f"✅ Updated existing proficiency")
+        return existing_prof
+    else:
+        print(f"✅ Creating new proficiency record")
+        try:
+            new_prof = await crud.create_proficiency(db, db_applicant.applicant_id, proficiency)
+            print(f"✅ Successfully created proficiency")
+            return new_prof
+        except Exception as e:
+            print(f"❌ Error creating proficiency: {e}")
+            print(f"❌ Error type: {type(e).__name__}")
+            await db.rollback()
+            raise HTTPException(status_code=400, detail=f"Failed to create proficiency: {str(e)}")
 
 @router.put("/me/proficiency", response_model=ApplicantProficiencyOut)
 async def update_my_proficiency(

@@ -204,6 +204,148 @@ async def get_current_user_info(
         raise HTTPException(status_code=400, detail=str(e))
 
 
+# === SUPABASE INTEGRATION ENDPOINTS ===
+@router.post("/verify-company")
+async def verify_company_user(
+    current_user = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Verify if current user is a company"""
+    try:
+        print(f"🏢 Verifying company user: {current_user}")
+        print(f"🏢 User email: {current_user.get('email', 'Not found')}")
+        
+        # FIXED: Use dictionary access instead of object access
+        user_email = current_user.get('email')
+        if not user_email:
+            print(f"❌ No email found in current_user: {current_user}")
+            raise HTTPException(status_code=403, detail="No email in token")
+        
+        # Check if user exists in company table
+        company = await company_crud.get_company_by_email(db, user_email)
+        if company:
+            print(f"✅ Company found: {company.company_name}")
+            return {
+                "company_id": company.company_id,
+                "company_name": company.company_name,
+                "email": company.company_email,
+                "user_type": "employer"
+            }
+        else:
+            print(f"❌ No company found for email: {user_email}")
+            raise HTTPException(status_code=403, detail="Not authorized as company")
+    except Exception as e:
+        print(f"❌ Error verifying company user: {e}")
+        print(f"❌ Current user data: {current_user}")
+        raise HTTPException(status_code=403, detail="Not authorized as company")
+
+@router.post("/verify-applicant")
+async def verify_applicant_user(
+    current_user = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Verify if current user is an applicant"""
+    try:
+        print(f"👤 Verifying applicant user: {current_user}")
+        print(f"👤 User email: {current_user.get('email', 'Not found')}")
+        
+        # FIXED: Use dictionary access instead of object access
+        user_email = current_user.get('email')
+        if not user_email:
+            print(f"❌ No email found in current_user: {current_user}")
+            raise HTTPException(status_code=403, detail="No email in token")
+        
+        # Check if user exists in applicant table
+        applicant = await applicant_crud.get_applicant_by_email(db, user_email)
+        if applicant:
+            print(f"✅ Applicant found: {applicant.first_name} {applicant.last_name}")
+            return {
+                "applicant_id": applicant.applicant_id,
+                "first_name": applicant.first_name,
+                "last_name": applicant.last_name,
+                "email": applicant.email,
+                "user_type": "applicant"
+            }
+        else:
+            print(f"❌ No applicant found for email: {user_email}")
+            raise HTTPException(status_code=403, detail="Not authorized as applicant")
+    except Exception as e:
+        print(f"❌ Error verifying applicant user: {e}")
+        print(f"❌ Current user data: {current_user}")
+        raise HTTPException(status_code=403, detail="Not authorized as applicant")
+
+@router.post("/applicant/create-profile")
+async def create_applicant_profile(
+    applicant_data: dict,
+    current_user = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Create applicant profile for Supabase user"""
+    try:
+        print(f"🏗️ Creating applicant profile for: {current_user}")
+        
+        # FIXED: Use dictionary access
+        user_email = current_user.get('email')
+        if not user_email:
+            raise HTTPException(status_code=400, detail="No email in token")
+        
+        # Create applicant record linked to Supabase user
+        applicant_create = ApplicantCreate(
+            email=user_email,  # FIXED: Use extracted email
+            first_name=applicant_data.get("first_name", ""),
+            last_name=applicant_data.get("last_name", ""),
+            password=""  # Empty for Supabase users
+        )
+        
+        applicant = await applicant_crud.create_applicant(db, applicant_create)
+        
+        print(f"✅ Applicant profile created: {applicant.first_name} {applicant.last_name}")
+        return {
+            "applicant_id": applicant.applicant_id,
+            "first_name": applicant.first_name,
+            "last_name": applicant.last_name,
+            "email": applicant.email,
+            "user_type": "applicant"
+        }
+    except Exception as e:
+        print(f"❌ Error creating applicant profile: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/company/create-profile")
+async def create_company_profile(
+    company_data: dict,
+    current_user = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Create company profile for Supabase user"""
+    try:
+        print(f"🏗️ Creating company profile for: {current_user}")
+        
+        # FIXED: Use dictionary access
+        user_email = current_user.get('email')
+        if not user_email:
+            raise HTTPException(status_code=400, detail="No email in token")
+        
+        # Create company record linked to Supabase user
+        company_create = CompanyCreate(
+            company_name=company_data["company_name"],
+            company_email=user_email,  # FIXED: Use extracted email
+            password=""  # Empty for Supabase users
+        )
+        
+        company = await company_crud.create_company(db, company_create)
+        
+        print(f"✅ Company profile created: {company.company_name}")
+        return {
+            "company_id": company.company_id,
+            "company_name": company.company_name,
+            "email": company.company_email,
+            "user_type": "employer"
+        }
+    except Exception as e:
+        print(f"❌ Error creating company profile: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
 # OTP section for applicants
 @router.post("/applicant/send-otp")
 async def send_applicant_otp(request: Request):

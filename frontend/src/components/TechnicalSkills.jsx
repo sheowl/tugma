@@ -97,6 +97,21 @@ export default function TechnicalSkills({
     setOpenLevel(openLevel === levelLabel ? null : levelLabel);
   };
 
+  // FIXED: Update how proficiency is set
+  const handleProficiencyChange = (levelLabel) => {
+    // Extract numeric level from the label (e.g., "Level 3: Competent" -> 3)
+    const levelMatch = levelLabel.match(/Level (\d+)/);
+    if (levelMatch) {
+      const numericLevel = parseInt(levelMatch[1]);
+
+      // Set proficiency as an object with title as key and numeric level as value
+      setProficiency((prev) => ({
+        ...prev,
+        [title]: numericLevel, // Use title (category name) as key, numeric level as value
+      }));
+    }
+  };
+
   return (
     <div
       className={`flex gap-8 justify-center items-start mt-8 mb-8 ${
@@ -157,7 +172,7 @@ export default function TechnicalSkills({
                 <div
                   className="flex items-center justify-between cursor-pointer"
                   onClick={() => {
-                    setProficiency(level.label);
+                    handleProficiencyChange(level.label); // Use the new handler
                     toggleOpen(level.label);
                   }}
                 >
@@ -165,8 +180,11 @@ export default function TechnicalSkills({
                     <input
                       type="radio"
                       name={`proficiency-${title}`}
-                      checked={selectedProficiency === level.label}
-                      onChange={() => setProficiency(level.label)}
+                      checked={
+                        selectedProficiency[title] ===
+                        parseInt(level.label.match(/Level (\d+)/)?.[1])
+                      }
+                      onChange={() => handleProficiencyChange(level.label)}
                       className="accent-[#2A4D9B] w-5 h-5"
                     />
                     {level.label}
