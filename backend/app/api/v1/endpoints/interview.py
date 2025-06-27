@@ -35,7 +35,7 @@ async def create_interview(
     try:
         company_id = company_info["db_user"].company_id
         
-        print(f"🔍 DEBUG: Company {company_id} creating interview for applicant {interview.applicant_id} on job {interview.job_id}")
+        print(f"DEBUG: Company {company_id} creating interview for applicant {interview.applicant_id} on job {interview.job_id}")
         
         # Verify job ownership
         job_verification = await app_crud.verify_job_ownership(db, interview.job_id, company_id)
@@ -66,13 +66,13 @@ async def create_interview(
         # Create the interview
         created_interview = await crud.create_interview(db, interview)
         
-        print(f"✅ DEBUG: Interview created successfully")
+        print(f"DEBUG: Interview created successfully")
         return created_interview
         
     except HTTPException:
         raise
     except Exception as e:
-        print(f"❌ ERROR: Failed to create interview: {e}")
+        print(f"ERROR: Failed to create interview: {e}")
         raise HTTPException(status_code=400, detail=str(e))
 
 # Update interview (Company authenticated)
@@ -108,7 +108,7 @@ async def update_interview(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"❌ ERROR: Failed to update interview: {e}")
+        print(f"ERROR: Failed to update interview: {e}")
         raise HTTPException(status_code=400, detail=str(e))
 
 # Get interview (Company authenticated)
@@ -143,7 +143,7 @@ async def get_interview(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"❌ ERROR: Failed to get interview: {e}")
+        print(f"ERROR: Failed to get interview: {e}")
         raise HTTPException(status_code=400, detail=str(e))
 
 # Get all interviews for company's jobs
@@ -161,7 +161,7 @@ async def get_company_interviews(
         return interviews
         
     except Exception as e:
-        print(f"❌ ERROR: Failed to get company interviews: {e}")
+        print(f"ERROR: Failed to get company interviews: {e}")
         raise HTTPException(status_code=400, detail=str(e))
 
 # Delete interview (Company authenticated)
@@ -194,6 +194,6 @@ async def delete_interview(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"❌ ERROR: Failed to delete interview: {e}")
+        print(f"ERROR: Failed to delete interview: {e}")
         raise HTTPException(status_code=400, detail=str(e))
 

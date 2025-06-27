@@ -65,7 +65,7 @@ async def get_all_job_matches_sorted(
                 "applicant_id": match.applicant_id,
                 "job_id": match.job_id,
                 "match_score": match.match_score,
-                "original_object": match  # Keep reference to original object
+                "original_object": match 
             }
             matches_data.append(match_dict)
         

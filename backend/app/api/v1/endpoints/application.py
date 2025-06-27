@@ -108,7 +108,7 @@ async def update_application_status_by_company(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"❌ ERROR: Failed to update application status: {e}")
+        print(f"ERROR: Failed to update application status: {e}")
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=400, detail=str(e))
@@ -167,7 +167,7 @@ async def update_application_status_with_workflow(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"❌ ERROR: Failed to update application status: {e}")
+        print(f"ERROR: Failed to update application status: {e}")
         raise HTTPException(status_code=400, detail=str(e))
 
 def generate_predefined_interview_remarks(applicant_id: int, job_id: int) -> str:

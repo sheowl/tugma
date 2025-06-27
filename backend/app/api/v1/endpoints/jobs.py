@@ -23,11 +23,11 @@ async def get_my_company_jobs_with_total(
     try:
         company_id = current_company["db_user"].company_id
         
-        print(f"🔍 DEBUG: Getting jobs for company_id: {company_id}")
+        print(f"DEBUG: Getting jobs for company_id: {company_id}")
         
         jobs = await crud.get_jobs_by_company(db, company_id)
         
-        print(f"🔍 DEBUG: Found {len(jobs)} jobs")
+        print(f"DEBUG: Found {len(jobs)} jobs")
         
         # Convert to JobOut objects with simplified job tags
         jobs_out = []
@@ -57,7 +57,7 @@ async def get_my_company_jobs_with_total(
                 "job_tags": job_tags  # Now just array of tag IDs
             }
             
-            print(f"🔍 DEBUG: Processing job {job.job_id} - applicants: {applicant_count}, tags: {job_tags}")
+            print(f"DEBUG: Processing job {job.job_id} - applicants: {applicant_count}, tags: {job_tags}")
             
             jobs_out.append(JobOut(**job_dict))
         
@@ -72,7 +72,7 @@ async def get_my_company_jobs_with_total(
         )
         
     except Exception as e:
-        print(f"❌ DEBUG: Error in get_my_company_jobs_with_total: {e}")
+        print(f"DEBUG: Error in get_my_company_jobs_with_total: {e}")
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=400, detail=str(e))
@@ -89,9 +89,9 @@ async def create_my_job(
         # Match the pattern from company.py
         company_id = current_company["db_user"].company_id
         
-        print(f"🔍 DEBUG: Creating job for company_id: {company_id}")
-        print(f"🔍 DEBUG: Input salary_min: {job_in.salary_min}, salary_max: {job_in.salary_max}")
-        print(f"🔍 DEBUG: Job tag IDs: {job_in.job_tags}")  # Now just tag IDs
+        print(f"DEBUG: Creating job for company_id: {company_id}")
+        print(f"DEBUG: Input salary_min: {job_in.salary_min}, salary_max: {job_in.salary_max}")
+        print(f"DEBUG: Job tag IDs: {job_in.job_tags}")  # Now just tag IDs
         
         # Set the company_id in the job data and ensure proper integer conversion
         job_data = job_in.model_dump()
@@ -101,7 +101,7 @@ async def create_my_job(
         job_data["salary_min"] = int(job_data["salary_min"]) if job_data.get("salary_min") else 0
         job_data["salary_max"] = int(job_data["salary_max"]) if job_data.get("salary_max") else 0
         
-        print(f"🔍 DEBUG: Processed salary_min: {job_data['salary_min']}, salary_max: {job_data['salary_max']}")
+        print(f"DEBUG: Processed salary_min: {job_data['salary_min']}, salary_max: {job_data['salary_max']}")
         
         # Create the job with the modified data (tags will be set to required=True automatically)
         job_create = JobCreate(**job_data)
@@ -110,9 +110,9 @@ async def create_my_job(
         # Get the job tags for the response
         job_tags = await crud.get_job_tags(db, new_job.job_id)
         
-        print(f"🔍 DEBUG: Job created successfully: {new_job.job_id}")
-        print(f"🔍 DEBUG: Created job salary_min: {new_job.salary_min}, salary_max: {new_job.salary_max}")
-        print(f"🔍 DEBUG: Job tags created: {len(job_tags)} (all set to required=True)")
+        print(f"DEBUG: Job created successfully: {new_job.job_id}")
+        print(f"DEBUG: Created job salary_min: {new_job.salary_min}, salary_max: {new_job.salary_max}")
+        print(f"DEBUG: Job tags created: {len(job_tags)} (all set to required=True)")
         
         # Return job with tags (all will have is_required=True)
         job_out_dict = {
@@ -136,7 +136,7 @@ async def create_my_job(
         return JobOut(**job_out_dict)
         
     except Exception as e:
-        print(f"❌ DEBUG: Error in create_my_job: {e}")
+        print(f"DEBUG: Error in create_my_job: {e}")
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=400, detail=str(e))
@@ -152,7 +152,7 @@ async def get_my_job_details(
     try:
         company_id = current_company["db_user"].company_id
         
-        print(f"🔍 DEBUG: Getting job {job_id} for company_id: {company_id}")
+        print(f"DEBUG: Getting job {job_id} for company_id: {company_id}")
         
         job = await crud.get_job_by_id(db, job_id)
         if not job:
@@ -190,7 +190,7 @@ async def get_my_job_details(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"❌ DEBUG: Error in get_my_job_details: {e}")
+        print(f"DEBUG: Error in get_my_job_details: {e}")
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=400, detail=str(e))
@@ -207,8 +207,8 @@ async def update_my_job(
     try:
         company_id = current_company["db_user"].company_id
         
-        print(f"🔍 DEBUG: Updating job {job_id} for company_id: {company_id}")
-        print(f"🔍 DEBUG: Job tag IDs to update: {job_update.job_tags}")  # Now just tag IDs
+        print(f"DEBUG: Updating job {job_id} for company_id: {company_id}")
+        print(f"DEBUG: Job tag IDs to update: {job_update.job_tags}")  # Now just tag IDs
         
         # First check if the job exists and belongs to the current company
         job = await crud.get_job_by_id(db, job_id)
@@ -227,8 +227,8 @@ async def update_my_job(
         job_tags = await crud.get_job_tags(db, job_id)
         applicant_count = await crud.get_applicant_count_by_job(db, job_id)
         
-        print(f"🔍 DEBUG: Job updated successfully: {job_id}")
-        print(f"🔍 DEBUG: Updated job tags: {len(job_tags)} (all set to required=True)")
+        print(f"DEBUG: Job updated successfully: {job_id}")
+        print(f"DEBUG: Updated job tags: {len(job_tags)} (all set to required=True)")
         
         # Build response with updated tags
         job_out_dict = {
@@ -254,7 +254,7 @@ async def update_my_job(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"❌ DEBUG: Error in update_my_job: {e}")
+        print(f"DEBUG: Error in update_my_job: {e}")
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=400, detail=str(e))
@@ -270,7 +270,7 @@ async def delete_my_job(
     try:
         company_id = current_company["db_user"].company_id
         
-        print(f"🔍 DEBUG: Deleting job {job_id} for company_id: {company_id}")
+        print(f"DEBUG: Deleting job {job_id} for company_id: {company_id}")
         
         # First check if the job exists and belongs to the current company
         job = await crud.get_job_by_id(db, job_id)
@@ -285,14 +285,14 @@ async def delete_my_job(
         if not success:
             raise HTTPException(status_code=404, detail="Job not found")
         
-        print(f"🔍 DEBUG: Job and its tags deleted successfully: {job_id}")
+        print(f"DEBUG: Job and its tags deleted successfully: {job_id}")
         
         return {"message": "Job and associated tags deleted successfully"}
         
     except HTTPException:
         raise
     except Exception as e:
-        print(f"❌ DEBUG: Error in delete_my_job: {e}")
+        print(f"EBUG: Error in delete_my_job: {e}")
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=400, detail=str(e))
@@ -349,7 +349,7 @@ async def get_my_job_applicants(
     try:
         company_id = current_company["db_user"].company_id
         
-        print(f"🔍 DEBUG: Getting applicants for job {job_id} from company_id: {company_id}")
+        print(f"DEBUG: Getting applicants for job {job_id} from company_id: {company_id}")
         
         # First verify that this job belongs to the current company
         job = await crud.get_job_by_id(db, job_id)
@@ -362,7 +362,7 @@ async def get_my_job_applicants(
         # Get applicants for this job
         applicants = await crud.get_applicants_by_job(db, job_id)
         
-        print(f"🔍 DEBUG: Found {len(applicants)} applicants for job {job_id}")
+        print(f"DEBUG: Found {len(applicants)} applicants for job {job_id}")
         
         # Format applicant data with tags and match scores
         applicants_data = []
@@ -397,7 +397,7 @@ async def get_my_job_applicants(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"❌ DEBUG: Error in get_my_job_applicants: {e}")
+        print(f"DEBUG: Error in get_my_job_applicants: {e}")
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=400, detail=str(e))

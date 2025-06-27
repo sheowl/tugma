@@ -6,7 +6,7 @@ def merge_sort(data: list, sort_key: str, descending: bool = False) -> list:
     # Start timing
     start_time = time.time()
     
-    print(f"🔄 Starting merge sort on {len(data)} items by '{sort_key}' ({'descending' if descending else 'ascending'})")
+    print(f"Starting merge sort on {len(data)} items by '{sort_key}' ({'descending' if descending else 'ascending'})")
     
     # Base case: if list has 1 or 0 elements, it's already sorted
     if len(data) <= 1:

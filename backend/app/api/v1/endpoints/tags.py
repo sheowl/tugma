@@ -257,7 +257,7 @@ async def test_match_formula(db: AsyncSession = Depends(get_db)):
             "explanation": {
                 "job_coverage": f"({intersection} / {len(job_tags)}) * 70% = {round((intersection / len(job_tags)) * 70, 2)}%",
                 "applicant_relevance": f"({intersection} / {len(applicant_tags)}) * 30% = {round((intersection / len(applicant_tags)) * 30, 2)}%",
-                "total": f"{round(manual_score)}%"  # ← Changed to round to whole number
+                "total": f"{round(manual_score)}%"  # Changed to round to whole number
             }
         }
         
