@@ -13,6 +13,8 @@ from app.schemas.applicant import (
     ApplicantCertificateCreate,
     ApplicantProficiencyCreate
 )
+from app.models.tags import Tags  # Adjust import path as needed
+from app.models.applicant import ApplicantTag  # Adjust import path as needed
 from app.models.base import Base
 
 
@@ -214,7 +216,33 @@ async def update_proficiency(
         return prof
     return None
 
-async def get_applicant_tags(db: AsyncSession, applicant_id: int) -> List[dict]:
-    from app.crud.tags import get_applicant_tags as tags_getter
-    return await tags_getter(db, applicant_id)
+async def get_applicant_tags(db: AsyncSession, applicant_id: int):
+    """Get all tags for a specific applicant"""
+    try:
+        print(f"🔍 DEBUG: Getting tags for applicant_id: {applicant_id}")
+        
+        result = await db.execute(
+            select(Tags)
+            .join(ApplicantTag, Tags.tag_id == ApplicantTag.tag_id)
+            .where(ApplicantTag.applicant_id == applicant_id)
+            .where(ApplicantTag.is_tagged == True)  # Only get tagged items
+        )
+        
+        tags = result.scalars().all()
+        print(f"✅ DEBUG: Found {len(tags)} tags for applicant {applicant_id}")
+        
+        # Debug: Print the first few tags to see their structure
+        if tags:
+            first_tag = tags[0]
+            print(f"🔍 DEBUG: First tag structure: {type(first_tag)}, has tag_name: {hasattr(first_tag, 'tag_name')}")
+            if hasattr(first_tag, 'tag_name'):
+                print(f"🔍 DEBUG: First tag name: {first_tag.tag_name}")
+        
+        return list(tags)
+        
+    except Exception as e:
+        print(f"❌ Error getting applicant tags: {e}")
+        import traceback
+        traceback.print_exc()
+        return []
 

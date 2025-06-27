@@ -44,11 +44,10 @@ function ApplicantBrowseJobs() {
     }, [user, loading, navigate]);
 
      const sampleData = [
-  { title: "Some Job Here", company: "Company Name Here", status: "Accepted", timeAgo: "3 hours ago" },
-  { title: "Junior Web Developer", company: "Kim Satrjt PH", status: "Rejected", timeAgo: "8 hours ago" },
-  { title: "Job Title", company: "Company Name", status: "Waitlisted", timeAgo: "3 hours ago" },
-  
-];
+        { title: "Some Job Here", company: "Company Name Here", status: "Accepted", timeAgo: "3 hours ago" },
+        { title: "Junior Web Developer", company: "Kim Satrjt PH", status: "Rejected", timeAgo: "8 hours ago" },
+        { title: "Job Title", company: "Company Name", status: "Waitlisted", timeAgo: "3 hours ago" },    
+    ];
 
 
 // Replace the mock firstName fetch with real user data
@@ -102,15 +101,16 @@ useEffect(() => {
                 
                 if (!accessToken) return;
 
+                // Use the detailed matching endpoint
                 const res = await fetch("http://localhost:8000/api/v1/matching/jobs", {
                     headers: { Authorization: `Bearer ${accessToken}` },
                 });
                 
                 const data = await res.json();
                 
-                console.log("Fetched raw jobs data:", data);
+                console.log("Fetched jobs with detailed match scores:", data);
                 
-                // Handle different response formats
+                // Handle the response
                 let jobsArray = [];
                 if (data.jobs && Array.isArray(data.jobs)) {
                     jobsArray = data.jobs;
@@ -118,10 +118,10 @@ useEffect(() => {
                     jobsArray = data;
                 }
                 
-                // FIXED: Map the data properly BEFORE setting to state
+                // Map the data for display (jobs already have match scores)
                 const mappedJobs = jobsArray.map(job => mapJobDataForApplicant(job));
                 
-                console.log("Mapped jobs for applicant:", mappedJobs);
+                console.log("Mapped jobs with match scores:", mappedJobs);
                 setJobs(mappedJobs);
             } catch (err) {
                 console.error("Failed to fetch jobs:", err);

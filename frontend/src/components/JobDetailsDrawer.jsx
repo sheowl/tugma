@@ -1,24 +1,56 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import SaveButton from "./SaveButton";
 import Tag from "./JobSkillTag";
 import CompanyDetails from "./CompanyDetails";
 import { useTags } from "../context/TagsContext";
+import { supabase } from "../services/supabaseClient";
 
 const JobDetailsDrawer = ({ open, onClose, job, onApply }) => {
   const [companyDetailsOpen, setCompanyDetailsOpen] = useState(false);
+  const [matchDetails, setMatchDetails] = useState(null);
+  const [loadingMatchDetails, setLoadingMatchDetails] = useState(false);
   const { getTagNamesByIds } = useTags();
+
+  // Fetch detailed match information when drawer opens
+  useEffect(() => {
+    if (open && job?.job_id) {
+      fetchMatchDetails();
+    }
+  }, [open, job?.job_id]);
+
+  const fetchMatchDetails = async () => {
+    try {
+      setLoadingMatchDetails(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      
+      if (!accessToken) return;
+
+      const response = await fetch(`http://localhost:8000/api/v1/matching/job/${job.job_id}/details`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setMatchDetails(data);
+        console.log("🔍 Match details fetched:", data);
+      }
+    } catch (error) {
+      console.error("Error fetching match details:", error);
+    } finally {
+      setLoadingMatchDetails(false);
+    }
+  };
 
   if (!job) return null;
 
-  console.log("JobDetailsDrawer received job:", job);
-
-  // Extract job data - now with resolved company information
+  // Extract job data
   const jobData = {
     job_id: job.job_id || job.id,
     job_title: job.job_title || job.jobTitle,
-    company_name: job.company_name || job.companyName, // RESOLVED
-    company_description: job.company_description || job.companyDescription || "", // RESOLVED
-    company_location: job.company_location || job.location, // RESOLVED
+    company_name: job.company_name || job.companyName,
+    company_description: job.company_description || job.companyDescription || "",
+    company_location: job.company_location || job.location,
     location: job.location || job.company_location,
     setting: job.setting || job.workSetup,
     work_type: job.work_type || job.employmentType,
@@ -28,7 +60,7 @@ const JobDetailsDrawer = ({ open, onClose, job, onApply }) => {
     salary_frequency: job.salary_frequency || job.salaryFrequency || "monthly",
     position_count: job.position_count || job.availablePositions || 1,
     required_category_id: job.required_category_id,
-    category_name: job.category_name || "General", // RESOLVED
+    category_name: job.category_name || "General",
     required_proficiency: job.required_proficiency || job.proficiency,
     job_tags: job.job_tags || [],
     created_at: job.created_at || job.createdAt,
@@ -45,11 +77,25 @@ const JobDetailsDrawer = ({ open, onClose, job, onApply }) => {
 
   // Match score color logic
   let matchScoreColor = "text-[#27AE60]";
-  if (job && job.matchScore < 50) {
+  if (job?.match_score < 50) {
     matchScoreColor = "text-[#E74C3C]";
-  } else if (job && job.matchScore < 75) {
+  } else if (job?.match_score < 75) {
     matchScoreColor = "text-[#F5B041]";
   }
+
+  // Render tag with match status
+  const renderTagWithMatchStatus = (tagName, isMatched) => (
+    <span
+      key={tagName}
+      className={`px-3 py-1 rounded-full text-xs font-semibold ${
+        isMatched 
+          ? "bg-green-100 text-green-800 border border-green-300" 
+          : "bg-red-100 text-red-800 border border-red-300"
+      }`}
+    >
+      {isMatched ? "✓ " : "✗ "}{tagName}
+    </span>
+  );
 
   return (
     <>
@@ -88,7 +134,7 @@ const JobDetailsDrawer = ({ open, onClose, job, onApply }) => {
                   <div className="space-y-4">
                     <div className="mb-4">
                       <span className={`text-2xl font-bold ${matchScoreColor}`}>
-                        {job.matchScore || 0}% Matched
+                        {job.match_score || 0}% Matched
                       </span>
                       <h2 className="text-4xl font-bold mt-1">{jobData.job_title}</h2>
 
@@ -144,7 +190,7 @@ const JobDetailsDrawer = ({ open, onClose, job, onApply }) => {
                       </p>
                     </div>
 
-                    {/* Required Skills/Tags */}
+                    {/* Enhanced Tag Matching Section */}
                     <div>
                       <h4 className="text-base font-bold mb-2 text-neutral-700">Required Skills</h4>
                       <div className="flex gap-2 flex-wrap">

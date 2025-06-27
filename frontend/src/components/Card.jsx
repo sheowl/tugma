@@ -6,6 +6,11 @@ function truncate(text, maxLength = 80) {
   return text.length > maxLength ? text.slice(0, maxLength) + "..." : text;
 }
 
+function formatSalaryK(amount) {
+  if (!amount || isNaN(amount)) return 0;
+  return `${Math.floor(Number(amount) / 1000)}K`;
+}
+
 function Card({
   jobTitle,
   companyName,
@@ -82,7 +87,6 @@ function Card({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="font-bold text-[#2A4D9B]">{matchScore}% Match</span>
           <div>
             {tags.map((tag) => (
               <span key={tag.label} className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">{tag.label}</span>
@@ -99,7 +103,9 @@ function Card({
       {/* Salary + Button */}
       <div className="flex items-center justify-between mt-2">
         <div className="leading-tight flex flex-col justify-center">
-          <p className="text-base font-bold">₱{salaryRangeLow}K - ₱{salaryRangeHigh}K</p>
+          <p className="text-base font-bold">
+            ₱{formatSalaryK(salaryRangeLow)} - ₱{formatSalaryK(salaryRangeHigh)}
+          </p>
           <p className="text-[10px] font-semibold text-gray-500 -mt-1">{salaryFrequency}</p>
         </div>
 
