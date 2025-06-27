@@ -1,10 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AuthService from '../services/AuthService';
-<<<<<<< HEAD
-=======
 import CompanyService from '../services/CompanyService';
 import { supabase } from '../services/supabaseClient';
->>>>>>> applicant-el
 
 const AuthContext = createContext();
 

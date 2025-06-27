@@ -7,9 +7,6 @@ from . import (
     jobs,
     notification,
     tags,
-<<<<<<< HEAD
     jobmatchtest,
-=======
     matching,
->>>>>>> applicant-el
 )

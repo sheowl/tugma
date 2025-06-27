@@ -174,17 +174,8 @@ export function JobsProvider({ children }) {
   // FIX: Don't auto-fetch with hardcoded company ID
   // Let the parent components fetch jobs with the correct company ID
   useEffect(() => {
-<<<<<<< HEAD
     // Remove auto-fetch to prevent interference
     // Parent components should call fetchJobs(companyId) when needed
-=======
-    // Only fetch if logged in and company_id exists
-    const accessToken = localStorage.getItem("access_token");
-    const companyId = localStorage.getItem("company_id");
-    if (accessToken && companyId) {
-      fetchJobs(companyId);
-    }
->>>>>>> applicant-el
   }, []);
 
   const value = {

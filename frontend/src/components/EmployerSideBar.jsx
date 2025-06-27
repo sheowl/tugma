@@ -12,12 +12,9 @@ const navItems = [
 const EmployerSideBar = ({ activePage }) => {
     const navigate = useNavigate();
     const location = useLocation();
-<<<<<<< HEAD
-=======
     const { logout } = useAuth();
 
     // Simple function to determine which menu should be active
->>>>>>> applicant-el
     const getActiveIndex = () => {
         if (activePage) {
             // Find by key

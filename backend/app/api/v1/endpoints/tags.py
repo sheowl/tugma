@@ -36,7 +36,6 @@ async def create_tag(tag: TagCreate, db: AsyncSession = Depends(get_db)):
 async def get_tags_by_category(category_id: int, db: AsyncSession = Depends(get_db)):
     return await crud.get_tags_by_category(db, category_id)
 
-<<<<<<< HEAD
 # === APPLICANT TAG ROUTES (NO AUTHENTICATION FOR TESTING) ===
 
 @router.post("/applicant/{applicant_id}/tags")
@@ -135,7 +134,6 @@ async def clear_all_applicant_tags(
         }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-=======
 @router.get("/test-hash")
 async def test_hash_table(db: AsyncSession = Depends(get_db)):
     """Test the tag hash table functionality"""
@@ -265,6 +263,5 @@ async def test_match_formula(db: AsyncSession = Depends(get_db)):
         
     except Exception as e:
         return {"error": str(e)}
->>>>>>> applicant-el
 
 
