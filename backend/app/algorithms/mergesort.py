@@ -1,8 +1,18 @@
 ﻿# merge sort algorithm implementation
 
+import time
+
 def merge_sort(data: list, sort_key: str, descending: bool = False) -> list:
+    # Start timing
+    start_time = time.time()
+    
+    print(f"🔄 Starting merge sort on {len(data)} items by '{sort_key}' ({'descending' if descending else 'ascending'})")
+    
     # Base case: if list has 1 or 0 elements, it's already sorted
     if len(data) <= 1:
+        end_time = time.time()
+        execution_time = (end_time - start_time) * 1000  # Convert to milliseconds
+        print(f"Merge sort completed in {execution_time:.3f}ms (trivial case)")
         return data
     
     # Create a copy to avoid modifying the original list
@@ -18,7 +28,15 @@ def merge_sort(data: list, sort_key: str, descending: bool = False) -> list:
     right_sorted = merge_sort(right_array, sort_key, descending)
     
     # Merge the sorted halves
-    return merge(left_sorted, right_sorted, sort_key, descending)
+    result = merge(left_sorted, right_sorted, sort_key, descending)
+    
+    # End timing and display results
+    end_time = time.time()
+    execution_time = (end_time - start_time) * 1000  # Convert to milliseconds
+    
+    print(f"Merge sort completed! Sorted {len(data)} items in {execution_time:.3f}ms")
+    
+    return result
 
 def merge(left: list, right: list, sort_key: str, descending: bool = False) -> list:
     """
