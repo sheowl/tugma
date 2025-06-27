@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext"; // ⭐ ADD THIS
 import { useCompany } from "../context/CompanyContext";
-import { useTags } from "../context/TagsContext"; // Added for dynamic tags
+import { useTags } from "../context/TagsContext";
 import EmployerSideBar from "../components/EmployerSideBar";
 import EmployerApplicantHeader from "../components/EmployerApplicantHeader";
 import EmpCard from "../components/EmpCard";
@@ -12,29 +13,128 @@ const EmployerApplicants = () => {
   const location = useLocation();
   const navigate = useNavigate();
   
+  // ⭐ USE AuthContext for authentication checks
+  const { 
+    isEmployer, 
+    isAuthenticated, 
+    user 
+  } = useAuth();
+  
   // Use CompanyContext for backend operations
-  const { getJobApplicants, loading, error, clearError } = useCompany();
+  const { 
+    getJobApplicants, 
+    getCompanyProfile, 
+    loading, 
+    error, 
+    clearError 
+  } = useCompany();
   
   // Use TagsContext for dynamic tag display
   const { getTagNamesByIds, loading: tagsLoading } = useTags();
   
   const [applicants, setApplicants] = useState([]);
   const [sortBy, setSortBy] = useState('best');
-  const [selectedJobNumber, setSelectedJobNumber] = useState(null); // Start with null
+  const [selectedJobNumber, setSelectedJobNumber] = useState(null);
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [selectedApplicant, setSelectedApplicant] = useState(null);
   const [showApplicationDetails, setShowApplicationDetails] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState("");
+  const [authChecked, setAuthChecked] = useState(false);
   
   // Get job posts data from navigation state
   const jobPostsData = location.state?.jobPosts || [];
   const selectedJob = location.state?.selectedJob;
   const selectedJobId = location.state?.selectedJobId;
 
+  // ⭐ STEP 1: Check authentication first
   useEffect(() => {
-    loadApplicantsData();
-  }, [selectedJobNumber]);
+    checkAuthenticationAndLoadData();
+  }, []);
+
+  // ⭐ STEP 2: Load applicants when job changes (after auth is confirmed)
+  useEffect(() => {
+    if (authChecked && isAuthenticated() && isEmployer()) {
+      loadApplicantsData();
+    }
+  }, [selectedJobNumber, authChecked]);
+
+  const checkAuthenticationAndLoadData = async () => {
+    try {
+      setIsLoading(true);
+      setFetchError("");
+      clearError();
+
+      console.log('🔍 EmployerApplicants: Checking authentication...');
+
+      // ⭐ Check if user is authenticated and is an employer
+      if (!isAuthenticated()) {
+        console.log('❌ EmployerApplicants: Not authenticated');
+        navigate('/employer-sign-in');
+        return;
+      }
+
+      if (!isEmployer()) {
+        console.log('❌ EmployerApplicants: Not an employer');
+        navigate('/employer-sign-in');
+        return;
+      }
+
+      console.log('✅ EmployerApplicants: Authentication verified');
+      
+      // ⭐ Verify backend connection with company profile
+      try {
+        const profileResponse = await getCompanyProfile();
+        if (profileResponse) {
+          console.log('✅ EmployerApplicants: Backend connection verified');
+        }
+      } catch (profileError) {
+        console.log('⚠️ EmployerApplicants: Backend connection issue, but proceeding...');
+      }
+      
+      setAuthChecked(true);
+      
+      // Initialize job selection
+      await initializeJobSelection();
+      
+    } catch (error) {
+      console.error("❌ EmployerApplicants: Auth check error:", error);
+      setFetchError("Authentication error. Please log in again.");
+      navigate('/employer-sign-in');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const initializeJobSelection = async () => {
+    // If no job posts data is passed, redirect back to job posts page
+    if (!jobPostsData || jobPostsData.length === 0) {
+      navigate('/employerjobposts');
+      return;
+    }
+
+    // Set the selected job if provided, otherwise default to first
+    let jobIdToSelect = selectedJobNumber;
+    
+    // Priority order for job ID selection:
+    if (selectedJobId && selectedJobNumber === null) {
+      jobIdToSelect = selectedJobId;
+      setSelectedJobNumber(selectedJobId);
+      console.log(`🔍 EmployerApplicants: Using selectedJobId from navigation: ${selectedJobId}`);
+    } else if (selectedJobNumber) {
+      jobIdToSelect = selectedJobNumber;
+      console.log(`🔍 EmployerApplicants: Using current selectedJobNumber: ${selectedJobNumber}`);
+    } else if (jobPostsData.length > 0) {
+      jobIdToSelect = jobPostsData[0].id;
+      setSelectedJobNumber(jobPostsData[0].id);
+      console.log(`🔍 EmployerApplicants: Using first job from jobPostsData: ${jobPostsData[0].id}`);
+    }
+
+    if (!jobIdToSelect) {
+      setFetchError("No valid job ID found");
+      return;
+    }
+  };
 
   const loadApplicantsData = async () => {
     try {
@@ -42,41 +142,15 @@ const EmployerApplicants = () => {
       setFetchError("");
       clearError();
 
-      // If no job posts data is passed, redirect back to job posts page
-      if (!jobPostsData || jobPostsData.length === 0) {
-        navigate('/employerjobposts');
+      if (!selectedJobNumber) {
+        console.log('⏳ EmployerApplicants: No job selected yet, skipping load');
         return;
       }
 
-      // Set the selected job if provided, otherwise default to first
-      let jobIdToFetch = selectedJobNumber;
-      
-      // Priority order for job ID selection:
-      // 1. selectedJobId from navigation (when coming from specific job)
-      // 2. Current selectedJobNumber state
-      // 3. First job in jobPostsData array
-      if (selectedJobId && selectedJobNumber === null) {
-        jobIdToFetch = selectedJobId;
-        setSelectedJobNumber(selectedJobId);
-        console.log(`🔍 EmployerApplicants: Using selectedJobId from navigation: ${selectedJobId}`);
-      } else if (selectedJobNumber) {
-        jobIdToFetch = selectedJobNumber;
-        console.log(`🔍 EmployerApplicants: Using current selectedJobNumber: ${selectedJobNumber}`);
-      } else if (jobPostsData.length > 0) {
-        jobIdToFetch = jobPostsData[0].id;
-        setSelectedJobNumber(jobPostsData[0].id);
-        console.log(`🔍 EmployerApplicants: Using first job from jobPostsData: ${jobPostsData[0].id}`);
-      }
-
-      if (!jobIdToFetch) {
-        setFetchError("No valid job ID found");
-        return;
-      }
-
-      console.log(`🔍 EmployerApplicants: Final job ID to fetch: ${jobIdToFetch}`);
+      console.log(`🔍 EmployerApplicants: Loading applicants for job ID: ${selectedJobNumber}`);
 
       // Fetch applicants from backend
-      const response = await getJobApplicants(jobIdToFetch);
+      const response = await getJobApplicants(selectedJobNumber);
       
       console.log('📋 Applicants response:', response);
 
@@ -86,25 +160,25 @@ const EmployerApplicants = () => {
         const tagNames = getTagNamesByIds(applicant.applicant_tags || []);
         
         return {
-          id: applicant.applicant_id || `${jobIdToFetch}-${index}`,
-          jobNumber: jobIdToFetch,
+          id: applicant.applicant_id || `${selectedJobNumber}-${index}`,
+          applicant_id: applicant.applicant_id, // ⭐ ADD THIS for ApplicationFullDetails
+          jobNumber: selectedJobNumber,
           jobTitle: response.job_title || 'Job Post',
-          matched: applicant.match_score || 0, // Use actual match score from backend
-          isNew: new Date() - new Date(applicant.application_created_at) < 24 * 60 * 60 * 1000, // New if applied within last 24 hours
+          matched: applicant.match_score || 0,
+          isNew: new Date() - new Date(applicant.application_created_at) < 24 * 60 * 60 * 1000,
           candidateName: applicant.name || 'Unknown Applicant',
-          role: 'Applicant', // Default role since backend doesn't provide this yet
-          email: applicant.applicant_email || 'N/A', // Use applicant_email from backend
+          role: 'Applicant',
+          email: applicant.applicant_email || 'N/A',
           phoneNumber: applicant.phone_number || 'N/A',
           location: applicant.location || 'N/A',
           applicationCreatedAt: applicant.application_created_at,
           status: applicant.status || 'applied',
-          skills: tagNames.slice(0, 3), // Show first 3 tags as skills
-          moreSkillsCount: Math.max(0, tagNames.length - 3), // Count of remaining tags
+          skills: tagNames.slice(0, 3),
+          moreSkillsCount: Math.max(0, tagNames.length - 3),
           appliedDaysAgo: calculateDaysAgo(applicant.application_created_at),
-          // Add new fields from backend
-          applicantTags: applicant.applicant_tags || [], // Array of tag IDs
-          tagNames: tagNames, // Array of tag names for display
-          matchScore: applicant.match_score || 0 // Actual match score
+          applicantTags: applicant.applicant_tags || [],
+          tagNames: tagNames,
+          matchScore: applicant.match_score || 0
         };
       });
 
@@ -112,7 +186,14 @@ const EmployerApplicants = () => {
       
     } catch (error) {
       console.error("❌ Error loading applicants:", error);
-      setFetchError(error.message || "Failed to load applicants. Please try again.");
+      
+      // Check if it's an auth error
+      if (error.message.includes('Authentication') || error.message.includes('401')) {
+        setFetchError("Session expired. Please log in again.");
+        navigate('/employer-sign-in');
+      } else {
+        setFetchError(error.message || "Failed to load applicants. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -140,7 +221,6 @@ const EmployerApplicants = () => {
   // Sort applicants based on sortBy
   const sortedApplicants = [...filteredApplicants].sort((a, b) => {
     if (sortBy === 'best') {
-      // Sort by actual match score (descending)
       return (b.matchScore || 0) - (a.matchScore || 0);
     } else if (sortBy === 'recent') {
       return a.appliedDaysAgo - b.appliedDaysAgo;
@@ -163,6 +243,12 @@ const EmployerApplicants = () => {
     setApplicants([]); // Clear current applicants while loading new ones
   };
 
+  // ⭐ RETRY FUNCTION THAT INCLUDES AUTH CHECK
+  const handleRetry = () => {
+    setAuthChecked(false);
+    checkAuthenticationAndLoadData();
+  };
+
   // Loading state
   if (isLoading && applicants.length === 0) {
     return (
@@ -172,7 +258,9 @@ const EmployerApplicants = () => {
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
               <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-[#FF8032] mx-auto"></div>
-              <div className="text-lg font-semibold text-gray-600 mt-4">Loading applicants...</div>
+              <div className="text-lg font-semibold text-gray-600 mt-4">
+                {!authChecked ? 'Verifying authentication...' : 'Loading applicants...'}
+              </div>
             </div>
           </div>
         </div>
@@ -190,8 +278,20 @@ const EmployerApplicants = () => {
             <div className="text-center text-red-500">
               <div className="text-lg font-semibold mb-4">Error Loading Applicants</div>
               <div className="mb-4">{fetchError || error}</div>
+              
+              {/* ⭐ DEBUG INFO */}
+              {process.env.NODE_ENV === 'development' && (
+                <div className="bg-gray-100 p-4 rounded mb-4 text-xs text-left max-w-md mx-auto">
+                  <div><strong>Debug Info:</strong></div>
+                  <div>Auth Checked: {authChecked ? '✅ Yes' : '❌ No'}</div>
+                  <div>Is Authenticated: {isAuthenticated() ? '✅ Yes' : '❌ No'}</div>
+                  <div>Is Employer: {isEmployer() ? '✅ Yes' : '❌ No'}</div>
+                  <div>User: {user ? '✅ Present' : '❌ Missing'}</div>
+                </div>
+              )}
+              
               <button 
-                onClick={() => loadApplicantsData()}
+                onClick={handleRetry}
                 className="bg-[#FF8032] text-white px-6 py-2 rounded-lg hover:bg-[#E66F24] transition"
               >
                 Retry
@@ -226,22 +326,21 @@ const EmployerApplicants = () => {
             sortedApplicants.map(applicant => (
               <EmpCard
                 key={applicant.id}
-                matched={applicant.matchScore} // Use actual match score
+                matched={applicant.matchScore}
                 isNew={applicant.isNew}
                 candidateName={applicant.candidateName}
                 role={applicant.role}
                 email={applicant.email}
                 phoneNumber={applicant.phoneNumber}
                 location={applicant.location}
-                skills={applicant.skills} // Dynamic skills from tags
-                moreSkillsCount={applicant.moreSkillsCount} // Count from tags
+                skills={applicant.skills}
+                moreSkillsCount={applicant.moreSkillsCount}
                 appliedDaysAgo={applicant.appliedDaysAgo}
                 actionLabel="Action"
                 onAction={val => {}}
                 dropdownOpen={openDropdownId === applicant.id}
                 onDropdownToggle={() => handleDropdownToggle(applicant.id)}
                 onViewFull={() => handleViewFullApplicant(applicant)}
-                // Pass additional data for potential future use
                 applicantTags={applicant.applicantTags}
                 tagNames={applicant.tagNames}
               />
@@ -261,6 +360,20 @@ const EmployerApplicants = () => {
           open={showApplicationDetails}
           onClose={() => setShowApplicationDetails(false)}
           applicant={selectedApplicant}
+          jobId={selectedJobNumber}
+          jobData={selectedApplicant?.job} // Add this line
+          onStatusUpdate={(applicantId, newStatus) => {
+            console.log(`Applicant ${applicantId} status updated to ${newStatus}`);
+            
+            // Update the local applicants state
+            setApplicants(prevApplicants => 
+              prevApplicants.map(app => 
+                app.id === applicantId 
+                  ? { ...app, status: newStatus }
+                  : app
+              )
+            );
+          }}
         />
       )}
     </div>
