@@ -8,4 +8,5 @@ from . import (
     notification,
     tags,
     jobmatchtest,
+    matching,
 )
