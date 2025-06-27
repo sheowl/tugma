@@ -9,7 +9,8 @@ from app.api.v1.endpoints import (
     jobs,
     notification,
     tags,
-    jobmatchtest,  # Add this import
+    jobmatchtest,
+    matching  # Add this import
 )
 
 api_router = APIRouter()
@@ -23,4 +24,6 @@ api_router.include_router(jobs.router, prefix="/jobs", tags=["jobs"])
 api_router.include_router(notification.router, prefix="/notifications", tags=["notifications"])
 api_router.include_router(tags.router, prefix="/tags", tags=["tags"])
 api_router.include_router(jobmatchtest.router, tags=["job-matches"])  # Add this line
+api_router.include_router(matching.router, prefix="/matching", tags=["matching"])
+
 

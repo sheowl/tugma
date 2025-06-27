@@ -92,3 +92,18 @@ class ApplicantCertificateOut(ApplicantCertificateBase):
 
     model_config = {"from_attributes": True}
 
+# === APPLICANT AUTH SCHEMAS ===
+class ApplicantSignUp(BaseModel):
+    email: EmailStr
+    password: str
+    first_name: str
+    last_name: str
+
+class ApplicantLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+# For onboarding status
+class ApplicantOnboardingStatus(BaseModel):
+    needs_onboarding: bool
+    completed_fields: dict[str, bool]

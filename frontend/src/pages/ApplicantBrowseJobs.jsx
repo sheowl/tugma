@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from "react-router-dom";
 import ApplicantSideBar from '../components/ApplicantSideBar';
 import Card from '../components/Card';
 import ApplicantDashLogo from '../assets/ApplicantDashLogo.svg';
@@ -7,19 +6,18 @@ import JobDetailsDrawer from '../components/JobDetailsDrawer';
 import SearchBar from '../components/SearchBar';
 import Dropdown from '../components/Dropdown';
 import ApplicantNotification from '../components/ApplicantNotification';
+import { supabase } from "../services/supabaseClient";
 
 function ApplicantBrowseJobs() {
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [selectedJob, setSelectedJob] = useState(null);
-    const navigate = useNavigate();
+    const [selectedSort, setSelectedSort] = useState("descending"); // Default sort option set to descending
+    const [sortedData, setSortedData] = useState([]); // State for sorted job data
+    const [selectedModality, setSelectedModality] = useState(null); // State for modality filter
+    const [selectedWorkType, setSelectedWorkType] = useState(null); // State for work type filter
+    const [firstName, setFirstName] = useState("User"); // State for user's first name
+    const [showNotifications, setShowNotifications] = useState(false);
 
-    // Auth check: redirect if not logged in
-    useEffect(() => {
-        // You can check for "access_token", "user", or whatever you use for auth
-        if (!localStorage.getItem("access_token")) {
-            navigate("/applicant-sign-in", { replace: true });
-        }
-    }, [navigate]);
 
      const sampleData = [
   { title: "Some Job Here", company: "Company Name Here", status: "Accepted", timeAgo: "3 hours ago" },
@@ -38,6 +36,31 @@ function ApplicantBrowseJobs() {
         };
 
         fetchFirstName();
+    }, []);
+
+    // Sync applicant data with the server
+    useEffect(() => {
+        const syncApplicant = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            const user = session?.user;
+            const accessToken = session?.access_token;
+
+            if (user && accessToken) {
+                await fetch("http://localhost:8000/api/v1/auth/applicant/oauth-register", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${accessToken}`,
+                    },
+                    body: JSON.stringify({
+                        email: user.email,
+                        first_name: user.user_metadata?.full_name?.split(" ")[0] || "",
+                        last_name: user.user_metadata?.full_name?.split(" ").slice(1).join(" ") || "",
+                    }),
+                });
+            }
+        };
+        syncApplicant();
     }, []);
 
     // Mock job data
@@ -192,21 +215,6 @@ function ApplicantBrowseJobs() {
         setSortedData(sorted); // Update the sorted and filtered data
     }, [selectedSort, selectedModality, selectedWorkType]);
 
-    const filteredJobs = useMemo(() => {
-        if (!searchQuery.trim()) {
-            return sortedData;
-        }
-
-        const searchTerm = searchQuery.toLowerCase().trim();
-
-        return sortedData.filter(job => {
-            return (
-                job.jobTitle.toLowerCase().includes(searchTerm) ||
-                job.companyName.toLowerCase().includes(searchTerm)
-            );
-        });
-    }, [searchQuery, sortedData]);
-
     return (
         <div className="min-h-screen bg-[#2A4D9B] flex items-start">
             {/* Sidebar */}
@@ -262,21 +270,14 @@ function ApplicantBrowseJobs() {
 
                 {/* Search Bar and Dropdowns */}
                 <div className="px-[112px] mt-0 mb-5 flex justify-between items-center">
-                    <SearchBar 
-    onSearch={(query) => {
-        setSearchQuery(query);
-        console.log("Applicant Search:", query);
-    }}
-    value={searchQuery}
-    onChange={(query) => setSearchQuery(query)}
-/>
+                    <SearchBar onSearch={(query) => console.log("Applicant Search:", query)} />
                 </div>
 
                 {/* Job Count */}
                 <div className="pl-[112px] pr-[118px]">
                     <div className="flex items-center justify-between mb-2">
                         <div className="text-base font-semibold text-gray-500 mb-2">
-                            {filteredJobs.length} matches displayed
+                            {sortedData.length} matches displayed
                         </div>
                         <div className="flex gap-4">
                             <Dropdown
@@ -367,7 +368,7 @@ function ApplicantBrowseJobs() {
 
                 {/* Job Cards */}
                 <div className="pl-[112px] pr-[118px] mt-10 mb-10 flex flex-wrap gap-[33px] justify-center">
-                    {filteredJobs.map((job) => (
+                    {sortedData.map((job) => (
                         <Card
                             key={job.id}
                             jobTitle={job.jobTitle}
