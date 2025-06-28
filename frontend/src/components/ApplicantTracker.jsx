@@ -113,6 +113,13 @@ function ApplicantTracker({
 
   const timelineSteps = getTimelineSteps();
 
+  // Add your formatSalary function here
+  const formatSalary = (amount) => {
+    if (!amount) return 0;
+    const num = typeof amount === 'string' ? parseInt(amount) : amount;
+    return num >= 1000 ? Math.floor(num / 1000) : num;
+  };
+
   return (
     <div className="bg-white shadow-all-around rounded-[20px] p-6 max-w-[500px] h-[310px] flex flex-row justify-between 
     gap-6 transition transform duration-300 ease-in-out hover:scale-102">
@@ -153,7 +160,9 @@ function ApplicantTracker({
 
         <div className="flex items-center justify-between mt-2">
           <div className="leading-tight flex flex-col justify-center">
-            <p className="text-base font-bold">₱{salaryRangeLow}K - ₱{salaryRangeHigh}K</p>
+            <p className="text-base font-bold">
+              ₱{formatSalary(salaryRangeLow)}K - ₱{formatSalary(salaryRangeHigh)}K
+            </p>
             <p className="text-[10px] font-semibold text-gray-500 -mt-1">{salaryFrequency}</p>
           </div>
         </div>
