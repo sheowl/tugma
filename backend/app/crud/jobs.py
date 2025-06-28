@@ -6,6 +6,9 @@ from app.models.jobs import Job, JobTag
 from app.models.tags import Tags
 from app.models.application import JobApplication
 from app.schemas.jobs import JobCreate, JobUpdate
+from app.models.company import Company
+from app.models.tags import Tags  # Adjust import path as needed
+from app.models.jobs import JobTag  # Adjust import path as needed
 from typing import List, Optional
 
 async def create_job(db: AsyncSession, job_in: JobCreate) -> Job:
@@ -222,3 +225,57 @@ async def get_applicant_tags(db: AsyncSession, applicant_id: int) -> List[int]:
         import traceback
         traceback.print_exc()
         return []
+
+async def get_all_active_jobs(db: AsyncSession) -> List[Job]:
+    """Get all jobs (since we don't have active/inactive status yet)"""
+    try:
+        result = await db.execute(select(Job))
+        jobs = result.scalars().all()
+        print(f"🔍 CRUD: Found {len(jobs)} total jobs")
+        return list(jobs)
+    except Exception as e:
+        print(f"❌ CRUD ERROR in get_all_active_jobs: {e}")
+        return []
+
+async def get_job_company_info(db: AsyncSession, job_id: int):
+    """Get company information for a specific job"""
+    try:        
+        # Get the job first
+        job_result = await db.execute(select(Job).where(Job.job_id == job_id))
+        job = job_result.scalar_one_or_none()
+        
+        if not job:
+            return None
+            
+        # Get company info
+        company_result = await db.execute(select(Company).where(Company.company_id == job.company_id))
+        company = company_result.scalar_one_or_none()
+        
+        return company
+        
+    except Exception as e:
+        print(f"❌ Error getting job company info: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+# Also, fix your get_job_tags function to return tag objects, not just IDs
+async def get_job_tags_with_names(db: AsyncSession, job_id: int):
+    """Get all tags with names for a specific job"""
+    try:
+        
+        result = await db.execute(
+            select(Tags)
+            .join(JobTag, Tags.tag_id == JobTag.tag_id)
+            .where(JobTag.job_id == job_id)
+        )
+        
+        tags = result.scalars().all()
+        return list(tags)
+        
+    except Exception as e:
+        print(f"❌ Error getting job tags with names: {e}")
+        import traceback
+        traceback.print_exc()
+        return []
+

@@ -7,6 +7,10 @@ from datetime import datetime
 from app.models.application import JobApplication, JobMatching
 from app.models.jobs import Job  # Add this import
 from app.schemas.application import JobApplicationCreate, JobApplicationUpdate, JobMatchingCreate, JobMatchingUpdate
+from app.models.jobs import Job
+from app.models.company import Company
+from app.models.tags import TagCategory
+from app.services.matching_service import MatchingService
 
 # Submit a new job application
 async def create_job_application(db: AsyncSession, app_in: JobApplicationCreate) -> JobApplication:
@@ -24,14 +28,59 @@ async def create_job_application(db: AsyncSession, app_in: JobApplicationCreate)
     db.add(application)
     await db.commit()
     await db.refresh(application)
+
+        # --- ADD THIS BLOCK ---
+    # Calculate match score
+    match_details = await MatchingService.calculate_job_match_score_with_details(
+        db, application.applicant_id, application.job_id
+    )
+    match_score = match_details.get("match_score", 0)
+
+    # Upsert into Job_Matching
+    await upsert_job_match(db, application.applicant_id, application.job_id, match_score)
+    # --- END BLOCK ---
+
+    return application
+
     return application
 
 # Get applications for a specific applicant
-async def get_applications_by_applicant(db: AsyncSession, applicant_id: int) -> List[JobApplication]:
+async def get_applications_by_applicant(db: AsyncSession, applicant_id: int):
     result = await db.execute(
-        select(JobApplication).where(JobApplication.applicant_id == applicant_id)
+        select(JobApplication, Job, Company, TagCategory, JobMatching.match_score)
+        .join(Job, JobApplication.job_id == Job.job_id)
+        .join(Company, Job.company_id == Company.company_id)
+        .outerjoin(JobMatching, (JobMatching.applicant_id == JobApplication.applicant_id) & (JobMatching.job_id == JobApplication.job_id))
+        .join(TagCategory, Job.required_category_id == TagCategory.category_id)
+        .where(JobApplication.applicant_id == applicant_id)
     )
-    return list(result.scalars().all())
+    rows = result.all()
+    applications = []
+    for app, job, company, category, match_score in rows:
+        applications.append({
+            "applicant_id": app.applicant_id,
+            "job_id": app.job_id,
+            "status": app.status,
+            "remarks": app.remarks,
+            "created_at": app.created_at,
+            "jobTitle": job.job_title,
+            "companyName": company.company_name,
+            "location": company.location,
+            "description": job.description,
+            "salaryRangeLow": job.salary_min,
+            "salaryRangeHigh": job.salary_max,
+            "salaryFrequency": "Monthly",  # Add this field
+            "setting": job.setting,
+            "jobType": job.work_type,
+            "workSetup": job.setting,      # Add this for consistency
+            "employmentType": job.work_type, # Add this for consistency
+            "matchScore": match_score or 0,              # Add a default match score
+            "tags": [],                    # Add empty tags array
+            "requiredCategory": category.category_name,
+            "requiredProficiency": job.required_proficiency,
+            # Add more fields as needed
+        })
+    return applications
 
 # Get a specific application by applicant and job
 async def get_application(db: AsyncSession, applicant_id: int, job_id: int) -> Optional[JobApplication]:

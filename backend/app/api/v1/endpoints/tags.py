@@ -4,23 +4,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
-from app.schemas.tags import TagCreate, TagOut, TagCategoryCreate, TagCategoryOut
+from app.schemas.tags import TagCreate, TagOut, TagCategoryCreate, TagCategoryOut, TagIdsRequest
 from app.core.database import get_db
 from app.crud import tags as crud
-from app.services.tag_hash_table import get_tag_hash_table
-from app.algorithms.hashing import TagMatcher
+from app.middleware.auth import get_current_applicant
 
-router = APIRouter()
-
-# === TAG CATEGORY ROUTES ===
-
-@router.get("/categories", response_model=List[TagCategoryOut])
-async def get_all_categories(db: AsyncSession = Depends(get_db)):
-    return await crud.get_all_categories(db)
-
-@router.post("/categories", response_model=TagCategoryOut)
-async def create_category(category: TagCategoryCreate, db: AsyncSession = Depends(get_db)):
-    return await crud.create_category(db, category)
+router = APIRouter(prefix="/tags", tags=["tags"])
 
 # === TAG ROUTES ===
 
@@ -35,6 +24,73 @@ async def create_tag(tag: TagCreate, db: AsyncSession = Depends(get_db)):
 @router.get("/category/{category_id}", response_model=List[TagOut])
 async def get_tags_by_category(category_id: int, db: AsyncSession = Depends(get_db)):
     return await crud.get_tags_by_category(db, category_id)
+
+# === TAG CATEGORY ROUTES ===
+
+@router.get("/categories", response_model=List[TagCategoryOut])
+async def get_all_categories(db: AsyncSession = Depends(get_db)):
+    return await crud.get_all_categories(db)
+
+@router.post("/categories", response_model=TagCategoryOut)
+async def create_category(category: TagCategoryCreate, db: AsyncSession = Depends(get_db)):
+    return await crud.create_category(db, category)
+
+
+# me routes for authenticated applicants
+@router.put("/applicant/me")
+async def update_my_tags(
+    tag_ids: TagIdsRequest,
+    db: AsyncSession = Depends(get_db),
+    applicant_info = Depends(get_current_applicant)
+):
+    """Replace all tags for the current authenticated applicant"""
+    db_applicant = applicant_info["db_user"]
+    try:
+        result = await crud.update_applicant_tags(db, db_applicant.applicant_id, tag_ids.tag_ids)
+        print(f"✅ Tags updated successfully: {result}")
+        return {"message": "Tags updated successfully"}
+    except Exception as e:
+        print(f"❌ Error in update_my_tags: {e}")
+        print(f"❌ Error type: {type(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/applicant/me/add-tags")  # New endpoint for adding tags
+async def add_applicant_tags(
+    tag_ids: TagIdsRequest,
+    db: AsyncSession = Depends(get_db),
+    applicant_info = Depends(get_current_applicant)
+):
+    """Add tags to existing applicant tags (doesn't replace)"""
+    db_applicant = applicant_info["db_user"]
+    try:
+        # Get existing tags
+        existing_tags = await crud.get_applicant_tags(db, db_applicant.applicant_id)
+        
+        # FIXED: Handle both dict and object formats
+        existing_tag_ids = []
+        for tag in existing_tags:
+            if isinstance(tag, dict):
+                existing_tag_ids.append(tag.get('tag_id'))
+            else:
+                existing_tag_ids.append(tag.tag_id)
+        
+        # Remove None values
+        existing_tag_ids = [tag_id for tag_id in existing_tag_ids if tag_id is not None]
+        
+        print(f"🔍 DEBUG: Existing tag IDs: {existing_tag_ids}")
+        print(f"🔍 DEBUG: New tag IDs: {tag_ids.tag_ids}")
+        
+        # Combine with new tags (remove duplicates)
+        all_tag_ids = list(set(existing_tag_ids + tag_ids.tag_ids))
+        
+        print(f"🔍 DEBUG: Combined tag IDs: {all_tag_ids}")
+        
+        # Update with combined tags
+        result = await crud.update_applicant_tags(db, db_applicant.applicant_id, all_tag_ids)
+        return {"message": "Tags added successfully", "total_tags": len(all_tag_ids)}
+    except Exception as e:
+        print(f"❌ Error in add_applicant_tags: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
 
 # === APPLICANT TAG ROUTES (NO AUTHENTICATION FOR TESTING) ===
 
@@ -134,44 +190,6 @@ async def clear_all_applicant_tags(
         }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-@router.get("/test-hash")
-async def test_hash_table(db: AsyncSession = Depends(get_db)):
-    """Test the tag hash table functionality"""
-    try:
-        print("=== Testing Tag Hash Table ===")
-        
-        # Test 1: Get the hash table
-        tag_hash_table = await get_tag_hash_table(db)
-        
-        # Test 2: Test some tag lookups
-        test_tags = ["Python", "JavaScript", "React", "SQL"]
-        results = []
-        
-        for tag in test_tags:
-            hash_value = tag_hash_table.get_hash(tag)
-            if hash_value:
-                reverse_tag = tag_hash_table.get_tag(hash_value)
-                results.append({
-                    "tag": tag,
-                    "hash": hash_value,
-                    "reverse_lookup": reverse_tag,
-                    "exists": tag in tag_hash_table
-                })
-            else:
-                results.append({
-                    "tag": tag,
-                    "hash": None,
-                    "error": "Tag not found in database"
-                })
-        
-        return {
-            "total_tags": len(tag_hash_table),
-            "test_results": results
-        }
-        
-    except Exception as e:
-        return {"error": str(e)}
-
 @router.get("/test-all-hashes")
 async def test_all_tag_hashes(db: AsyncSession = Depends(get_db)):
     """Test that ALL tags from database are properly hashed"""

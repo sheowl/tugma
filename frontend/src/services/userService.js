@@ -1,4 +1,4 @@
-import { supabase } from "./supabaseClient";
+import { supabase } from "../services/supabaseClient";
 
 // // Mock data for testing
 // const mockUserDetails = {
@@ -16,62 +16,127 @@ import { supabase } from "./supabaseClient";
 //   field: "",
 // };
 
-// Fetch user details (real API)
+// Fetch user details (mock or real)
 export const fetchUserDetails = async (useMock = false) => {
   if (useMock) {
     // Simulate an asynchronous call with mock data
     return new Promise((resolve) => setTimeout(() => resolve(mockUserDetails), 500));
   }
-
-  // Get the current session and access token
-  const { data: { session } } = await supabase.auth.getSession();
+  // Real API call
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   const accessToken = session?.access_token;
-  if (!accessToken) return null;
+  if (!accessToken) throw new Error("No access token");
 
-  // Call your backend API to get user details
-  const res = await fetch("http://localhost:8000/api/v1/auth/me", {
+  const res = await fetch("http://localhost:8000/api/v1/applicants/me", {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
-  if (!res.ok) return null;
-  const userData = await res.json();
-
-  // You may need to transform userData to match your frontend structure
-  // For example:
+  if (!res.ok) throw new Error("Failed to fetch user details");
+  const data = await res.json();
+  // Optionally transform data to match your frontend structure
   return {
     contactDetails: {
-      currentAddress: userData.database_user.current_address || "",
-      contactNumber: userData.database_user.contact_number || "",
-      telephoneNumber: userData.database_user.telephone_number || "",
+      currentAddress: data.current_address || "",
+      contactNumber: data.contact_number || "",
+      telephoneNumber: data.telephone_number || "",
     },
     educationDetails: {
-      university: userData.database_user.university || "",
-      degree: userData.database_user.degree || "",
-      yearGraduated: userData.database_user.year_graduated || "",
+      university: data.university || "",
+      degree: data.degree || "",
+      yearGraduated: data.year_graduated ? String(data.year_graduated) : "",
     },
-    workExperiences: userData.database_user.work_experiences || [],
-    field: userData.database_user.field || "",
+    workExperiences: data.work_experiences || [],
+    field: data.field || "",
+    preferred_worksetting: data.preferred_worksetting || "",
+    preferred_worktype: data.preferred_worktype || "",
+    // Add other fields as needed
   };
 };
 
-// Save user details (real API)
-export const saveUserDetails = async (userDetails, useMock = false) => {
-  if (useMock) {
-    console.log("Mock Save:", userDetails);
-    return new Promise((resolve) => setTimeout(() => resolve(true), 500));
-  }
-  // Real API call
+// Save user details (mock or real)
+export const saveUserDetails = async (userDetails) => {
   const { data: { session } } = await supabase.auth.getSession();
   const accessToken = session?.access_token;
-  if (!accessToken) return false;
+  if (!accessToken) throw new Error("No access token");
 
-  // Call your backend API to save user details (adjust endpoint as needed)
-  const res = await fetch("http://localhost:8000/api/v1/applicants/onboarding-details", {
-    method: "POST",
+  const res = await fetch("http://localhost:8000/api/v1/applicants/me", {
+    method: "PUT",
     headers: {
-      "Content-Type": "application/json",
       Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
     },
-    body: JSON.stringify(userDetails),
+    body: JSON.stringify(userDetails), // userDetails is already flattened
   });
-  return res.ok;
+  if (!res.ok) throw new Error("Failed to save user details");
+  return true;
 };
+
+export const saveCertificates = async (certifications) => {
+  const { data: { session } } = await supabase.auth.getSession();
+  const accessToken = session?.access_token;
+  if (!accessToken) throw new Error("No access token");
+
+  for (const cert of certifications) {
+    const res = await fetch("http://localhost:8000/api/v1/applicants/me/certificates", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        certificate_name: cert.name || cert.certificate_name,
+        certificate_description: cert.description || cert.certificate_description,
+        // Add other fields as needed
+      }),
+    });
+    if (!res.ok) throw new Error("Failed to save certificate");
+  }
+};
+
+export const saveProficiency = async (proficiencyObjOrArr) => {
+  const { data: { session } } = await supabase.auth.getSession();
+  const accessToken = session?.access_token;
+  if (!accessToken) throw new Error("No access token");
+
+  // If it's an object, convert to array
+  const proficiencyArr = Array.isArray(proficiencyObjOrArr)
+    ? proficiencyObjOrArr
+    : Object.entries(proficiencyObjOrArr).map(([category_id, proficiency]) => ({
+        category_id: Number(category_id),
+        proficiency,
+      }));
+
+  for (const prof of proficiencyArr) {
+    const res = await fetch("http://localhost:8000/api/v1/applicants/me/proficiency", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        category_id: prof.category_id,
+        proficiency: prof.proficiency,
+      }),
+    });
+    if (!res.ok) throw new Error("Failed to save proficiency");
+  }
+};
+
+const saveWorkExperiences = async (workExperiences) => {
+  const { data: { session } } = await supabase.auth.getSession();
+  const accessToken = session?.access_token;
+  if (!accessToken) throw new Error("No access token");
+
+  for (const exp of workExperiences) {
+    await fetch("http://localhost:8000/api/v1/applicants/me/experience", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(exp), // exp should match your backend schema
+    });
+  }
+};
+

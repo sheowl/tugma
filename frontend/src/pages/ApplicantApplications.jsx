@@ -1,117 +1,149 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from "react-router-dom";
 import ApplicantSideBar from '../components/ApplicantSideBar';
 import ApplicantTracker from '../components/ApplicantTracker';
 import SearchBar from '../components/SearchBar';
-import ApplicantDashLogo from '../assets/ApplicantDashLogo.svg';
-import { useState, useEffect } from 'react';
 import Dropdown from '../components/Dropdown';
-import ApplicantNotification from '../components/ApplicantNotification';
+import ApplicantHeader from '../components/ApplicantHeader'; 
+import ApplicantTrackerDrawer from '../components/ApplicantTrackerDrawer'; 
+import LoadContent from "../components/LoadContent"; 
+import { useAuth } from "../context/AuthContext";
+import { supabase } from "../services/supabaseClient";
+
+const sortOptions = [
+    { label: "Most Recent", value: "recent" },
+    { label: "Oldest First", value: "oldest" },
+    { label: "Best Match", value: "best" },
+];
+
+const filterOptions = [
+  { label: "On-Site", value: "On-Site" },
+  { label: "Hybrid", value: "Hybrid" },
+  { label: "Remote", value: "Remote" },
+];
+
+const statusOptions = [
+  { label: "Full-Time", value: "Full-time" },
+  { label: "Contractual", value: "Contractual" },
+  { label: "Part-Time", value: "Part-Time" },
+  { label: "Internship", value: "Internship" },
+];
 
 function ApplicantApplications() {
-    const firstName = "Julianna Leila"; // Replace with actual user data
-    const [selectedSort, setSelectedSort] = useState("descending"); // Default sort option set to descending
-    const [sortedData, setSortedData] = useState([]); // State for sorted job data
-    const [selectedModality, setSelectedModality] = useState(null); // State for modality filter
-    const [selectedWorkType, setSelectedWorkType] = useState(null); // State for work type filter
+    const { user, loading } = useAuth();
+    const [firstName, setFirstName] = useState("");
     const [showNotifications, setShowNotifications] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [applications, setApplications] = useState([]);
+    const [selectedSort, setSelectedSort] = useState("recent");
+    const [selectedModality, setSelectedModality] = useState(null);
+    const [selectedWorkType, setSelectedWorkType] = useState(null);
+    
+    // Add these missing states for drawer functionality
+    const [drawerOpen, setDrawerOpen] = useState(false);
+    const [selectedJob, setSelectedJob] = useState(null);
 
+    // Add loading states
+    const [isLoadingApplications, setIsLoadingApplications] = useState(true);
+    const [isLoadingUserData, setIsLoadingUserData] = useState(true);
+    
+    const navigate = useNavigate();
 
-    const sampleData = [
-  { title: "Some Job Here", company: "Company Name Here", status: "Accepted", timeAgo: "3 hours ago" },
-  { title: "Junior Web Developer", company: "Kim Satrjt PH", status: "Rejected", timeAgo: "8 hours ago" },
-  { title: "Job Title", company: "Company Name", status: "Waitlisted", timeAgo: "3 hours ago" },
-  
-];
-    // Example job applications data
-    const jobApplications = [
-        {
-            jobTitle: "Software Engineer",
-            companyName: "Tech Innovations Inc.",
-            location: "San Francisco, CA",
-            matchScore: 85,
-            employmentType: "Full-time",
-            workSetup: "Hybrid",
-            description: "Join our dynamic team to develop cutting-edge software solutions.",
-            salaryRangeLow: 40,
-            salaryRangeHigh: 80,
-            salaryFrequency: "Monthly",
-            companyDescription: "Tech Innovations Inc. is a leading software development company focused on delivering innovative solutions to our clients. We value creativity, collaboration, and continuous learning.",
-            status: "rejected-after-interview", // or "interview", "accepted", etc.
-        },
-        {
-            jobTitle: "Product Manager",
-            companyName: "Innovatech Solutions",
-            location: "New York, NY",
-            matchScore: 90,
-            employmentType: "Full-time",
-            workSetup: "Remote",
-            description: "Lead product development and strategy for innovative solutions.",
-            salaryRangeLow: 50,
-            salaryRangeHigh: 100,
-            salaryFrequency: "Monthly",
-            companyDescription: "Innovatech Solutions is a global leader in tech innovation, empowering businesses worldwide.",
-            status: "interview",
-        },
-        {
-            jobTitle: "UI/UX Designer",
-            companyName: "Creative Minds Studio",
-            location: "Austin, TX",
-            matchScore: 75,
-            employmentType: "Contract",
-            workSetup: "On-site",
-            description: "Design user-friendly interfaces for our cutting-edge applications.",
-            salaryRangeLow: 30,
-            salaryRangeHigh: 60,
-            salaryFrequency: "Monthly",
-            companyDescription: "Creative Minds Studio specializes in creating visually stunning and functional designs.",
-            status: "applied",
-        },
-    ];
+    // Example: Fetch applications from backend or mock data
+    useEffect(() => {
+      const fetchApplications = async () => {
+        setIsLoadingApplications(true);
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          const accessToken = session?.access_token;
+          if (!accessToken) {
+            navigate("/applicant-sign-in", { replace: true });
+            return;
+          }
 
-    const filterOptions = [
-            { label: "On-Site", value: "On-Site" },
-            { label: "Hybrid", value: "Hybrid" },
-            { label: "Remote", value: "Remote" },
-        ];
-    
-        const statusOptions = [
-            { label: "Full-Time", value: "Full-time" },
-            { label: "Contractual", value: "Contractual" },
-            { label: "Part-Time", value: "Part-Time" },
-            { label: "Internship", value: "Internship" },
-        ];
-    
-        const sortOptions = [
-            { label: "Ascending Match Score", value: "ascending" },
-            { label: "Descending Match Score", value: "descending" },
-        ];
-    
-        // Sort and filter the data whenever filters or sort options change
-        useEffect(() => {
-            let filtered = [...jobApplications]; // Start with the full job applications list
-    
-            // Apply modality filter
-            if (selectedModality) {
-                filtered = filtered.filter((job) => job.workSetup === selectedModality);
+          const res = await fetch("http://localhost:8000/api/v1/applicants/my-applications", {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json",
+            },
+          });
+
+          if (!res.ok) {
+            throw new Error("Failed to fetch applications");
+          }
+
+          const data = await res.json();
+          setApplications(data); // Adjust if your backend returns { applications: [...] }
+        } catch (err) {
+          console.error("Error fetching applications:", err);
+          setApplications([]);
+        } finally {
+          setIsLoadingApplications(false);
+        }
+      };
+
+      if (user) {
+        fetchApplications();
+      }
+    }, [navigate, user]);
+
+    // Update filtering logic to match backend field names
+    const filteredApplications = applications
+        .filter(app => 
+            (!searchQuery || app.jobTitle.toLowerCase().includes(searchQuery.toLowerCase()))
+            && (!selectedModality || app.setting === selectedModality) // Use 'setting' instead of 'modality'
+            && (!selectedWorkType || app.jobType === selectedWorkType) // Use 'jobType' instead of 'workType'
+        )
+        .sort((a, b) => {
+            if (selectedSort === "recent") {
+                return new Date(b.applicationCreatedAt || 0) - new Date(a.applicationCreatedAt || 0);
+            } else if (selectedSort === "oldest") {
+                return new Date(a.applicationCreatedAt || 0) - new Date(b.applicationCreatedAt || 0);
+            } else if (selectedSort === "best") {
+                return (b.matchScore || 0) - (a.matchScore || 0);
             }
-    
-            // Apply work type filter
-            if (selectedWorkType) {
-                filtered = filtered.filter((job) => job.employmentType === selectedWorkType);
-            }
-    
-            // Apply sorting
-            const sorted = filtered.sort((a, b) => {
-                if (selectedSort === "ascending") {
-                    return a.matchScore - b.matchScore; // Ascending order
-                } else if (selectedSort === "descending") {
-                    return b.matchScore - a.matchScore; // Descending order
-                }
-                return 0;
-            });
-    
-            setSortedData(sorted); // Update the sorted and filtered data
-        }, [selectedSort, selectedModality, selectedWorkType]);
+            return 0;
+        });
+
+    useEffect(() => {
+      if (user && user.user_metadata && user.user_metadata.first_name) {
+        setFirstName(user.user_metadata.first_name);
+      }
+    }, [user]);
+
+    useEffect(() => {
+      if (!loading && !user) {
+        navigate("/applicant-sign-in", { replace: true });
+      }
+    }, [user, loading, navigate]);
+
+    // Add user data loading
+    useEffect(() => {
+      const fetchUserData = async () => {
+        if (!user) return;
+        
+        setIsLoadingUserData(true);
+        try {
+          // ...fetch user data...
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+        } finally {
+          setIsLoadingUserData(false);
+        }
+      };
+
+      fetchUserData();
+    }, [user]);
+
+    // Move the loading check outside of the main return, keeping only auth loading
+    if (loading || isLoadingUserData) {
+        return (
+            <div className="min-h-screen bg-white flex items-start overflow-hidden">
+                <ApplicantSideBar />
+                <LoadContent message="Loading your applications..." />
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-[#2A4D9B] flex items-start overflow-hidden">
@@ -119,62 +151,20 @@ function ApplicantApplications() {
 
             {/* Main Content Area */}
             <div className="flex-1 h-screen bg-white rounded-tl-[40px] overflow-y-auto p-6 shadow-md">
+                {/* Use ApplicantHeader instead of manual header */}
+                <ApplicantHeader
+                    title="Track Your Applications"
+                    subtitle="Ready to make meets end?"
+                    firstName={firstName}
+                    showProfile={true}
+                    showSearchBar={true}
+                />
 
-                {/* Header */}
-                <div className="flex justify-between w-full px-9 mb-0">
-                    <div className="flex items-center gap-[15px] m-9">
-                        <img
-                            src={ApplicantDashLogo}
-                            alt="Tugma Logo"
-                            className="max-w-[136px] h-auto"
-                        />
-                        <div>
-                            <div className="font-[Montserrat] text-4xl font-bold text-[#2A4D9B]">
-                                Track your applications
-                            </div>
-                            <div className="font-semibold italic text-orange-400 text-xl">
-                                Ready to make meets end?
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                        <i className="bi bi-person-circle text-4xl text-gray-400"></i>
-                        <div className="leading-tight pl-3">
-                            <div className="font-semibold text-black text-sm">{firstName}</div>
-                        </div>
-                       <i
-                        className="bi bi-bell text-2xl text-[#2A4D9B] ml-6 cursor-pointer position-relative"
-                        onClick={() => setShowNotifications((prev) => !prev)}
-                        ></i>
-
-                    </div>
-                </div>
-
-                {showNotifications && (
-                    <div className="absolute top-[120px] right-[50px] z-50">
-                        <ApplicantNotification
-                        open={showNotifications}
-                        onClose={() => setShowNotifications(false)}
-                        notification={sampleData}
-                        onViewDetails={(notif) => {
-                            console.log("View notif details:", notif);
-                            setShowNotifications(false);
-                        }}
-                        />
-                    </div>
-                    )}
-
-                {/* Search Bar and Dropdowns */}
-                <div className="px-[112px] mt-0 mb-5 flex justify-between items-center">
-                    <SearchBar onSearch={(query) => console.log("Applicant Search:", query)} />
-                </div>
-
-                {/* Job Count */}
+                {/* Job Count section remains the same */}
                 <div className="pl-[112px] pr-[118px]">
                     <div className="flex items-center justify-between mb-2">
                         <div className="text-base font-semibold text-gray-500 mb-2">
-                            {sortedData.length} matches displayed
+                            {filteredApplications.length} matches displayed
                         </div>
                         <div className="flex gap-4">
                             <Dropdown
@@ -264,29 +254,61 @@ function ApplicantApplications() {
                 </div>
 
                 {/* Job Applications */}
-                <div className="pl-[112px] pr-[118px]">
-                      <div className="grid grid-cols-2 gap-10 mt-10 mb-10">
-                    {sortedData.map((job, index) => (
-                        <div key={index} className="flex items-center justify-between mb-2">
-                            <ApplicantTracker
-                                jobTitle={job.jobTitle}
-                                companyName={job.companyName}
-                                location={job.location}
-                                matchScore={job.matchScore}
-                                employmentType={job.employmentType}
-                                workSetup={job.workSetup}
-                                description={job.description}
-                                salaryRangeLow={job.salaryRangeLow}
-                                salaryRangeHigh={job.salaryRangeHigh}
-                                salaryFrequency={job.salaryFrequency}
-                                companyDescription={job.companyDescription}
-                                onViewDetails={() => alert(`View Details for ${job.jobTitle}`)}
-                                status={job.status}
-                            />
+                <div className="pl-[112px] pr-[118px] mt-10 mb-10 flex flex-wrap gap-[33px] justify-center">
+                    {isLoadingApplications ? (
+                        // Simple loading spinner for applications only
+                        <div className="flex justify-center items-center w-full h-64">
+                            <div className="text-center">
+                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2A4D9B] mx-auto mb-4"></div>
+                                <div>Loading applications...</div>
+                            </div>
                         </div>
-                    ))}
+                    ) : filteredApplications.length === 0 ? (
+                        // Empty state
+                        <div className="flex justify-center items-center w-full h-64">
+                            <div className="text-center text-gray-500">
+                                <i className="bi bi-inbox text-4xl mb-4"></i>
+                                <div>No applications found</div>
+                                <div className="text-sm">Start applying to jobs to see them here!</div>
+                            </div>
+                        </div>
+                    ) : (
+                        // Applications list
+                        filteredApplications.map((job, index) => (
+                            <div key={index} className="flex items-center justify-between mb-2">
+                                <ApplicantTracker
+                                    jobTitle={job.jobTitle}
+                                    companyName={job.companyName}
+                                    location={job.location}
+                                    matchScore={job.matchScore || 0}
+                                    employmentType={job.jobType}
+                                    workSetup={job.setting}
+                                    description={job.description}
+                                    salaryRangeLow={job.salaryRangeLow}
+                                    salaryRangeHigh={job.salaryRangeHigh}
+                                    salaryFrequency={job.salaryFrequency || "Monthly"}
+                                    companyDescription={job.companyDescription || ""}
+                                    onViewDetails={() => {
+                                        setSelectedJob(job);
+                                        setDrawerOpen(true);
+                                    }}
+                                    status={job.status}
+                                />
+                            </div>
+                        ))
+                    )}
                 </div>
-                </div>
+
+                {/* Add ApplicantTrackerDrawer */}
+                <ApplicantTrackerDrawer
+                    open={drawerOpen}
+                    onClose={() => setDrawerOpen(false)}
+                    onViewDetails={(job) => {
+                        setSelectedJob(job);
+                        setDrawerOpen(true);
+                    }}
+                    job={selectedJob}
+                />
             </div>
         </div>
     );

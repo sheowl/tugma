@@ -50,6 +50,17 @@ async def health_check():
     return {"status": "healthy", "service": "tugma-api"}
 
 
+# Add this endpoint after the health check
+@app.get("/debug/cors")
+async def debug_cors():
+    return {
+        "allowed_origins": settings.ALLOWED_ORIGINS if hasattr(settings, 'ALLOWED_ORIGINS') else "Not found",
+        "allowed_methods": settings.ALLOWED_METHODS if hasattr(settings, 'ALLOWED_METHODS') else "Not found",
+        "allowed_headers": settings.ALLOWED_HEADERS if hasattr(settings, 'ALLOWED_HEADERS') else "Not found",
+        "type_origins": type(settings.ALLOWED_ORIGINS).__name__ if hasattr(settings, 'ALLOWED_ORIGINS') else "Not found"
+    }
+
+
 if __name__ == "__main__":
     uvicorn.run(
         "main:app",

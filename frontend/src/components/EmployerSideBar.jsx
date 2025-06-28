@@ -43,12 +43,6 @@ const EmployerSideBar = ({ activePage }) => {
         }
     };
 
-    const handleLogout = (e) => {
-        e.preventDefault();
-        logout();
-        navigate("/employer-sign-in");
-    };
-
     return (
         <div className="w-[336px] bg-[#FF8032] min-h-screen flex flex-col justify-between items-center pt-14 pb-6">
             {/* Top Section: Logo + Navigation */}
@@ -82,14 +76,12 @@ const EmployerSideBar = ({ activePage }) => {
             </div>
 
             {/* Bottom Section */}
-            <a
-                href="/employer-sign-in"
-                onClick={handleLogout}
-                className="flex items-center gap-3 px-6 py-3 w-[190px] h-[50px] text-white text-base cursor-pointer hover:bg-[#E66F24] rounded-[10px]"
+            <NavLink to="/employer-sign-in"
+            className="flex items-center gap-3 px-6 py-3 w-[190px] h-[50px] text-white text-base cursor-pointer hover:bg-[#E66F24] rounded-[10px]"
             >
-                <i className="bi bi-box-arrow-right text-xl"></i>
-                <span>Logout</span>
-            </a>
+            <i className="bi bi-box-arrow-right text-xl"></i>
+            <span>Logout</span>
+        </NavLink>
         </div>
     );
 };

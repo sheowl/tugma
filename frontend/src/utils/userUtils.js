@@ -10,8 +10,8 @@ export function flattenUserDetails(userDetails) {
       parseInt(userDetails.educationDetails.yearGraduated, 10) : null,
     // Only send field if it has a valid value, otherwise send null
     field: userDetails.field || null,
-    preferred_worksetting: mapWorkSettingToEnum(userDetails.preferred_worksetting) || null,
-    preferred_worktype: mapWorkTypeToEnum(userDetails.preferred_worktype) || null,
+    preferred_worksetting: userDetails.preferred_worksetting || null,
+    preferred_worktype: userDetails.preferred_worktype || null,
     // ...other fields
   };
 }
@@ -35,4 +35,3 @@ export function mapWorkTypeToEnum(val) {
     default: return null; // Changed from undefined to null
   }
 }
-

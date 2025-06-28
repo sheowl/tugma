@@ -3,15 +3,16 @@ export default function StepProgressFooter({ step, segment, onContinue, onSkip }
 
   const handleContinue = () => {
     if (step === 2 && segment === 10) {
-      console.log("Redirecting to ApplicantProfile"); // Debugging
-      onSkip(); // Redirect to ApplicantProfile
+      // FIXED: Call onContinue first to save data, then redirect will happen from AppOnbStepTwo
+      console.log("Final segment - calling onContinue to save data first");
+      onContinue(); // This will call handleContinue in AppOnbStepTwo which saves data then calls onNext()
     } else {
       onContinue(); // Call the provided onContinue function for other steps/segments
     }
   };
 
   return (
-    <div className="fixed bottom-0 left-0 w-full z-50 bg-gray-50 flex justify-between items-center px-[112px] py-6 pb-[24px]">
+    <div className="flex justify-between items-center w-full mt-12 px-[112px]">
       <div>
         <p className="text-sm font-medium text-gray-700 mb-1">
           Step {step} of 2
@@ -27,8 +28,9 @@ export default function StepProgressFooter({ step, segment, onContinue, onSkip }
           ))}
         </div>
       </div>
+
       <div className="flex gap-4">
-        {(step === 1 || step == 2) && (
+        {(step === 1 || step === 2) && (
           <button
             onClick={onSkip}
             className="w-[192px] px-6 py-3 text-[#2A4D9B] font-bold rounded-md hover:bg-[#E9EDF8]"
@@ -40,7 +42,7 @@ export default function StepProgressFooter({ step, segment, onContinue, onSkip }
           onClick={handleContinue} // Use the updated handleContinue function
           className="w-[192px] px-6 py-3 bg-[#2A4D9B] text-white font-bold rounded-md hover:bg-[#1f3d7a]"
         >
-          Continue
+          {step === 2 && segment === 10 ? "Complete" : "Continue"}
         </button>
       </div>
     </div>

@@ -10,15 +10,17 @@ export default function ApplicantCertPopup({ onSave, onCancel }) {
   const handleSave = () => {
     if (certificationName.trim()) {
       const certification = {
-        name: certificationName,
-        description: certificationDescription,
+        certificate_name: certificationName,        // ✅ Correct field name
+        certificate_description: certificationDescription, // ✅ Correct field name
+        name: certificationName,                   // Keep for UI compatibility
+        description: certificationDescription,     // Keep for UI compatibility
         previewURL: previewURL,
-        file,
+        file,  // ✅ Include the actual file for upload
       };
-      console.log("Saving certification:", certification); // Debugging
+      console.log("Saving certification:", certification);
       onSave(certification);
     } else {
-      console.log("Validation failed: Missing required fields"); // Debugging
+      console.log("Validation failed: Missing required fields");
     }
   };
 
@@ -26,18 +28,10 @@ export default function ApplicantCertPopup({ onSave, onCancel }) {
     const selectedFile = e.target.files[0];
 
     if (selectedFile) {
-      const validTypes = ["image/jpeg", "image/png", "application/pdf"];
-      const maxSize = 1 * 1024 * 1024; // 1MB
+      const validTypes = ["image/jpeg", "image/png"];
 
       if (!validTypes.includes(selectedFile.type)) {
-        setFileError("Only PDF, JPG, and PNG files are allowed.");
-        setFile(null);
-        setPreviewURL("");
-        return;
-      }
-
-      if (selectedFile.size > maxSize) {
-        setFileError("File size must be less than 1MB.");
+        setFileError("Only JPG, and PNG files are allowed.");
         setFile(null);
         setPreviewURL("");
         return;
@@ -48,8 +42,6 @@ export default function ApplicantCertPopup({ onSave, onCancel }) {
 
       if (selectedFile.type.startsWith("image/")) {
         setPreviewURL(URL.createObjectURL(selectedFile));
-      } else {
-        setPreviewURL("pdf"); // special flag to show icon later
       }
     }
   };
@@ -59,7 +51,8 @@ export default function ApplicantCertPopup({ onSave, onCancel }) {
       <h2 className="text-2xl font-semibold text-[#2A4D9B]">Add Certification</h2>
 
 <div className="space-y-2">
-        <label className="text-base italic text-[#3C3B3B]">Upload certification (Max 1MB, PDF/JPG/PNG)</label>
+        {/* UPDATED: Remove size limit and PDF mention */}
+        <label className="text-base italic text-[#3C3B3B]">Upload certification (JPG/PNG only)</label>
         <div className="flex items-center space-x-4">
           {/* Custom Button */}
           <label
@@ -75,6 +68,7 @@ export default function ApplicantCertPopup({ onSave, onCancel }) {
             type="file"
             className="hidden"
             onChange={handleFileChange}
+            accept="image/jpeg,image/png" // ADDED: Restrict file picker to images only
           />
           {file && <span className="text-sm text-gray-600 truncate max-w-[160px]">{file.name}</span>}
         </div>
@@ -86,14 +80,8 @@ export default function ApplicantCertPopup({ onSave, onCancel }) {
         <div className="mt-4">
           <label className="text-base font-semibold text-[#3C3B3B]">Preview:</label>
           <div className="mt-2 border rounded-md p-2 w-fit max-w-[300px]">
-            {previewURL === "pdf" ? (
-              <div className="flex items-center gap-2 text-gray-700">
-                <i className="bi bi-file-earmark-pdf text-3xl text-red-600"></i>
-                <span>PDF file selected</span>
-              </div>
-            ) : (
-              <img src={previewURL} alt="Preview" className="max-h-48 rounded-md" />
-            )}
+            {/* SIMPLIFIED: Only show image preview since PDF is removed */}
+            <img src={previewURL} alt="Preview" className="max-h-48 rounded-md" />
           </div>
         </div>
       )}
@@ -123,8 +111,6 @@ export default function ApplicantCertPopup({ onSave, onCancel }) {
           }}
         />
       </div>
-
-      
 
       <div className="flex justify-end gap-4 mt-4">
         <button

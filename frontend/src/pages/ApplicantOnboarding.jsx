@@ -7,6 +7,9 @@ import TugmaLogo from "../assets/TugmaLogo.svg";
 import ApplicantWorkExpPopup from "../components/ApplicantWorkExpPopup";
 import { fetchUserDetails, saveUserDetails } from "../services/userService";
 import { supabase } from "../services/supabaseClient";
+import { useAuth } from "../context/AuthContext";
+import LoadContent from "../components/LoadContent";
+import { flattenUserDetails } from "../utils/userUtils";
 
 function ApplicantOnboarding() {
   const [step, setStep] = useState(1);
@@ -29,12 +32,18 @@ function ApplicantOnboarding() {
     field: "",
     preferred_worksetting: "",
     preferred_worktype: "",
+    // ...add more as needed
   });
   const navigate = useNavigate();
-
-  const totalSegments = step === 2 ? 10 : 3;
+  const { user, loading } = useAuth();
 
   useEffect(() => {
+    if (loading) return;
+    if (!user) {
+      navigate("/applicant-sign-in");
+      return;
+    }
+
     const checkOnboardingStatus = async () => {
       const {
         data: { session },
@@ -52,16 +61,15 @@ function ApplicantOnboarding() {
       if (!data.needs_onboarding) {
         navigate("/applicantbrowsejobs");
       } else {
-        // Load existing user details before showing onboarding
         const existingUserDetails = await fetchUserDetails();
-        if (existingUserDetails) {
-          setUserDetails(existingUserDetails);
-        }
-        setIsLoading(false); // Show onboarding form
+        if (existingUserDetails) setUserDetails(existingUserDetails);
+        setIsLoading(false);
       }
     };
     checkOnboardingStatus();
-  }, [navigate]);
+  }, [navigate, loading, user]);
+
+  const totalSegments = step === 2 ? 10 : 3;
 
   const handleNextSegment = () => {
     if (step === 2 && segment === 10) {
@@ -123,12 +131,24 @@ function ApplicantOnboarding() {
     return success;
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-start overflow-hidden">
+        <LoadContent message="Loading..." />
+      </div>
+    );
+  }
+
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+          <div className="min-h-screen bg-white flex items-start overflow-hidden">
+            <LoadContent message="Loading..." />
+          </div>
+        );  
   }
 
   return (
-    <div className="flex flex-col bg-white">
+    <div className="flex flex-col min-h-screen bg-white">
       <div className="w-full h-[100px] pl-[112px] pt-[24px] pb-[24px] bg-white shadow-md z-10 relative">
         <img
           src={TugmaLogo}
@@ -136,10 +156,7 @@ function ApplicantOnboarding() {
           className="w-40 h-16 sm:w-60 sm:h-20 md:w-[192px] md:h-[60px]"
         />
       </div>
-      <div
-        className="flex-grow px-4 bg-gray-50 flex flex-col items-center overflow-y-auto"
-        style={{ height: "calc(100vh - 100px)" }}
-      >
+      <div className="flex-grow flex flex-col items-center overflow-y-auto px-4 bg-gray-50">
         {step === 1 && (
           <AppOnbStepOne
             step={step}
@@ -163,9 +180,11 @@ function ApplicantOnboarding() {
             userDetails={userDetails}
             setUserDetails={setUserDetails}
             saveUserDetails={saveUserDetails}
+            workExperiences={workExperiences} // ADD THIS LINE
           />
         )}
       </div>
+      
       {showPopup && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-[600px]">

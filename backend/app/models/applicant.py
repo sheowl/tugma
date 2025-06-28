@@ -52,6 +52,7 @@ class ApplicantWorkExperience(Base):
     exp_id: Mapped[int] = mapped_column(primary_key=True)
     applicant_id: Mapped[int] = mapped_column(ForeignKey("Applicant.applicant_id", ondelete="CASCADE"), nullable=False)
     company: Mapped[str] = mapped_column(String, nullable=False)
+    position: Mapped[str] = mapped_column(String, nullable=False)
     start_date: Mapped[date] = mapped_column(nullable=True)
     end_date: Mapped[date] = mapped_column(nullable=True)
     description: Mapped[str] = mapped_column(Text, nullable=True)
@@ -65,4 +66,4 @@ class ApplicantCertificate(Base):
     applicant_id: Mapped[int] = mapped_column(ForeignKey("Applicant.applicant_id", ondelete="CASCADE"), primary_key=True)
     certificate_name: Mapped[str] = mapped_column(String, primary_key=True)
     certificate_description: Mapped[str] = mapped_column(String, nullable=True)
-
+    certificate_file_url: Mapped[str] = mapped_column(String, nullable=True)  # URL to the certificate file

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from "react-router-dom";
 import ApplicantSideBar from '../components/ApplicantSideBar';
 import Card from '../components/Card';
 import ApplicantDashLogo from '../assets/ApplicantDashLogo.svg';
@@ -6,214 +7,372 @@ import JobDetailsDrawer from '../components/JobDetailsDrawer';
 import SearchBar from '../components/SearchBar';
 import Dropdown from '../components/Dropdown';
 import ApplicantNotification from '../components/ApplicantNotification';
-import { supabase } from "../services/supabaseClient";
+import LoadContent from '../components/LoadContent';
+import ApplicantHeader from '../components/ApplicantHeader'; // Add this import
+import { useAuth } from '../context/AuthContext';
+import { supabase } from '../services/supabaseClient'; // Add this import
+import { useTags } from '../context/TagsContext';
 
 function ApplicantBrowseJobs() {
+    // State for drawer and selected job
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [selectedJob, setSelectedJob] = useState(null);
-    const [selectedSort, setSelectedSort] = useState("descending"); // Default sort option set to descending
-    const [sortedData, setSortedData] = useState([]); // State for sorted job data
-    const [selectedModality, setSelectedModality] = useState(null); // State for modality filter
-    const [selectedWorkType, setSelectedWorkType] = useState(null); // State for work type filter
-    const [firstName, setFirstName] = useState("User"); // State for user's first name
-    const [showNotifications, setShowNotifications] = useState(false);
 
+    const [firstName, setFirstName] = useState("");
+    const [showNotifications, setShowNotifications] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [selectedModality, setSelectedModality] = useState(null);
+    const [selectedWorkType, setSelectedWorkType] = useState(null);
+    const [selectedSort, setSelectedSort] = useState("best"); // Change default to "best"
+    const [sortedData, setSortedData] = useState([]);
+    const [jobs, setJobs] = useState([]);
+    const [loadingJobs, setLoadingJobs] = useState(true);
+    
+    // Add these missing states for apply functionality
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    
+    // Add this state with your other states
+    const [sortTime, setSortTime] = useState("0.00 secs");
+
+    const navigate = useNavigate();
+    const { user, loading } = useAuth(); // Get user and loading from Auth context
+    const { getTagNamesByIds, loading: tagsLoading } = useTags();
+
+    // Auth check: redirect if not logged in
+    useEffect(() => {
+        if (!loading && !user) {
+            navigate("/applicant-sign-in", { replace: true });
+        }
+    }, [user, loading, navigate]);
 
      const sampleData = [
-  { title: "Some Job Here", company: "Company Name Here", status: "Accepted", timeAgo: "3 hours ago" },
-  { title: "Junior Web Developer", company: "Kim Satrjt PH", status: "Rejected", timeAgo: "8 hours ago" },
-  { title: "Job Title", company: "Company Name", status: "Waitlisted", timeAgo: "3 hours ago" },
-  
-];
+        { title: "Some Job Here", company: "Company Name Here", status: "Accepted", timeAgo: "3 hours ago" },
+        { title: "Junior Web Developer", company: "Kim Satrjt PH", status: "Rejected", timeAgo: "8 hours ago" },
+        { title: "Job Title", company: "Company Name", status: "Waitlisted", timeAgo: "3 hours ago" },    
+    ];
 
-    // Simulate fetching first name from a database
-    useEffect(() => {
-        const fetchFirstName = async () => {
-            // Simulate a delay for fetching data
-            setTimeout(() => {
-                setFirstName("Julianna Leila"); // Mock name
-            }, 1000);
-        };
 
-        fetchFirstName();
-    }, []);
-
-    // Sync applicant data with the server
-    useEffect(() => {
-        const syncApplicant = async () => {
+// Replace the mock firstName fetch with real user data
+useEffect(() => {
+    const fetchUserDetails = async () => {
+        if (!user) return;
+        
+        try {
             const { data: { session } } = await supabase.auth.getSession();
-            const user = session?.user;
             const accessToken = session?.access_token;
+            
+            if (!accessToken) return;
 
-            if (user && accessToken) {
-                await fetch("http://localhost:8000/api/v1/auth/applicant/oauth-register", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${accessToken}`,
-                    },
-                    body: JSON.stringify({
-                        email: user.email,
-                        first_name: user.user_metadata?.full_name?.split(" ")[0] || "",
-                        last_name: user.user_metadata?.full_name?.split(" ").slice(1).join(" ") || "",
-                    }),
+            // Fetch from your backend endpoint
+            const res = await fetch("http://localhost:8000/api/v1/auth/me", {
+                headers: { 
+                    Authorization: `Bearer ${accessToken}` 
+                },
+            });
+            
+            if (res.ok) {
+                const data = await res.json();
+                // Get first name from either Supabase user metadata or database
+                const firstName = data.supabase_user?.user_metadata?.first_name || 
+                                data.database_user?.first_name || 
+                                "User";
+                setFirstName(firstName);
+            } else {
+                // Fallback to Supabase user metadata
+                const firstName = user?.user_metadata?.first_name || "User";
+                setFirstName(firstName);
+            }
+        } catch (error) {
+            console.error("Error fetching user details:", error);
+            // Fallback to Supabase user metadata
+            const firstName = user?.user_metadata?.first_name || "User";
+            setFirstName(firstName);
+        }
+    };
+
+    fetchUserDetails();
+}, [user]);
+
+    // Fetch jobs from backend
+    useEffect(() => {
+        const fetchJobs = async () => {
+            setLoadingJobs(true);
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                const accessToken = session?.access_token;
+                
+                if (!accessToken) return;
+
+                // Use the detailed matching endpoint
+                const res = await fetch("http://localhost:8000/api/v1/matching/jobs", {
+                    headers: { Authorization: `Bearer ${accessToken}` },
                 });
+                
+                const data = await res.json();
+                console.log("Fetched jobs with detailed match scores:", data);
+                
+                let jobsArray = [];
+                if (data.jobs && Array.isArray(data.jobs)) {
+                    jobsArray = data.jobs;
+                } else if (Array.isArray(data)) {
+                    jobsArray = data;
+                }
+                
+                // Save backend timing
+                setSortTime(data.hashing_time ? `${data.hashing_time} secs` : "N/A");
+
+                // Map the data for display (jobs already have match scores)
+                const mappedJobs = jobsArray.map(job => mapJobDataForApplicant(job));
+                
+                console.log("Mapped jobs with match scores:", mappedJobs);
+                setJobs(mappedJobs);
+            } catch (err) {
+                console.error("Failed to fetch jobs:", err);
+                setJobs([]);
+            } finally {
+                setLoadingJobs(false);
             }
         };
-        syncApplicant();
-    }, []);
+        fetchJobs();
+    }, [tagsLoading]); // Add tagsLoading as dependency
 
-    // Mock job data
-    const mockJobData = [
-        {
-            id: 1,
-            jobTitle: "UI/UX Designer",
-            companyName: "Creative Minds Inc.",
-            location: "Sta Mesa, Manila",
-            matchScore: 67,
-            workSetup: "Hybrid",
-            employmentType: "Contractual",
-            description: "We are looking for a talented UI/UX Designer to create amazing user experiences. The ideal candidate should have an eye for clean and artful design, possess superior UI skills, and be able to translate high-level requirements into interaction flows and artifacts. You will be responsible for designing the overall functionality of the product and ensuring a great user experience. Responsibilities include collaborating with product managers and developers, creating wireframes, prototypes, and user flows, and conducting user research to refine designs.",
-            salaryRangeLow: 35,
-            salaryRangeHigh: 45,
-            salaryFrequency: "Monthly",
-            availablePositions: 2,
-            companyDescription: "Creative Minds Inc. is a leading design agency specializing in creating innovative and user-friendly digital experiences for clients worldwide. With a team of highly skilled designers and developers, we aim to transform complex ideas into visually stunning and functional designs. Our mission is to empower businesses by delivering cutting-edge solutions that enhance user engagement and satisfaction.",
-            tags: [
-                { label: "Figma", matched: true },
-                { label: "Adobe XD", matched: true },
-                { label: "Wireframing", matched: true },
-                { label: "Prototyping", matched: false },
-            ],
-            socialLinks: [
-                { url: "https://linkedin.com/company/creativeminds", icon: "bi-linkedin", label: "LinkedIn" },
-                { url: "https://github.com/creativeminds", icon: "bi-github", label: "GitHub" },
-            ],
-        },
-        {
-            id: 2,
-            jobTitle: "Frontend Developer",
-            companyName: "TechNova Corp.",
-            location: "Quezon City, Manila",
-            matchScore: 72,
-            workSetup: "Remote",
-            employmentType: "Full-time",
-            description: "TechNova Corp. is seeking a skilled Frontend Developer to join our dynamic team. You will be responsible for implementing visual elements that users see and interact with in a web application. Your role will involve translating UI/UX design wireframes into actual code, ensuring the technical feasibility of designs, and optimizing applications for maximum speed and scalability. You will collaborate with backend developers and designers to bridge the gap between graphical design and technical implementation. Proficiency in React, JavaScript, and CSS is required.",
-            salaryRangeLow: 40,
-            salaryRangeHigh: 60,
-            salaryFrequency: "Monthly",
-            availablePositions: 1,
-            companyDescription: "TechNova Corp. is a technology-driven company focused on delivering cutting-edge software solutions to businesses across the globe. Our expertise lies in building scalable, secure, and efficient applications tailored to meet the unique needs of our clients. At TechNova, we foster a culture of innovation and collaboration, empowering our team to push the boundaries of technology and deliver exceptional results.",
-            tags: [
-                { label: "React", matched: true },
-                { label: "JavaScript", matched: true },
-                { label: "CSS", matched: true },
-                { label: "TypeScript", matched: false },
-            ],
-            socialLinks: [
-                { url: "https://linkedin.com/company/technova", icon: "bi-linkedin", label: "LinkedIn" },
-                { url: "https://facebook.com/technova", icon: "bi-facebook", label: "Facebook" },
-                { url: "https://instagram.com/technova", icon: "bi-instagram", label: "Instagram" },
-            ],
-        },
-        {
-            id: 3,
-            jobTitle: "Backend Developer",
-            companyName: "CodeWorks Inc.",
-            location: "Makati City, Manila",
-            matchScore: 80,
-            workSetup: "On-Site",
-            employmentType: "Part-Time",
-            description: "We are looking for a Backend Developer to join our growing team. You will be responsible for managing the interchange of data between the server and the users. Your primary focus will be the development of all server-side logic, definition, and maintenance of the central database, and ensuring high performance and responsiveness to requests from the frontend. You will also be responsible for integrating the frontend elements built by your coworkers into the application. A strong understanding of Node.js, Express, and database technologies like MongoDB is required.",
-            salaryRangeLow: 50,
-            salaryRangeHigh: 70,
-            salaryFrequency: "Monthly",
-            availablePositions: 5,
-            companyDescription: "CodeWorks Inc. specializes in backend development and API integrations, helping businesses scale their digital infrastructure efficiently. With a strong focus on performance and reliability, we deliver robust solutions that power mission-critical systems. Our team of experienced engineers is dedicated to creating seamless integrations and ensuring the scalability of your digital ecosystem.",
-            tags: [
-                { label: "Node.js", matched: true },
-                { label: "Express", matched: true },
-                { label: "MongoDB", matched: true },
-                { label: "GraphQL", matched: false },
-            ],
-            socialLinks: [
-                { url: "https://github.com/codeworks", icon: "bi-github", label: "GitHub" },
-                { url: "https://linkedin.com/company/codeworks", icon: "bi-linkedin", label: "LinkedIn" },
-            ],
-        },
-        {
-            id: 4,
-            jobTitle: "Frontend Developer",
-            companyName: "CodeWorks Inc.",
-            location: "Makati City, Manila",
-            matchScore: 39,
-            workSetup: "On-Site",
-            employmentType: "Part-Time",
-            description: "CodeWorks Inc. is hiring a Frontend Developer to create engaging and user-friendly web interfaces. You will work closely with designers and backend developers to implement responsive designs and ensure seamless user experiences. Responsibilities include developing new user-facing features, building reusable code and libraries for future use, and optimizing applications for maximum speed and scalability. Proficiency in modern frontend frameworks like React or Vue.js, along with a strong understanding of HTML, CSS, and JavaScript, is required.",
-            salaryRangeLow: 38,
-            salaryRangeHigh: 50,
-            salaryFrequency: "Monthly",
-            availablePositions: 2,
-            companyDescription: "CodeWorks Inc. is a trusted partner for frontend development, delivering responsive and user-friendly interfaces for web applications. Our team is passionate about crafting intuitive designs and seamless user experiences. By leveraging the latest technologies and best practices, we ensure that our clients' applications stand out in a competitive digital landscape.",
-            tags: [
-                { label: "Node.js", matched: true },
-                { label: "Express", matched: true },
-                { label: "MongoDB", matched: true },
-                { label: "GraphQL", matched: false },
-            ],
-            socialLinks: [
-                { url: "https://facebook.com/codeworks", icon: "bi-facebook", label: "Facebook" },
-                { url: "https://instagram.com/codeworks", icon: "bi-instagram", label: "Instagram" },
-                { url: "https://t.me/codeworks", icon: "bi-telegram", label: "Telegram" },
-            ],
-        },
-    ];
+    const filteredJobs = useMemo(() => {
+        const startTime = performance.now();
+        
+        let filtered = [...jobs];
 
-    // Dropdown options for filtering
-    const filterOptions = [
-        { label: "On-Site", value: "On-Site" },
-        { label: "Hybrid", value: "Hybrid" },
-        { label: "Remote", value: "Remote" },
-    ];
+        // Apply modality filter - handle both field names
+        if (selectedModality) {
+            filtered = filtered.filter((job) => {
+                const setting = job.setting || job.workSetup;
+                return setting?.toLowerCase() === selectedModality.toLowerCase();
+            });
+        }
 
-    const statusOptions = [
-        { label: "Full-Time", value: "Full-time" },
-        { label: "Contractual", value: "Contractual" },
-        { label: "Part-Time", value: "Part-Time" },
-        { label: "Internship", value: "Internship" },
-    ];
+        // Apply work type filter - handle both field names  
+        if (selectedWorkType) {
+            filtered = filtered.filter((job) => {
+                const workType = job.work_type || job.employmentType;
+                return workType?.toLowerCase() === selectedWorkType.toLowerCase();
+            });
+        }
+
+        // Apply search filter - handle both field names
+        if (searchQuery.trim()) {
+            const searchTerm = searchQuery.toLowerCase().trim();
+            filtered = filtered.filter(job => {
+                const title = job.job_title || job.jobTitle || '';
+                const company = job.company_name || job.companyName || '';
+                return title.toLowerCase().includes(searchTerm) ||
+                       company.toLowerCase().includes(searchTerm);
+            });
+        }
+
+        // Apply sorting - handle both field names
+        if (selectedSort === "best") {
+            filtered = filtered.sort((a, b) => (b.match_score || 0) - (a.match_score || 0));
+        } else if (selectedSort === "recent") {
+            filtered = filtered.sort((a, b) => {
+                const dateA = new Date(a.created_at || a.createdAt || 0);
+                const dateB = new Date(b.created_at || b.createdAt || 0);
+                return dateB - dateA;
+            });
+        } else if (selectedSort === "oldest") {
+            filtered = filtered.sort((a, b) => {
+                const dateA = new Date(a.created_at || a.createdAt || 0);
+                const dateB = new Date(b.created_at || b.createdAt || 0);
+                return dateA - dateB;
+            });
+        }
+
+        const endTime = performance.now();
+        const timeTaken = ((endTime - startTime) / 1000).toFixed(2);
+        setSortTime(`${timeTaken} secs`);
+
+        return filtered;
+    }, [jobs, selectedModality, selectedWorkType, searchQuery, selectedSort]);
 
     const sortOptions = [
-        { label: "Ascending Match Score", value: "ascending" },
-        { label: "Descending Match Score", value: "descending" },
-    ];
+        { label: "Best Match", value: "best" },
+        { label: "Most Recent", value: "recent" },
+        { label: "Oldest First", value: "oldest" },
+      ];
 
-    // Sort and filter the data whenever filters or sort options change
-    useEffect(() => {
-        let filtered = [...mockJobData];
+      const filterOptions = [
+        { label: "On-Site", value: "on-site" },
+        { label: "Hybrid", value: "hybrid" },
+        { label: "Remote", value: "remote" },
+      ];
+  
+      const statusOptions = [
+        { label: "Full-Time", value: "full-time" },
+        { label: "Contractual", value: "contractual" },
+        { label: "Part-Time", value: "part-time" },
+        { label: "Internship", value: "internship" },
+      ];
 
-        // Apply modality filter
-        if (selectedModality) {
-            filtered = filtered.filter((job) => job.workSetup === selectedModality);
+// Add these handler functions before your useEffects
+const handleApplyClick = () => {
+    setShowConfirmModal(true);
+};
+
+const handleProceed = async () => {
+    setShowConfirmModal(false);
+
+    try {
+        // Get applicant_id from your auth context/user
+        const { data: { session } } = await supabase.auth.getSession();
+        const accessToken = session?.access_token;
+
+        // Fetch the integer applicant_id from backend
+        const res = await fetch("http://localhost:8000/api/v1/auth/me", {
+            headers: { Authorization: `Bearer ${accessToken}` }
+        });
+        const userData = await res.json();
+        const applicant_id = userData.database_user?.applicant_id;
+
+        if (!accessToken || !selectedJob?.job_id || !applicant_id) {
+            alert("Missing required information.");
+            return;
         }
 
-        // Apply work type filter
-        if (selectedWorkType) {
-            filtered = filtered.filter((job) => job.employmentType === selectedWorkType);
-        }
+        // Prepare application data
+        const applicationData = {
+            applicant_id,
+            job_id: selectedJob.job_id,
+            status: "applied", // or whatever status you want
+            remarks: "",
+            created_at: new Date().toISOString()
+        };
 
-        // Apply sorting
-        const sorted = filtered.sort((a, b) => {
-            if (selectedSort === "ascending") {
-                return a.matchScore - b.matchScore; // Ascending order
-            } else if (selectedSort === "descending") {
-                return b.matchScore - a.matchScore; // Descending order
-            }
-            return 0;
+        console.log("Submitting application:", applicationData);
+
+        // Call backend API
+        const response = await fetch("http://localhost:8000/api/v1/applications/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify(applicationData),
         });
 
-        setSortedData(sorted); // Update the sorted and filtered data
-    }, [selectedSort, selectedModality, selectedWorkType]);
+        if (!response.ok) {
+            throw new Error("Failed to apply for job.");
+        }
+
+        setShowSuccessModal(true);
+    } catch (error) {
+        console.error("Error applying to job:", error);
+        alert("Failed to apply for job.");
+    }
+};
+
+const handleCancel = () => {
+    setShowConfirmModal(false);
+};
+
+const handleCloseSuccess = () => {
+    setShowSuccessModal(false);
+    setDrawerOpen(false); // Close the drawer after successful application
+};
+
+// Update the mapJobDataForApplicant function
+const mapJobDataForApplicant = (job) => {
+    console.log('Mapping job data for applicant:', job);
+    
+    // Calculate days ago
+    const dateAdded = new Date(job.created_at || job.date_added);
+    const now = new Date();
+    const diffTime = Math.abs(now - dateAdded);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    // Format salary for display
+    const formatSalary = (amount) => {
+        if (!amount) return 0;
+        const num = typeof amount === 'string' ? parseInt(amount) : amount;
+        return num >= 1000 ? Math.floor(num / 1000) : num;
+    };
+
+    // Map work settings and types to display values
+    const settingMap = {
+        'onsite': 'On-site',
+        'hybrid': 'Hybrid', 
+        'remote': 'Remote'
+    };
+
+    const workTypeMap = {
+        'fulltime': 'Full-time',
+        'part-time': 'Part-time',
+        'contractual': 'Contractual',
+        'internship': 'Internship'
+    };
+
+    const tagNames = tagsLoading ? [] : getTagNamesByIds(job.job_tags || []);
+    const matchedTags = (job.matched_tags || []).filter(Boolean);
+    let tags;
+    if (matchedTags.length) {
+        tags = matchedTags.map(name => ({ label: name, matched: true }));
+    } 
+
+    return {
+        // Core identifiers
+        id: job.job_id,
+        job_id: job.job_id,
+        
+        // Basic info
+        jobTitle: job.job_title,
+        job_title: job.job_title,
+        companyName: job.company_name || "Company Name",
+        company_name: job.company_name || "Company Name",
+        location: job.location || job.company_location || "Location",
+        description: job.description || "",
+        
+        // Work setup and type
+        workSetup: settingMap[job.setting] || job.setting || 'On-site',
+        setting: job.setting,
+        employmentType: workTypeMap[job.work_type] || job.work_type || 'Full-time',
+        work_type: job.work_type,
+        
+        // Salary
+        salaryRangeLow: formatSalary(job.salary_min),
+        salaryRangeHigh: formatSalary(job.salary_max),
+        salary_min: job.salary_min,
+        salary_max: job.salary_max,
+        salaryFrequency: job.salary_frequency || "monthly",
+        salary_frequency: job.salary_frequency || "monthly",
+        
+        // Position info
+        availablePositions: job.position_count || 1,
+        position_count: job.position_count || 1,
+        
+        // Tags
+        tags, // for Card
+        job_tags: job.job_tags || [],
+        tag_names: tagNames, // resolved tag names
+        
+        // Category and proficiency
+        required_category_id: job.required_category_id,
+        category_name: job.category_name || "General",
+        required_proficiency: job.required_proficiency,
+        proficiency: job.required_proficiency,
+        
+        // Dates
+        created_at: job.created_at,
+        createdAt: job.created_at,
+        postedDaysAgo: diffDays,
+        
+        // Match score
+        matchScore: job.match_score || 0,
+        match_score: job.match_score || 0,
+        
+        // Company info
+        company_description: job.company_description || "",
+        companyDescription: job.company_description || "",
+        company_location: job.company_location || "",
+    };
+};
 
     return (
         <div className="min-h-screen bg-[#2A4D9B] flex items-start">
@@ -270,16 +429,29 @@ function ApplicantBrowseJobs() {
 
                 {/* Search Bar and Dropdowns */}
                 <div className="px-[112px] mt-0 mb-5 flex justify-between items-center">
-                    <SearchBar onSearch={(query) => console.log("Applicant Search:", query)} />
+                    <SearchBar 
+                        onSearch={(query) => {
+                            setSearchQuery(query);
+                            console.log("Applicant Search:", query);
+                        }}
+                        value={searchQuery}
+                        onChange={(query) => setSearchQuery(query)}
+                    />
                 </div>
 
                 {/* Job Count */}
                 <div className="pl-[112px] pr-[118px]">
                     <div className="flex items-center justify-between mb-2">
-                        <div className="text-base font-semibold text-gray-500 mb-2">
-                            {sortedData.length} matches displayed
+                        <div className="flex gap-2">
+                            <div className="text-base font-semibold text-gray-500 mb-2">
+                                {filteredJobs.length} matches displayed
+                            </div>
+                            <div className="text-base italic text-gray-500 mb-2">({sortTime})</div>
                         </div>
+                        
+                        {/* Add the missing dropdowns here */}
                         <div className="flex gap-4">
+                            {/* Sort By Dropdown */}
                             <Dropdown
                                 label="Sort by"
                                 customContent={
@@ -302,6 +474,8 @@ function ApplicantBrowseJobs() {
                                 width="w-40"
                                 color="#2A4D9B"
                             />
+                            
+                            {/* Filter By Dropdown */}
                             <Dropdown
                                 label="Filter by"
                                 customContent={
@@ -316,6 +490,7 @@ function ApplicantBrowseJobs() {
                                             </div>
                                         </div>
                                         <div className="flex flex-col gap-1 justify-start items-start">
+                                            {/* Modality Filter Options */}
                                             {filterOptions.map((opt) => (
                                                 <div
                                                     key={opt.value}
@@ -336,6 +511,8 @@ function ApplicantBrowseJobs() {
                                                 </div>
                                             ))}
                                             <div className="h-2" />
+                                            
+                                            {/* Work Type Filter Options */}
                                             {statusOptions.map((opt) => (
                                                 <div
                                                     key={opt.value}
@@ -368,26 +545,45 @@ function ApplicantBrowseJobs() {
 
                 {/* Job Cards */}
                 <div className="pl-[112px] pr-[118px] mt-10 mb-10 flex flex-wrap gap-[33px] justify-center">
-                    {sortedData.map((job) => (
-                        <Card
-                            key={job.id}
-                            jobTitle={job.jobTitle}
-                            companyName={job.companyName}
-                            location={job.location}
-                            matchScore={job.matchScore}
-                            workSetup={job.workSetup}
-                            employmentType={job.employmentType}
-                            description={job.description}
-                            salaryRangeLow={job.salaryRangeLow}
-                            salaryRangeHigh={job.salaryRangeHigh}
-                            tags={job.tags} // Pass tags here
-                            onViewDetails={() => {
-                                console.log("Selected Job:", job); // Debugging
-                                setSelectedJob(job);
-                                setDrawerOpen(true);
-                            }}
-                        />
-                    ))}
+                    {loadingJobs ? (
+                        // Simple loading spinner positioned right after the bars
+                        <div className="flex justify-center items-center w-full h-64">
+                            <div className="text-center">
+                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2A4D9B] mx-auto mb-4"></div>
+                                <div>Loading jobs...</div>
+                            </div>
+                        </div>
+                    ) : filteredJobs.length === 0 ? (
+                        // Empty state
+                        <div className="flex justify-center items-center w-full h-64">
+                            <div className="text-center text-gray-500">
+                                <i className="bi bi-search text-4xl mb-4"></i>
+                                <div>No jobs found matching your criteria</div>
+                            </div>
+                        </div>
+                    ) : (
+                        filteredJobs.map((job) => (
+                            <Card
+                                key={job.job_id || job.id}
+                                jobTitle={job.job_title || job.jobTitle}
+                                companyName={job.company_name || job.companyName}
+                                location={job.location}
+                                matchScore={job.match_score || 0}
+                                workSetup={job.setting || job.workSetup}
+                                employmentType={job.work_type || job.employmentType}
+                                description={job.description}
+                                salaryRangeLow={job.salary_min || job.salaryRangeLow}
+                                salaryRangeHigh={job.salary_max || job.salaryRangeHigh}
+                                tags={job.tags || []}
+                                onViewDetails={() => {
+                                    console.log("=== JOB DETAILS DEBUG ===");
+                                    console.log("Selected job for details:", job);
+                                    setSelectedJob(job);
+                                    setDrawerOpen(true);
+                                }}
+                            />
+                        ))
+                    )}
                 </div>
             </div>
 
@@ -396,8 +592,49 @@ function ApplicantBrowseJobs() {
                 open={drawerOpen}
                 onClose={() => setDrawerOpen(false)}
                 job={selectedJob}
-                onApply={() => alert("Applied!")}
+                onApply={handleApplyClick}
             />
+
+            {/* Confirmation Modal */}
+{showConfirmModal && (
+    <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center">
+        <div className="bg-white p-6 rounded-lg shadow-lg text-center w-[90%] max-w-md">
+            <h2 className="text-lg font-semibold mb-4 text-center">Are you sure you want to apply?</h2>
+            <div className="flex justify-center gap-4 mt-6">
+                <button
+                    onClick={handleCancel}
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-[10px] hover:bg-gray-400"
+                >
+                    Cancel
+                </button>
+                <button
+                    onClick={handleProceed}
+                    className="px-4 py-2 bg-[#2A4D9B] text-white rounded-[10px] font-semibold hover:bg-[#1e3c78]"
+                >
+                    Proceed
+                </button>
+            </div>
+        </div>
+    </div>
+)}
+
+{/* Success Modal */}
+{showSuccessModal && (
+    <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center">
+        <div className="bg-white p-6 rounded-lg shadow-lg text-center w-[90%] max-w-md">
+            <h2 className="text-lg font-semibold mb-4 text-center">Application Successful!</h2>
+            <p className="text-gray-600 mb-4">
+                You have successfully applied for the job. Our team will review your application and get back to you soon.
+            </p>
+            <button
+                onClick={handleCloseSuccess}
+                className="px-4 py-2 bg-[#2A4D9B] text-white rounded-[10px] font-semibold hover:bg-[#1e3c78]"
+            >
+                Close
+            </button>
+        </div>
+    </div>
+)}
         </div>
     );
 }
