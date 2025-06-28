@@ -38,9 +38,8 @@ export default function EmployerPostingDetails({ open, onClose, job, onEdit }) {
       return <div className="text-gray-500 text-sm">Loading tags...</div>;
     }
 
-    const maxDisplayTags = 8;
+    const maxDisplayTags = 100;
     const tagsToShow = tagIds.slice(0, maxDisplayTags);
-    const hasMoreTags = tagIds.length > maxDisplayTags;
 
     return (
       <>
@@ -52,11 +51,6 @@ export default function EmployerPostingDetails({ open, onClose, job, onEdit }) {
             {getTagNameById(tagId)}
           </span>
         ))}
-        {hasMoreTags && (
-          <span className="px-3 py-1 bg-[#FF8032] text-white rounded-full text-[12px] font-semibold whitespace-nowrap">
-            +{tagIds.length - maxDisplayTags} More
-          </span>
-        )}
       </>
     );
   };
