@@ -786,12 +786,14 @@ const saveProficiency = async (proficiencyArr) => {
         </div>
       )}
 
-      <StepProgressFooter
-        step={step}
-        segment={segment}
-        onContinue={handleContinue}
-        onSkip={handleSkip}
-      />
+      <div className="fixed bottom-0 left-0 right-0 z-50 mb-[37px]">
+        <StepProgressFooter
+          step={step}
+          segment={segment}
+          onContinue={handleContinue}
+          onSkip={handleSkip}
+        />
+      </div>
     </div>
   );
 }

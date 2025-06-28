@@ -4,6 +4,7 @@ import ApplicantHeader from "../components/ApplicantHeader";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../services/supabaseClient";
 import { useTags } from "../context/TagsContext";
+import LoadContent from "../components/LoadContent";
 
 function ApplicantProfile() {
   const { user, loading } = useAuth();
@@ -360,11 +361,9 @@ const CertificateCard = ({ image, title, description, onClick }) => {
 
   if (loading || isLoadingProfile || isLoadingData) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2A4D9B] mx-auto mb-4"></div>
-          <div>Loading profile data...</div>
-        </div>
+      <div className="min-h-screen bg-[#2A4D9B] flex items-start overflow-hidden">
+        <ApplicantSideBar />
+        <LoadContent message="Loading your profile..." />
       </div>
     );
   }

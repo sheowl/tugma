@@ -313,12 +313,14 @@ function AppOnbStepOne({
       )}
 
       {/* Step Progress Footer */}
-      <StepProgressFooter
-        step={step}
-        segment={segment}
-        onContinue={handleContinue} // <-- this calls saveUserDetails and then onNext
-        onSkip={onSkip}
-      />
+      <div className="fixed bottom-0 left-0 right-0 z-50 mb-[37px]">
+        <StepProgressFooter
+          step={step}
+          segment={segment}
+          onContinue={handleContinue} // <-- this calls saveUserDetails and then onNext
+          onSkip={onSkip}
+        />
+      </div>
     </div>
   );
 }

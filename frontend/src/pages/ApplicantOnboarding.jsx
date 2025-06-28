@@ -8,6 +8,7 @@ import ApplicantWorkExpPopup from "../components/ApplicantWorkExpPopup";
 import { fetchUserDetails, saveUserDetails } from "../services/userService";
 import { supabase } from "../services/supabaseClient";
 import { useAuth } from "../context/AuthContext";
+import LoadContent from "../components/LoadContent";
 import { flattenUserDetails } from "../utils/userUtils";
 
 function ApplicantOnboarding() {
@@ -131,11 +132,19 @@ function ApplicantOnboarding() {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen bg-white flex items-start overflow-hidden">
+        <LoadContent message="Loading..." />
+      </div>
+    );
   }
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+          <div className="min-h-screen bg-white flex items-start overflow-hidden">
+            <LoadContent message="Loading..." />
+          </div>
+        );  
   }
 
   return (
@@ -175,14 +184,7 @@ function ApplicantOnboarding() {
           />
         )}
       </div>
-      <StepProgressFooter
-        step={step}
-        segment={segment}
-        totalSegments={totalSegments}
-        onNext={handleNextSegment}
-        onBack={handleBackSegment}
-        onSkip={handleSkipSegment}
-      />
+      
       {showPopup && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-[600px]">

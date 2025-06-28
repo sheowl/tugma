@@ -4,8 +4,9 @@ import ApplicantSideBar from '../components/ApplicantSideBar';
 import ApplicantTracker from '../components/ApplicantTracker';
 import SearchBar from '../components/SearchBar';
 import Dropdown from '../components/Dropdown';
-import ApplicantHeader from '../components/ApplicantHeader'; // Add this
-import ApplicantTrackerDrawer from '../components/ApplicantTrackerDrawer'; // Add this
+import ApplicantHeader from '../components/ApplicantHeader'; 
+import ApplicantTrackerDrawer from '../components/ApplicantTrackerDrawer'; 
+import LoadContent from "../components/LoadContent"; 
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../services/supabaseClient";
 
@@ -41,12 +42,17 @@ function ApplicantApplications() {
     // Add these missing states for drawer functionality
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [selectedJob, setSelectedJob] = useState(null);
+
+    // Add loading states
+    const [isLoadingApplications, setIsLoadingApplications] = useState(true);
+    const [isLoadingUserData, setIsLoadingUserData] = useState(true);
     
     const navigate = useNavigate();
 
     // Example: Fetch applications from backend or mock data
     useEffect(() => {
       const fetchApplications = async () => {
+        setIsLoadingApplications(true);
         try {
           const { data: { session } } = await supabase.auth.getSession();
           const accessToken = session?.access_token;
@@ -71,11 +77,15 @@ function ApplicantApplications() {
         } catch (err) {
           console.error("Error fetching applications:", err);
           setApplications([]);
+        } finally {
+          setIsLoadingApplications(false);
         }
       };
 
-      fetchApplications();
-    }, [navigate]);
+      if (user) {
+        fetchApplications();
+      }
+    }, [navigate, user]);
 
     // Update filtering logic to match backend field names
     const filteredApplications = applications
@@ -106,6 +116,34 @@ function ApplicantApplications() {
         navigate("/applicant-sign-in", { replace: true });
       }
     }, [user, loading, navigate]);
+
+    // Add user data loading
+    useEffect(() => {
+      const fetchUserData = async () => {
+        if (!user) return;
+        
+        setIsLoadingUserData(true);
+        try {
+          // ...fetch user data...
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+        } finally {
+          setIsLoadingUserData(false);
+        }
+      };
+
+      fetchUserData();
+    }, [user]);
+
+    // Move the loading check outside of the main return, keeping only auth loading
+    if (loading || isLoadingUserData) {
+        return (
+            <div className="min-h-screen bg-white flex items-start overflow-hidden">
+                <ApplicantSideBar />
+                <LoadContent message="Loading your applications..." />
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-[#2A4D9B] flex items-start overflow-hidden">
@@ -217,28 +255,48 @@ function ApplicantApplications() {
 
                 {/* Job Applications */}
                 <div className="pl-[112px] pr-[118px] mt-10 mb-10 flex flex-wrap gap-[33px] justify-center">
-                    {filteredApplications.map((job, index) => (
-                        <div key={index} className="flex items-center justify-between mb-2">
-                            <ApplicantTracker
-                                jobTitle={job.jobTitle}
-                                companyName={job.companyName}
-                                location={job.location}
-                                matchScore={job.matchScore || 0}
-                                employmentType={job.jobType}
-                                workSetup={job.setting}
-                                description={job.description}
-                                salaryRangeLow={job.salaryRangeLow}
-                                salaryRangeHigh={job.salaryRangeHigh}
-                                salaryFrequency={job.salaryFrequency || "Monthly"}
-                                companyDescription={job.companyDescription || ""}
-                                onViewDetails={() => {
-                                    setSelectedJob(job);
-                                    setDrawerOpen(true);
-                                }}
-                                status={job.status}
-                            />
+                    {isLoadingApplications ? (
+                        // Simple loading spinner for applications only
+                        <div className="flex justify-center items-center w-full h-64">
+                            <div className="text-center">
+                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2A4D9B] mx-auto mb-4"></div>
+                                <div>Loading applications...</div>
+                            </div>
                         </div>
-                    ))}
+                    ) : filteredApplications.length === 0 ? (
+                        // Empty state
+                        <div className="flex justify-center items-center w-full h-64">
+                            <div className="text-center text-gray-500">
+                                <i className="bi bi-inbox text-4xl mb-4"></i>
+                                <div>No applications found</div>
+                                <div className="text-sm">Start applying to jobs to see them here!</div>
+                            </div>
+                        </div>
+                    ) : (
+                        // Applications list
+                        filteredApplications.map((job, index) => (
+                            <div key={index} className="flex items-center justify-between mb-2">
+                                <ApplicantTracker
+                                    jobTitle={job.jobTitle}
+                                    companyName={job.companyName}
+                                    location={job.location}
+                                    matchScore={job.matchScore || 0}
+                                    employmentType={job.jobType}
+                                    workSetup={job.setting}
+                                    description={job.description}
+                                    salaryRangeLow={job.salaryRangeLow}
+                                    salaryRangeHigh={job.salaryRangeHigh}
+                                    salaryFrequency={job.salaryFrequency || "Monthly"}
+                                    companyDescription={job.companyDescription || ""}
+                                    onViewDetails={() => {
+                                        setSelectedJob(job);
+                                        setDrawerOpen(true);
+                                    }}
+                                    status={job.status}
+                                />
+                            </div>
+                        ))
+                    )}
                 </div>
 
                 {/* Add ApplicantTrackerDrawer */}

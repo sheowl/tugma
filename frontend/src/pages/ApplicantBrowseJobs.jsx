@@ -7,6 +7,7 @@ import JobDetailsDrawer from '../components/JobDetailsDrawer';
 import SearchBar from '../components/SearchBar';
 import Dropdown from '../components/Dropdown';
 import ApplicantNotification from '../components/ApplicantNotification';
+import LoadContent from '../components/LoadContent';
 import ApplicantHeader from '../components/ApplicantHeader'; // Add this import
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../services/supabaseClient'; // Add this import
@@ -545,7 +546,21 @@ const mapJobDataForApplicant = (job) => {
                 {/* Job Cards */}
                 <div className="pl-[112px] pr-[118px] mt-10 mb-10 flex flex-wrap gap-[33px] justify-center">
                     {loadingJobs ? (
-                        <div>Loading jobs...</div>
+                        // Simple loading spinner positioned right after the bars
+                        <div className="flex justify-center items-center w-full h-64">
+                            <div className="text-center">
+                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2A4D9B] mx-auto mb-4"></div>
+                                <div>Loading jobs...</div>
+                            </div>
+                        </div>
+                    ) : filteredJobs.length === 0 ? (
+                        // Empty state
+                        <div className="flex justify-center items-center w-full h-64">
+                            <div className="text-center text-gray-500">
+                                <i className="bi bi-search text-4xl mb-4"></i>
+                                <div>No jobs found matching your criteria</div>
+                            </div>
+                        </div>
                     ) : (
                         filteredJobs.map((job) => (
                             <Card
@@ -553,23 +568,18 @@ const mapJobDataForApplicant = (job) => {
                                 jobTitle={job.job_title || job.jobTitle}
                                 companyName={job.company_name || job.companyName}
                                 location={job.location}
-                                matchScore={job.match_score || 0} // Set to 0 for now
+                                matchScore={job.match_score || 0}
                                 workSetup={job.setting || job.workSetup}
                                 employmentType={job.work_type || job.employmentType}
                                 description={job.description}
                                 salaryRangeLow={job.salary_min || job.salaryRangeLow}
                                 salaryRangeHigh={job.salary_max || job.salaryRangeHigh}
-                                tags={job.tags || []} // Handle both formats
+                                tags={job.tags || []}
                                 onViewDetails={() => {
                                     console.log("=== JOB DETAILS DEBUG ===");
                                     console.log("Selected job for details:", job);
-                                    console.log("Job tags:", job.job_tags);
-                                    console.log("Tag names:", job.tag_names);
-                                    console.log("Company name:", job.company_name);
-                                    console.log("Description:", job.description);
                                     setSelectedJob(job);
                                     setDrawerOpen(true);
-                                    onViewDetails={handleViewDetails}
                                 }}
                             />
                         ))
