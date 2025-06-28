@@ -11,6 +11,7 @@ from app.schemas.company import CompanyCreate, CompanyUpdate
 from app.core.auth import get_password_hash
 from typing import Optional, Dict, List
 from datetime import datetime, timedelta, timezone  # Add timezone import
+from app.crud.jobs import get_match_score
 
 async def create_company(db: AsyncSession, company_in: CompanyCreate) -> Company:
     new_company = Company(
@@ -144,10 +145,11 @@ async def get_recent_applicants(db: AsyncSession, company_id: int) -> List[Dict]
                 minutes = max(1, time_diff.seconds // 60)
                 time_ago = f"{minutes} minute{'s' if minutes > 1 else ''} ago"
             
-            # Mock match percentage for now
-            import random
-            match_percentage = random.randint(65, 95)
-            
+
+            # Get actual match percentage from JobMatching table
+            match_score = await get_match_score(db, app.applicant_id, app.job_id)
+            match_percentage = int(round(match_score)) if match_score is not None else 0
+
             recent_applicants.append({
                 "id": app.applicant_id,
                 "name": f"{app.first_name} {app.last_name}",

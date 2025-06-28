@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useCompany } from "../context/CompanyContext";
 import Dropdown from "./Dropdown";
 
-const ApplicationFullDetails = ({ open, onClose, applicant, jobId, onStatusUpdate }) => {
+const ApplicationFullDetails = ({ open, onClose, applicant, jobId, onStatusUpdate, applicantTags = [], tagNames = [] }) => {
   const navigate = useNavigate();
   
   // Use CompanyContext for authentication and API calls
@@ -309,6 +309,7 @@ const ApplicationFullDetails = ({ open, onClose, applicant, jobId, onStatusUpdat
 
       const result = await response.json();
       setIsInterviewConfirmed(true);
+      setInterviewExists(true);
       return result;
     } catch (error) {
       console.error('❌ Error creating interview:', error);
@@ -858,24 +859,18 @@ const ApplicationFullDetails = ({ open, onClose, applicant, jobId, onStatusUpdat
               )}
             </div>
             
+            {/* Tag Matches (renamed from All Applicant Tags) */}
             <div className="mb-8">
               <h4 className="font-bold text-[16px] text-gray-800 mb-4">Tag Matches</h4>
               <div className="flex flex-wrap gap-2">
-                {tempSkillMatches.matched.map((skill, index) => (
-                  <span key={`matched-${index}`} className="border-2 border-[#34A853] text-[#3C3B3B] px-3 py-1 rounded-full text-[12px] font-semibold">
-                    {skill}
-                  </span>
-                ))}
-                {tempSkillMatches.notMatched.map((skill, index) => (
-                  <span key={`not-matched-${index}`} className="border-2 border-[#E74C3C] text-[#3C3B3B] px-3 py-1 rounded-full text-[12px] font-semibold">
-                    {skill}
-                  </span>
-                ))}
-                {tempSkillMatches.moreNotMatched > 0 && (
-                  <span className="border-2 border-[#E74C3C] text-[#3C3B3B] px-3 py-1 rounded-full text-[12px] font-semibold">
-                    +{tempSkillMatches.moreNotMatched} more
-                  </span>
-                )}
+                {tagNames.length > 0
+                  ? tagNames.map((tag, idx) => (
+                      <span key={idx} className="border-2 border-[#FF8032] text-[#FF8032] px-3 py-1 rounded-full text-[12px] font-semibold bg-[#FFF7F2]">
+                        {tag}
+                      </span>
+                    ))
+                  : <span className="text-gray-500">No tags found.</span>
+                }
               </div>
             </div>
 

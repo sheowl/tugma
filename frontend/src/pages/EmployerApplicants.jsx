@@ -65,31 +65,22 @@ const EmployerApplicants = () => {
       setFetchError("");
       clearError();
 
-      console.log('🔍 EmployerApplicants: Checking authentication...');
-
-      // ⭐ Check if user is authenticated and is an employer
+      // Check if user is authenticated and is an employer
       if (!isAuthenticated()) {
-        console.log('❌ EmployerApplicants: Not authenticated');
         navigate('/employer-sign-in');
         return;
       }
 
       if (!isEmployer()) {
-        console.log('❌ EmployerApplicants: Not an employer');
         navigate('/employer-sign-in');
         return;
       }
-
-      console.log('✅ EmployerApplicants: Authentication verified');
       
-      // ⭐ Verify backend connection with company profile
+      // Verify backend connection with company profile
       try {
         const profileResponse = await getCompanyProfile();
-        if (profileResponse) {
-          console.log('✅ EmployerApplicants: Backend connection verified');
-        }
       } catch (profileError) {
-        console.log('⚠️ EmployerApplicants: Backend connection issue, but proceeding...');
+        // Proceed even if backend connection has issues
       }
       
       setAuthChecked(true);
@@ -98,7 +89,6 @@ const EmployerApplicants = () => {
       await initializeJobSelection();
       
     } catch (error) {
-      console.error("❌ EmployerApplicants: Auth check error:", error);
       setFetchError("Authentication error. Please log in again.");
       navigate('/employer-sign-in');
     } finally {
@@ -120,14 +110,11 @@ const EmployerApplicants = () => {
     if (selectedJobId && selectedJobNumber === null) {
       jobIdToSelect = selectedJobId;
       setSelectedJobNumber(selectedJobId);
-      console.log(`🔍 EmployerApplicants: Using selectedJobId from navigation: ${selectedJobId}`);
     } else if (selectedJobNumber) {
       jobIdToSelect = selectedJobNumber;
-      console.log(`🔍 EmployerApplicants: Using current selectedJobNumber: ${selectedJobNumber}`);
     } else if (jobPostsData.length > 0) {
       jobIdToSelect = jobPostsData[0].id;
       setSelectedJobNumber(jobPostsData[0].id);
-      console.log(`🔍 EmployerApplicants: Using first job from jobPostsData: ${jobPostsData[0].id}`);
     }
 
     if (!jobIdToSelect) {
@@ -143,16 +130,11 @@ const EmployerApplicants = () => {
       clearError();
 
       if (!selectedJobNumber) {
-        console.log('⏳ EmployerApplicants: No job selected yet, skipping load');
         return;
       }
 
-      console.log(`🔍 EmployerApplicants: Loading applicants for job ID: ${selectedJobNumber}`);
-
       // Fetch applicants from backend
       const response = await getJobApplicants(selectedJobNumber);
-      
-      console.log('📋 Applicants response:', response);
 
       // Transform backend applicants data to frontend format
       const transformedApplicants = (response.applicants || []).map((applicant, index) => {
@@ -185,8 +167,6 @@ const EmployerApplicants = () => {
       setApplicants(transformedApplicants);
       
     } catch (error) {
-      console.error("❌ Error loading applicants:", error);
-      
       // Check if it's an auth error
       if (error.message.includes('Authentication') || error.message.includes('401')) {
         setFetchError("Session expired. Please log in again.");
@@ -238,7 +218,6 @@ const EmployerApplicants = () => {
   };
 
   const handleJobChange = (newJobId) => {
-    console.log(`🔍 EmployerApplicants: Changing job to ID: ${newJobId}`);
     setSelectedJobNumber(newJobId);
     setApplicants([]); // Clear current applicants while loading new ones
   };
@@ -361,11 +340,10 @@ const EmployerApplicants = () => {
           onClose={() => setShowApplicationDetails(false)}
           applicant={selectedApplicant}
           jobId={selectedJobNumber}
-          jobData={selectedApplicant?.job} // Add this line
+          jobData={selectedApplicant?.job}
+          applicantTags={selectedApplicant.applicantTags} // <-- add this line
+          tagNames={selectedApplicant.tagNames} // <-- optionally, if you want tag names
           onStatusUpdate={(applicantId, newStatus) => {
-            console.log(`Applicant ${applicantId} status updated to ${newStatus}`);
-            
-            // Update the local applicants state
             setApplicants(prevApplicants => 
               prevApplicants.map(app => 
                 app.id === applicantId 
