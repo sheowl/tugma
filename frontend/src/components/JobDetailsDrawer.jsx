@@ -10,6 +10,7 @@ const JobDetailsDrawer = ({ open, onClose, job, onApply }) => {
   const [matchDetails, setMatchDetails] = useState(null);
   const [loadingMatchDetails, setLoadingMatchDetails] = useState(false);
   const { getTagNamesByIds } = useTags();
+  const applicantTags = matchDetails?.applicant_tags || [];
 
   // Fetch detailed match information when drawer opens
   useEffect(() => {
@@ -41,6 +42,15 @@ const JobDetailsDrawer = ({ open, onClose, job, onApply }) => {
       setLoadingMatchDetails(false);
     }
   };
+   // Add these states for toggling tag visibility
+  const [showAllMatched, setShowAllMatched] = useState(false);
+  const [showAllUnmatched, setShowAllUnmatched] = useState(false);
+  const matchedTags = (matchDetails?.matched_tags || []).filter(Boolean);
+  const unmatchedTags = (matchDetails?.unmatched_job_tags || []).filter(Boolean);
+  const tags = [
+    ...matchedTags.map(tag => ({ label: tag, matched: true })),
+    ...unmatchedTags.map(tag => ({ label: tag, matched: false })),
+  ];
 
   if (!job) return null;
 
@@ -194,19 +204,58 @@ const JobDetailsDrawer = ({ open, onClose, job, onApply }) => {
                     <div>
                       <h4 className="text-base font-bold mb-2 text-neutral-700">Required Skills</h4>
                       <div className="flex gap-2 flex-wrap">
-                        {job.tag_names.map((tag, idx) => (
-                          <span
-                            key={idx}
-                            className={`px-2 py-1 rounded-full text-xs ${
-                              applicantTags.includes(tag) ? "bg-green-200 text-green-800" : "bg-gray-200 text-gray-700"
-                            }`}
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                      <div className="mt-2 font-bold text-[#2A4D9B]">
-                        Match Score: {job.match_score}%
+                        {(() => {
+                          const matched = tags.filter(t => t.matched);
+                          const unmatched = tags.filter(t => !t.matched);
+
+                          const matchedToShow = showAllMatched ? matched : matched.slice(0, 5);
+                          const unmatchedToShow = showAllUnmatched ? unmatched : unmatched.slice(0, 5);
+
+                          const moreMatched = matched.length - matchedToShow.length;
+                          const moreUnmatched = unmatched.length - unmatchedToShow.length;
+
+                          return (
+                            <>
+                              {/* Matched tags (green) */}
+                              {matchedToShow.map(tag => (
+                                <span
+                                  key={`matched-${tag.label}`}
+                                  className="px-3 py-1 rounded-full text-xs font-semibold bg-[#34A853] text-white"
+                                >
+                                  {tag.label}
+                                </span>
+                              ))}
+                              {moreMatched > 0 && !showAllMatched && (
+                                <button
+                                  className="px-3 py-1 bg-[#34A853] text-white rounded-full text-xs font-semibold opacity-60 cursor-pointer"
+                                  onClick={() => setShowAllMatched(true)}
+                                  type="button"
+                                >
+                                  +{moreMatched} more
+                                </button>
+                              )}
+
+                              {/* Unmatched tags (red) */}
+                              {unmatchedToShow.map(tag => (
+                                <span
+                                  key={`unmatched-${tag.label}`}
+                                  className="px-3 py-1 rounded-full text-xs font-semibold bg-[#E74C3C] text-white"
+                                >
+                                  {tag.label}
+                                </span>
+                              ))}
+                              {moreUnmatched > 0 && !showAllUnmatched && (
+                                <button
+                                  className="px-3 py-1 bg-[#E74C3C] text-white rounded-full text-xs font-semibold opacity-60 cursor-pointer"
+                                  onClick={() => setShowAllUnmatched(true)}
+                                  type="button"
+                                >
+                                  +{moreUnmatched} more
+                                </button>
+                              )}
+                            </>
+                          );
+                        })()}
                       </div>
                     </div>
 

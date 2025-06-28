@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabaseClient";
 
-export const logout = async () => {
+const logout = async () => {
   await supabase.auth.signOut();
   localStorage.clear();
   window.location.href = "/applicant-sign-in"; // Hard reload

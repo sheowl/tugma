@@ -14,28 +14,35 @@ class MatchingService:
         Match Score = (|A ∩ J| / |J|) * 70% + (|A ∩ J| / |A|) * 30%
         """
         try:
-            # Get applicant tags (A) and job tags (J)
+            # Get applicant tags (A) - from real database
             applicant_tags_db = await applicant_crud.get_applicant_tags(db, applicant_id)
-            job_tags_db = await jobs_crud.get_job_tags_with_names(db, job_id)
             
-            # Extract tag names (same as before)
+            # Handle both object and dict formats for applicant tags
             applicant_tag_names = []
             for tag in applicant_tags_db:
                 if hasattr(tag, 'tag_name'):
                     applicant_tag_names.append(tag.tag_name)
                 elif isinstance(tag, dict) and 'tag_name' in tag:
                     applicant_tag_names.append(tag['tag_name'])
-        
+                else:
+                    print(f"❌ DEBUG: Unexpected tag format: {type(tag)} - {tag}")
+            
+            # Get job tags (J) - from real database  
+            job_tags_db = await jobs_crud.get_job_tags_with_names(db, job_id)
+            
+            # Handle both object and dict formats for job tags
             job_tag_names = []
             for tag in job_tags_db:
                 if hasattr(tag, 'tag_name'):
                     job_tag_names.append(tag.tag_name)
                 elif isinstance(tag, dict) and 'tag_name' in tag:
                     job_tag_names.append(tag['tag_name'])
-        
+                else:
+                    print(f"❌ DEBUG: Unexpected job tag format: {type(tag)} - {tag}")
+            
             print(f"🔍 DEBUG: Applicant tags: {applicant_tag_names}")
             print(f"🔍 DEBUG: Job tags: {job_tag_names}")
-        
+            
             # Edge case: No tags
             if not applicant_tag_names or not job_tag_names:
                 return {
@@ -51,41 +58,27 @@ class MatchingService:
                         "applicant_coverage": 0
                     }
                 }
-        
-            # 🔥 CORE ALGORITHM: Use TagMatcher with FNV-1a hash table
-            print(f"🔍 DEBUG: Creating TagMatcher with FNV-1a hash table...")
+            
+            # Use TagMatcher with hash table for O(1) lookups
             matcher = TagMatcher(applicant_tag_names, job_tag_names)
-        
-            # Calculate match score using your hash table algorithm
             match_score = matcher.calculate_score()
-            print(f"🔍 DEBUG: Hash-based match score: {match_score}")
-        
-            # 🔥 ALGORITHM DEMONSTRATION: Find intersections using hash table
-            print(f"🔍 DEBUG: Finding intersections using FNV-1a hash table...")
+            
+            # Calculate detailed breakdown
             matched_tags = []
             unmatched_job_tags = []
             unmatched_applicant_tags = []
-        
-            # Use hash table to find matched tags (intersection A ∩ J)
-            for applicant_tag in applicant_tag_names:
-                hash_value = matcher.job_table._hash(applicant_tag)  # Get FNV-1a hash
-                print(f"🔍 DEBUG: Checking '{applicant_tag}' -> hash: {hash_value}")
             
-                if matcher.job_table.contains(applicant_tag):  # O(1) lookup using FNV-1a
-                    matched_tags.append(applicant_tag)
-                    print(f"✅ DEBUG: MATCH FOUND: '{applicant_tag}' exists in job tags")
-                else:
-                    unmatched_applicant_tags.append(applicant_tag)
-                    print(f"❌ DEBUG: NO MATCH: '{applicant_tag}' not in job tags")
-        
-            # Find job tags that aren't matched
-            for job_tag in job_tag_names:
-                if job_tag not in matched_tags:
-                    unmatched_job_tags.append(job_tag)
-        
-            print(f"🔍 DEBUG: Intersection using hash table: {matched_tags}")
-            print(f"🔍 DEBUG: Total intersections: {len(matched_tags)}")
-        
+            # Find intersection manually (simpler approach)
+            applicant_set = set(applicant_tag_names)
+            job_set = set(job_tag_names)
+            
+            matched_tags = list(applicant_set & job_set)  # Intersection
+            unmatched_job_tags = list(job_set - applicant_set)  # Job tags not in applicant
+            unmatched_applicant_tags = list(applicant_set - job_set)  # Applicant tags not in job
+            
+            print(f"🔍 DEBUG: Matched tags: {matched_tags}")
+            print(f"🔍 DEBUG: Match score: {match_score}")
+            
             return {
                 "match_score": round(match_score),
                 "matched_tags": matched_tags,
@@ -97,17 +90,9 @@ class MatchingService:
                 "formula_breakdown": {
                     "job_coverage": round((len(matched_tags) / len(job_tag_names)) * 100, 1) if job_tag_names else 0,
                     "applicant_coverage": round((len(matched_tags) / len(applicant_tag_names)) * 100, 1) if applicant_tag_names else 0
-                },
-                # 🔥 ALGORITHM EVIDENCE: Include hash details for academic demonstration
-                "algorithm_details": {
-                    "hashing_algorithm": "FNV-1a",
-                    "hash_table_size": matcher.job_table.size,
-                    "tag_hash_samples": {
-                        tag: matcher.job_table._hash(tag) for tag in job_tag_names[:3]  # Show first 3 hashes
-                    }
                 }
             }
-        
+            
         except Exception as e:
             print(f"❌ Error calculating detailed match score: {e}")
             import traceback
@@ -120,8 +105,10 @@ class MatchingService:
                 "total_job_tags": 0,
                 "total_applicant_tags": 0,
                 "intersection_count": 0,
-                "formula_breakdown": {"job_coverage": 0, "applicant_coverage": 0},
-                "algorithm_details": {"hashing_algorithm": "FNV-1a", "error": str(e)}
+                "formula_breakdown": {
+                    "job_coverage": 0,
+                    "applicant_coverage": 0
+                }
             }
 
     @staticmethod

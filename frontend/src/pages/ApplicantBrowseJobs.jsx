@@ -13,8 +13,10 @@ import { supabase } from '../services/supabaseClient'; // Add this import
 import { useTags } from '../context/TagsContext';
 
 function ApplicantBrowseJobs() {
+    // State for drawer and selected job
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [selectedJob, setSelectedJob] = useState(null);
+
     const [firstName, setFirstName] = useState("");
     const [showNotifications, setShowNotifications] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
@@ -107,10 +109,8 @@ useEffect(() => {
                 });
                 
                 const data = await res.json();
-                
                 console.log("Fetched jobs with detailed match scores:", data);
                 
-                // Handle the response
                 let jobsArray = [];
                 if (data.jobs && Array.isArray(data.jobs)) {
                     jobsArray = data.jobs;
@@ -118,6 +118,9 @@ useEffect(() => {
                     jobsArray = data;
                 }
                 
+                // Save backend timing
+                setSortTime(data.hashing_time ? `${data.hashing_time} secs` : "N/A");
+
                 // Map the data for display (jobs already have match scores)
                 const mappedJobs = jobsArray.map(job => mapJobDataForApplicant(job));
                 
@@ -215,15 +218,53 @@ const handleApplyClick = () => {
 
 const handleProceed = async () => {
     setShowConfirmModal(false);
-    
+
     try {
-        // Here you would make an API call to apply for the job
-        // const response = await applyToJob(selectedJob.job_id);
-        
+        // Get applicant_id from your auth context/user
+        const { data: { session } } = await supabase.auth.getSession();
+        const accessToken = session?.access_token;
+
+        // Fetch the integer applicant_id from backend
+        const res = await fetch("http://localhost:8000/api/v1/auth/me", {
+            headers: { Authorization: `Bearer ${accessToken}` }
+        });
+        const userData = await res.json();
+        const applicant_id = userData.database_user?.applicant_id;
+
+        if (!accessToken || !selectedJob?.job_id || !applicant_id) {
+            alert("Missing required information.");
+            return;
+        }
+
+        // Prepare application data
+        const applicationData = {
+            applicant_id,
+            job_id: selectedJob.job_id,
+            status: "applied", // or whatever status you want
+            remarks: "",
+            created_at: new Date().toISOString()
+        };
+
+        console.log("Submitting application:", applicationData);
+
+        // Call backend API
+        const response = await fetch("http://localhost:8000/api/v1/applications/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify(applicationData),
+        });
+
+        if (!response.ok) {
+            throw new Error("Failed to apply for job.");
+        }
+
         setShowSuccessModal(true);
     } catch (error) {
         console.error("Error applying to job:", error);
-        // Handle error (maybe show error modal)
+        alert("Failed to apply for job.");
     }
 };
 
@@ -267,8 +308,12 @@ const mapJobDataForApplicant = (job) => {
         'internship': 'Internship'
     };
 
-    // Get tag names for job_tags array
     const tagNames = tagsLoading ? [] : getTagNamesByIds(job.job_tags || []);
+    const matchedTags = (job.matched_tags || []).filter(Boolean);
+    let tags;
+    if (matchedTags.length) {
+        tags = matchedTags.map(name => ({ label: name, matched: true }));
+    } 
 
     return {
         // Core identifiers
@@ -302,7 +347,7 @@ const mapJobDataForApplicant = (job) => {
         position_count: job.position_count || 1,
         
         // Tags
-        tags: tagNames.map(name => ({ label: name, matched: true })), // for Card
+        tags, // for Card
         job_tags: job.job_tags || [],
         tag_names: tagNames, // resolved tag names
         
@@ -514,7 +559,7 @@ const mapJobDataForApplicant = (job) => {
                                 description={job.description}
                                 salaryRangeLow={job.salary_min || job.salaryRangeLow}
                                 salaryRangeHigh={job.salary_max || job.salaryRangeHigh}
-                                tags={job.job_tags || job.tags || []} // Handle both formats
+                                tags={job.tags || []} // Handle both formats
                                 onViewDetails={() => {
                                     console.log("=== JOB DETAILS DEBUG ===");
                                     console.log("Selected job for details:", job);
@@ -524,6 +569,7 @@ const mapJobDataForApplicant = (job) => {
                                     console.log("Description:", job.description);
                                     setSelectedJob(job);
                                     setDrawerOpen(true);
+                                    onViewDetails={handleViewDetails}
                                 }}
                             />
                         ))
@@ -536,7 +582,7 @@ const mapJobDataForApplicant = (job) => {
                 open={drawerOpen}
                 onClose={() => setDrawerOpen(false)}
                 job={selectedJob}
-                onApply={handleApplyClick} // Use the proper handler
+                onApply={handleApplyClick}
             />
 
             {/* Confirmation Modal */}

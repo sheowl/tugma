@@ -31,11 +31,24 @@ export const AuthProvider = ({ children }) => {
     getInitialSession();
 
     // Listen for auth changes
+    let mounted = true;
+    
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        // Only process if component is still mounted and session actually changed
+        if (!mounted) return;
+        
+        // Ignore token refresh events if user data hasn't changed
+        if (event === 'TOKEN_REFRESHED' && user?.id === session?.user?.id) {
+          return;
+        }
+        
         if (session?.user) {
-          setUser(session.user);
-          setUserType(session.user.user_metadata?.user_type || null);
+          // Only update if user actually changed
+          if (!user || user.id !== session.user.id) {
+            setUser(session.user);
+            setUserType(session.user.user_metadata?.user_type || null);
+          }
         } else {
           setUser(null);
           setUserType(null);
@@ -44,7 +57,10 @@ export const AuthProvider = ({ children }) => {
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Company authentication methods using Supabase
