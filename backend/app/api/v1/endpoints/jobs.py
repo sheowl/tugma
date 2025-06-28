@@ -537,7 +537,7 @@ async def get_my_job_applicants(
                 "phone_number": applicant.contact_number,
                 "location": applicant.current_address,
                 "application_created_at": applicant.application_created_at,
-                "status": applicant.status if applicant.status else "pending",
+                "status": applicant.status if applicant.status else "applied",
                 "applicant_tags": applicant_tags,  # Array of tag IDs
                 "match_score": match_score if match_score is not None else 0  # Default to 0 if null
             }

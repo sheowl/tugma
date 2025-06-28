@@ -126,8 +126,17 @@ export const CompanyProvider = ({ children }) => {
     setError(null);
     try {
       const response = await CompanyService.getRecentApplicants(); // No limit passed
-      setRecentApplicants(response);
-      return response;
+      console.log('Recent applicants response:', response);
+
+    // Ensure each applicant has a match_percentage or match_score
+    const applicantsWithMatchScores = response.recent_applicants?.map(applicant => ({
+      ...applicant,
+      match_percentage: applicant.match_percentage || applicant.match_score || 0,
+      match_score: applicant.match_score || applicant.match_percentage || 0
+    })) || [];
+
+      setRecentApplicants(applicantsWithMatchScores);
+      return { recent_applicants: applicantsWithMatchScores };
     } catch (err) {
       setError(err.message);
       throw err;

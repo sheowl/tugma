@@ -84,7 +84,7 @@ async def get_company_dashboard_stats(db: AsyncSession, company_id: int) -> Dict
         .join(Job, JobApplication.job_id == Job.job_id)
         .where(
             Job.company_id == company_id,
-            (JobApplication.status == 'pending') | (JobApplication.status.is_(None))
+            (JobApplication.status == 'applied') | (JobApplication.status.is_(None))
         )
     )
     pending_reviews = pending_reviews_result.scalar() or 0

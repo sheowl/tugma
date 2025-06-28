@@ -127,16 +127,18 @@ const EmployerHomePage = () => {
   };
 
   const getMatchColor = (percentage) => {
-    if (percentage < 50) {
+    const score = percentage || 0; // Handle undefined/null values
+    if (score < 50) {
       return "bg-[#E74C3C] text-[#FEFEFF]";
-    } else if (percentage < 75) {
+    } else if (score < 75) {
       return "bg-[#F5B041] text-[#FEFEFF]";
     }
     return "bg-[#27AE60] text-[#FEFEFF]";
   };
 
   const getMatchText = (percentage) => {
-    return `${percentage}% Match`;
+    const score = percentage || 0; // Handle undefined/null values
+    return `${Math.round(score)}% Match`;
   };
 
   const formatCompanyType = (companySize) => {
@@ -334,64 +336,76 @@ const EmployerHomePage = () => {
             </div>
           ) : (
             <div className="space-y-0">
-              {applicantsToShow.map((applicant, index) => (
-                <div key={applicant.id} className="flex items-start gap-4 relative">
-                  
-                  {/* Timeline */}
-                  <div className="flex flex-col items-center relative">
-                    <div className={`w-[25px] h-[25px] rounded-full ${
-                      index === 0 ? 'bg-[#FF8032]' : 'bg-white border-2 border-[#FF8032]'
-                    } mt-6 relative z-10`}></div>
-                    {index < applicantsToShow.length - 1 && (
-                      <div className="w-0.5 bg-[#FF8032] absolute top-[43px] bottom-[-102px] left-1/2 transform -translate-x-1/2"></div>
-                    )}
-                  </div>
-                  
-                  {/* Content Card */}
-                  <div className="flex-1 bg-white border border-[#E5E7EB] rounded-[12px] p-4 mb-2 h-[100px] hover:shadow-md transition-shadow">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        
-                        {/* Avatar */}
-                        <div className="w-[50px] h-[50px] bg-[#D1D5DB] rounded-full flex items-center justify-center overflow-hidden">
-                          {applicant.profile_picture ? (
-                            <img 
-                              src={applicant.profile_picture} 
-                              alt={applicant.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <span className="text-[#6B7280] font-semibold text-[14px]">
-                              {applicant.name.split(' ').map(n => n[0]).join('')}
-                            </span>
-                          )}
+              {applicantsToShow.map((applicant, index) => {
+                // Add this debug log
+                console.log('🔍 Applicant match score debug:', {
+                  name: applicant.name,
+                  match_percentage: applicant.match_percentage,
+                  match_score: applicant.match_score,
+                  position: applicant.position
+                });
+                
+                return (
+                  <div key={applicant.id} className="flex items-start gap-4 relative">
+                    
+                    {/* Timeline */}
+                    <div className="flex flex-col items-center relative">
+                      <div className={`w-[25px] h-[25px] rounded-full ${
+                        index === 0 ? 'bg-[#FF8032]' : 'bg-white border-2 border-[#FF8032]'
+                      } mt-6 relative z-10`}></div>
+                      {index < applicantsToShow.length - 1 && (
+                        <div className="w-0.5 bg-[#FF8032] absolute top-[43px] bottom-[-102px] left-1/2 transform -translate-x-1/2"></div>
+                      )}
+                    </div>
+                    
+                    {/* Content Card */}
+                    <div className="flex-1 bg-white border border-[#E5E7EB] rounded-[12px] p-4 mb-2 h-[100px] hover:shadow-md transition-shadow">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          
+                          {/* Avatar */}
+                          <div className="w-[50px] h-[50px] bg-[#D1D5DB] rounded-full flex items-center justify-center overflow-hidden">
+                            {applicant.profile_picture ? (
+                              <img 
+                                src={applicant.profile_picture} 
+                                alt={applicant.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <span className="text-[#6B7280] font-semibold text-[14px]">
+                                {applicant.name.split(' ').map(n => n[0]).join('')}
+                              </span>
+                            )}
+                          </div>
+                          
+                          {/* Details */}
+                          <div>
+                            <h3 className="text-[16px] font-bold text-[#000000]">{applicant.name}</h3>
+                            <p className="text-[14px] font-semibold text-[#6B7280]">Applied to: {applicant.position}</p>
+                            <p className="text-[12px] font-semibold text-[#6B7280]">{applicant.time_ago}</p>
+                          </div>
                         </div>
-                        
-                        {/* Details */}
-                        <div>
-                          <h3 className="text-[16px] font-bold text-[#000000]">{applicant.name}</h3>
-                          <p className="text-[14px] font-semibold text-[#6B7280]">Applied to: {applicant.position}</p>
-                          <p className="text-[12px] font-semibold text-[#6B7280]">{applicant.time_ago}</p>
-                        </div>
-                      </div>
 
-                      {/* Actions */}
-                      <div className="flex items-center gap-3">
-                        <span className={`px-3 py-1 rounded-full text-[12px] font-semibold ${getMatchColor(applicant.match_percentage)}`}>
-                          {getMatchText(applicant.match_percentage)}
-                        </span>
-                        <button 
-                          onClick={() => handleViewProfile(applicant.id)}
-                          className="flex items-center gap-2 px-4 py-2 border border-[#D1D5DB] rounded-[8px] text-[12px] text-[#3C3B3B] font-semibold hover:bg-[#F9FAFB] transition-colors"
-                        >
-                          <EyeIcon className="text-[#3C3B3B] w-[20px] h-[20px]" strokeWidth={2} />
-                          View Profile
-                        </button>
+                        {/* Actions */}
+                        <div className="flex items-center gap-3">
+                          <span className={`px-3 py-1 rounded-full text-[12px] font-semibold ${
+                            getMatchColor(applicant.match_percentage || applicant.match_score)
+                          }`}>
+                            {getMatchText(applicant.match_percentage || applicant.match_score)}
+                          </span>
+                          <button 
+                            onClick={() => handleViewProfile(applicant.id)}
+                            className="flex items-center gap-2 px-4 py-2 border border-[#D1D5DB] rounded-[8px] text-[12px] text-[#3C3B3B] font-semibold hover:bg-[#F9FAFB] transition-colors"
+                          >
+                            <EyeIcon className="text-[#3C3B3B] w-[20px] h-[20px]" strokeWidth={2} />
+                            View Profile
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
