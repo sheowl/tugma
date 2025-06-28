@@ -25,3 +25,5 @@ class TagOut(TagBase):
 
     model_config = {"from_attributes": True}
 
+class TagIdsRequest(BaseModel):
+    tag_ids: list[int]

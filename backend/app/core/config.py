@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     EMAIL_PASSWORD: str
 
     # CORS Settings with defaults
-    ALLOWED_ORIGINS: List[str] = Field(default_factory=lambda: ["http://localhost:3000", "http://localhost:5173"])
+    ALLOWED_ORIGINS: List[str] = Field(default_factory=lambda: ["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:5173"])
     ALLOWED_METHODS: List[str] = Field(default_factory=lambda: ["GET", "POST", "PUT", "DELETE", "OPTIONS"])
     ALLOWED_HEADERS: List[str] = Field(default_factory=lambda: ["*"])
 

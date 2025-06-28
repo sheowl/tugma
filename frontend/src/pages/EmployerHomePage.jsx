@@ -6,9 +6,12 @@ import {
   DocumentTextIcon, 
   CalendarDaysIcon, 
   StarIcon, 
-  EyeIcon 
+  EyeIcon,
+  ChevronUpIcon,
+  ChevronDownIcon
 } from "@heroicons/react/24/outline";
 import { useAuth } from "../context/AuthContext";
+import { useCompany } from "../context/CompanyContext";
 import { useNavigate } from "react-router-dom";
 
 const EmployerHomePage = () => {
@@ -25,20 +28,31 @@ const EmployerHomePage = () => {
     company_size: "",
     location: ""
   });
-  const [recentApplicants, setRecentApplicants] = useState([]);
+  const [allApplicants, setAllApplicants] = useState([]); // Store all applicants
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [showAllApplicants, setShowAllApplicants] = useState(false); // New state for expanded view
 
-  // Get methods from AuthContext
+  // Dashboard limit for recent applicants
+  const DASHBOARD_LIMIT = 3;
+
+  // Get methods from AuthContext (authentication only)
   const { 
-    getDashboardStats, 
-    getRecentApplicants, 
     isEmployer, 
     isAuthenticated,
     user,
-    userType,
-    getCompanyProfile
+    userType
   } = useAuth();
+
+  // Get methods from CompanyContext (company operations)
+  const { 
+    getDashboardStats, 
+    getRecentApplicants, 
+    getCompanyProfile,
+    loading: companyLoading,
+    error: companyError,
+    clearError
+  } = useCompany();
 
   useEffect(() => {
     checkAuthAndLoadData();
@@ -71,11 +85,13 @@ const EmployerHomePage = () => {
     try {
       setIsLoading(true);
       setError("");
+      clearError(); // Clear any previous company errors
       
-      // Load dashboard stats, recent applicants, and company profile in parallel
+      // Load dashboard stats, all applicants, and company profile in parallel
+      // Note: getRecentApplicants now returns ALL applicants from backend
       const [statsResponse, applicantsResponse, profileResponse] = await Promise.all([
         getDashboardStats(),
-        getRecentApplicants(3),
+        getRecentApplicants(), // No limit parameter - backend returns all
         getCompanyProfile()
       ]);
 
@@ -89,20 +105,25 @@ const EmployerHomePage = () => {
       // Update company info (from either dashboard stats or profile)
       const companyData = statsResponse.company_info || profileResponse;
       setCompanyInfo({
-        company_name: companyData.company_name || "Company Name",
+        company_name: companyData.company_name || companyData.name || "Company Name",
         company_size: companyData.company_size || "",
         location: companyData.location || ""
       });
 
-      // Update recent applicants
-      setRecentApplicants(applicantsResponse.recent_applicants || []);
+      // Store ALL applicants in state
+      setAllApplicants(applicantsResponse.recent_applicants || applicantsResponse || []);
 
     } catch (error) {
       console.error("Error loading dashboard data:", error);
-      setError("Failed to load dashboard data. Please try refreshing the page.");
+      setError(error.message || "Failed to load dashboard data. Please try refreshing the page.");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Get applicants based on whether showing all or limited view
+  const getApplicantsToShow = () => {
+    return showAllApplicants ? allApplicants : allApplicants.slice(0, DASHBOARD_LIMIT);
   };
 
   const getMatchColor = (percentage) => {
@@ -133,8 +154,8 @@ const EmployerHomePage = () => {
     return sizeMapping[companySize] || `${companySize} Company`;
   };
 
-  const handleViewAllApplicants = () => {
-    navigate('/employerapplicants');
+  const handleToggleViewAll = () => {
+    setShowAllApplicants(!showAllApplicants);
   };
 
   const handleViewProfile = (applicantId) => {
@@ -143,8 +164,17 @@ const EmployerHomePage = () => {
     // navigate(`/applicant/${applicantId}`);
   };
 
-  // Loading state
-  if (isLoading) {
+  const handleRetry = () => {
+    setError("");
+    clearError();
+    loadDashboardData();
+  };
+
+  // Get the applicants to display (limited or all based on state)
+  const applicantsToShow = getApplicantsToShow();
+
+  // Loading state (combine both loading states)
+  if (isLoading || companyLoading) {
     return (
       <div className="min-h-screen bg-[#FF8032] flex items-start overflow-hidden">
         <EmployerSideBar />
@@ -159,6 +189,9 @@ const EmployerHomePage = () => {
       </div>
     );
   }
+
+  // Combine errors from both sources
+  const displayError = error || companyError;
 
   return (
     <div className="min-h-screen bg-[#FF8032] flex items-start overflow-hidden">
@@ -180,24 +213,23 @@ const EmployerHomePage = () => {
                 <span className="text-[#FF8032] italic text-[13px] leading-tight">
                   {formatCompanyType(companyInfo.company_size)}
                 </span>
-                {companyInfo.location && (
-                  <span className="text-[#FF8032] text-[11px] leading-tight opacity-75">
-                    📍 {companyInfo.location}
-                  </span>
-                )}
+                <span className="text-[#FF8032] text-[12px] leading-tight flex items-center gap-1">
+                  <i className="bi bi-geo-alt-fill text-[#FF8032] text-[14px]"></i>
+                  {companyInfo.location}
+                </span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Error Message */}
-        {error && (
+        {displayError && (
           <div className="mx-[112px] mb-4">
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
               <div className="flex items-center justify-between">
-                <span>{error}</span>
+                <span>{displayError}</span>
                 <button 
-                  onClick={loadDashboardData}
+                  onClick={handleRetry}
                   className="ml-4 px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors"
                 >
                   Retry
@@ -264,15 +296,27 @@ const EmployerHomePage = () => {
               <StarIcon className="text-[#FF8032] w-[25px] h-[25px]" strokeWidth={2} />
               <h2 className="text-[24px] font-bold text-[#3C3B3B]">Recent Applicants</h2>
             </div>
-            <button 
-              onClick={handleViewAllApplicants}
-              className="text-[#FF8032] hover:text-[#e6722d] font-semibold text-[16px] hover:underline transition-colors"
-            >
-              View All
-            </button>
+            {allApplicants.length > DASHBOARD_LIMIT && (
+              <button 
+                onClick={handleToggleViewAll}
+                className="flex items-center gap-2 text-[#FF8032] hover:text-[#e6722d] font-semibold text-[16px] hover:underline transition-colors"
+              >
+                {showAllApplicants ? (
+                  <>
+                    Show Less
+                    <ChevronUpIcon className="w-4 h-4" />
+                  </>
+                ) : (
+                  <>
+                    View All
+                    <ChevronDownIcon className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            )}
           </div>
 
-          {recentApplicants.length === 0 ? (
+          {applicantsToShow.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-[#6B7280] mb-4">
                 <BriefcaseIcon className="w-16 h-16 mx-auto mb-4 opacity-50" />
@@ -290,7 +334,7 @@ const EmployerHomePage = () => {
             </div>
           ) : (
             <div className="space-y-0">
-              {recentApplicants.map((applicant, index) => (
+              {applicantsToShow.map((applicant, index) => (
                 <div key={applicant.id} className="flex items-start gap-4 relative">
                   
                   {/* Timeline */}
@@ -298,7 +342,7 @@ const EmployerHomePage = () => {
                     <div className={`w-[25px] h-[25px] rounded-full ${
                       index === 0 ? 'bg-[#FF8032]' : 'bg-white border-2 border-[#FF8032]'
                     } mt-6 relative z-10`}></div>
-                    {index < recentApplicants.length - 1 && (
+                    {index < applicantsToShow.length - 1 && (
                       <div className="w-0.5 bg-[#FF8032] absolute top-[43px] bottom-[-102px] left-1/2 transform -translate-x-1/2"></div>
                     )}
                   </div>

@@ -182,21 +182,20 @@ async def get_company_dashboard_stats(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.get("/dashboard/recent-applicants")  # Add this new endpoint
+@router.get("/dashboard/recent-applicants")  # Remove limit parameter
 async def get_recent_applicants(
-    limit: int = 3,
     company_info = Depends(get_current_company),
     db: AsyncSession = Depends(get_db)
 ):
-    """Get recent applicants for authenticated company"""
+    """Get all applicants for authenticated company"""
     try:
         company_id = company_info["db_user"].company_id
         
-        # Get recent applicants using CRUD function
-        recent_applicants = await crud.get_recent_applicants(db, company_id, limit)
+        # Get all applicants without limit (remove limit parameter)
+        all_applicants = await crud.get_recent_applicants(db, company_id)
         
         return {
-            "recent_applicants": recent_applicants
+            "recent_applicants": all_applicants
         }
         
     except Exception as e:

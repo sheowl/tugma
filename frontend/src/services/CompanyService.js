@@ -61,9 +61,9 @@ class CompanyService {
     }
 
     // Job operations
-    async getJobs() {
+    async getMyJobs() {
         const response = await AuthService.makeAuthenticatedRequest(
-            `${API_BASE_URL}/v1/jobs/company/jobs`,
+            `${API_BASE_URL}/v1/jobs/my-jobs`,
             { method: "GET" }
         );
         return response.json();
@@ -71,12 +71,53 @@ class CompanyService {
 
     async createJob(jobData) {
         const response = await AuthService.makeAuthenticatedRequest(
-            `${API_BASE_URL}/v1/jobs/jobs`,
+            `${API_BASE_URL}/v1/jobs/my-jobs`,
             {
                 method: "POST",
                 body: JSON.stringify(jobData),
             }
         );
+        return response.json();
+    }
+
+    async updateJob(jobId, jobData) {
+        console.log('🔄 CompanyService: Updating job with data:', jobData);
+        
+        const response = await AuthService.makeAuthenticatedRequest(
+            `${API_BASE_URL}/v1/jobs/my-jobs/${jobId}`,
+            {
+                method: "PUT",
+                body: JSON.stringify(jobData),
+            }
+        );
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('❌ Update job failed:', errorData);
+            throw new Error(`Failed to update job: ${response.status}`);
+        }
+        
+        return response.json();
+    }
+
+    async deleteJob(jobId) {
+        const response = await AuthService.makeAuthenticatedRequest(
+            `${API_BASE_URL}/v1/jobs/my-jobs/${jobId}`,
+            { method: "DELETE" }
+        );
+        return response.json();
+    }
+
+    async getJobDetails(jobId) {
+        const response = await AuthService.makeAuthenticatedRequest(
+            `${API_BASE_URL}/v1/jobs/my-jobs/${jobId}`,
+            { method: "GET" }
+        );
+        
+        if (!response.ok) {
+            throw new Error(`Failed to fetch job details: ${response.status}`);
+        }
+        
         return response.json();
     }
 
@@ -87,6 +128,15 @@ class CompanyService {
             : `${API_BASE_URL}/v1/applications/company/applications`;
             
         const response = await AuthService.makeAuthenticatedRequest(url, { method: "GET" });
+        return response.json();
+    }
+
+    // Add new method for job applicants using the correct endpoint
+    async getJobApplicants(jobId) {
+        const response = await AuthService.makeAuthenticatedRequest(
+            `${API_BASE_URL}/v1/jobs/my-jobs/${jobId}/applicants`,
+            { method: "GET" }
+        );
         return response.json();
     }
 }

@@ -11,6 +11,8 @@ class JobApplicationBase(BaseModel):
 class JobApplicationCreate(JobApplicationBase):
     applicant_id: int
     job_id: int
+    status: str
+    remarks: Optional[str] = None
 
 class JobApplicationUpdate(BaseModel):
     status: Optional[str] = None
@@ -29,6 +31,9 @@ class JobMatchingBase(BaseModel):
 class JobMatchingCreate(JobMatchingBase):
     applicant_id: int
     job_id: int
+
+class JobMatchingUpdate(BaseModel):
+    match_score: Optional[float] = None
 
 class JobMatchingOut(JobMatchingBase):
     applicant_id: int

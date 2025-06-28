@@ -1,11 +1,16 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import AuthService from '../services/AuthService';
-import CompanyService from '../services/CompanyService';
 import { supabase } from '../services/supabaseClient';
+import AuthService from '../services/AuthService';
 
 const AuthContext = createContext();
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -13,14 +18,52 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const currentUser = AuthService.getCurrentUser();
-    const currentUserType = AuthService.getUserType();
-    setUser(currentUser);
-    setUserType(currentUserType);
-    setLoading(false);
+    // Get initial session
+    const getInitialSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        setUser(session.user);
+        setUserType(session.user.user_metadata?.user_type || null);
+      }
+      setLoading(false);
+    };
+
+    getInitialSession();
+
+    // Listen for auth changes
+    let mounted = true;
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        // Only process if component is still mounted and session actually changed
+        if (!mounted) return;
+        
+        // Ignore token refresh events if user data hasn't changed
+        if (event === 'TOKEN_REFRESHED' && user?.id === session?.user?.id) {
+          return;
+        }
+        
+        if (session?.user) {
+          // Only update if user actually changed
+          if (!user || user.id !== session.user.id) {
+            setUser(session.user);
+            setUserType(session.user.user_metadata?.user_type || null);
+          }
+        } else {
+          setUser(null);
+          setUserType(null);
+        }
+        setLoading(false);
+      }
+    );
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
-  // Company authentication methods
+  // Company authentication methods using Supabase
   const companyLogin = async (company_email, password) => {
     const result = await AuthService.companyLogin(company_email, password);
     if (result.success) {
@@ -39,7 +82,7 @@ export const AuthProvider = ({ children }) => {
     return result;
   };
 
-  // Applicant authentication methods
+  // Applicant authentication methods using Supabase
   const applicantLogin = async (email, password) => {
     const result = await AuthService.applicantLogin(email, password);
     if (result.success) {
@@ -58,78 +101,23 @@ export const AuthProvider = ({ children }) => {
     return result;
   };
 
-  // Generic login method (backwards compatibility)
-  const login = async (identifier, password, type = 'company') => {
-    if (type === 'company') {
-      return await companyLogin(identifier, password);
-    } else {
-      return await applicantLogin(identifier, password);
-    }
-  };
-
-  // Generic register method (backwards compatibility)
-  const register = async (userData, type = 'company') => {
-    if (type === 'company') {
-      return await companySignup(userData.email, userData.password, userData.company_name);
-    } else {
-      return await applicantSignup(userData.email, userData.password, userData);
-    }
-  };
-
   const logout = async () => {
-    await supabase.auth.signOut();
-    AuthService.logout();
+    await AuthService.logout();
     setUser(null);
     setUserType(null);
   };
 
-  // Helper methods
-  const isEmployer = () => userType === 'employer';
-  const isApplicant = () => userType === 'applicant';
-  const isAuthenticated = () => !!user && !!userType;
-
-  // Company-specific methods
-  const getCompanyProfile = async () => {
-    if (!isEmployer()) {
-      throw new Error('Only employers can access company profile');
-    }
-    return await AuthService.getCompanyProfile();
+  // Check functions using Supabase session
+  const isAuthenticated = () => {
+    return !!user;
   };
 
-  const updateCompanyProfile = async (data) => {
-    if (!isEmployer()) {
-      throw new Error('Only employers can update company profile');
-    }
-    return await AuthService.updateCompanyProfile(data);
+  const isEmployer = () => {
+    return userType === 'employer' || user?.user_metadata?.user_type === 'employer';
   };
 
-  const completeOnboarding = async (data) => {
-    if (!isEmployer()) {
-      throw new Error('Only employers can complete onboarding');
-    }
-    return await CompanyService.completeOnboarding(data);
-  };
-
-  const getOnboardingStatus = async () => {
-    if (!isEmployer()) {
-      throw new Error('Only employers can check onboarding status');
-    }
-    return await CompanyService.getOnboardingStatus();
-  };
-
-  // Company dashboard methods
-  const getDashboardStats = async () => {
-    if (!isEmployer()) {
-      throw new Error('Only employers can access dashboard stats');
-    }
-    return await CompanyService.getDashboardStats();
-  };
-
-  const getRecentApplicants = async (limit = 3) => {
-    if (!isEmployer()) {
-      throw new Error('Only employers can access recent applicants');
-    }
-    return await CompanyService.getRecentApplicants(limit);
+  const isApplicant = () => {
+    return userType === 'applicant' || user?.user_metadata?.user_type === 'applicant';
   };
 
   const value = {
@@ -139,9 +127,8 @@ export const AuthProvider = ({ children }) => {
     loading,
     
     // Authentication methods
-    login,
-    register,
     logout,
+    isAuthenticated,
     
     // Company-specific methods
     companyLogin,
@@ -154,22 +141,7 @@ export const AuthProvider = ({ children }) => {
     // Helper methods
     isEmployer,
     isApplicant,
-    isAuthenticated,
-    
-    // Company profile methods
-    getCompanyProfile,
-    updateCompanyProfile,
-    completeOnboarding,
-    getOnboardingStatus,
-    
-    // Company dashboard methods
-    getDashboardStats,
-    getRecentApplicants,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

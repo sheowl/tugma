@@ -7,5 +7,6 @@ from . import (
     jobs,
     notification,
     tags,
+    jobmatchtest,
     matching,
 )
