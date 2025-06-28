@@ -1,40 +1,152 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext"; // ⭐ ADD THIS
 import { useCompany } from "../context/CompanyContext";
-import { useTags } from "../context/TagsContext"; // Added for dynamic tags
+import { useTags } from "../context/TagsContext";
 import EmployerSideBar from "../components/EmployerSideBar";
 import EmployerApplicantHeader from "../components/EmployerApplicantHeader";
 import EmpCard from "../components/EmpCard";
 import ApplicationFullDetails from "../components/ApplicationFullDetails";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 
+const fetchSortedApplicantsFromAPI = async (jobId, sortBy = 'match_score', descending = true) => {
+  try {
+    const response = await fetch(
+      `http://localhost:8000/api/v1/job-matches/job/${jobId}/sorted?sort_by=${sortBy}&descending=${descending}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          // Add auth headers if needed
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching sorted applicants:', error);
+    throw error;
+  }
+};
+
 const EmployerApplicants = () => {
   const location = useLocation();
   const navigate = useNavigate();
   
+  // ⭐ USE AuthContext for authentication checks
+  const { 
+    isEmployer, 
+    isAuthenticated, 
+    user 
+  } = useAuth();
+  
   // Use CompanyContext for backend operations
-  const { getJobApplicants, loading, error, clearError } = useCompany();
+  const { 
+    getJobApplicants, 
+    getCompanyProfile, 
+    loading, 
+    error, 
+    clearError 
+  } = useCompany();
   
   // Use TagsContext for dynamic tag display
   const { getTagNamesByIds, loading: tagsLoading } = useTags();
   
   const [applicants, setApplicants] = useState([]);
   const [sortBy, setSortBy] = useState('best');
-  const [selectedJobNumber, setSelectedJobNumber] = useState(null); // Start with null
+  const [selectedJobNumber, setSelectedJobNumber] = useState(null);
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [selectedApplicant, setSelectedApplicant] = useState(null);
   const [showApplicationDetails, setShowApplicationDetails] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState("");
+  const [authChecked, setAuthChecked] = useState(false);
   
   // Get job posts data from navigation state
   const jobPostsData = location.state?.jobPosts || [];
   const selectedJob = location.state?.selectedJob;
   const selectedJobId = location.state?.selectedJobId;
 
+  // ⭐ STEP 1: Check authentication first
   useEffect(() => {
-    loadApplicantsData();
-  }, [selectedJobNumber]);
+    checkAuthenticationAndLoadData();
+  }, []);
+
+  // ⭐ STEP 2: Load applicants when job changes (after auth is confirmed)
+  useEffect(() => {
+    if (authChecked && isAuthenticated() && isEmployer()) {
+      loadApplicantsData();
+    }
+  }, [selectedJobNumber, authChecked, sortBy]); // Added sortBy dependency
+
+  const checkAuthenticationAndLoadData = async () => {
+    try {
+      setIsLoading(true);
+      setFetchError("");
+      clearError();
+
+      // Check if user is authenticated and is an employer
+      if (!isAuthenticated()) {
+        navigate('/employer-sign-in');
+        return;
+      }
+
+      if (!isEmployer()) {
+        navigate('/employer-sign-in');
+        return;
+      }
+      
+      // Verify backend connection with company profile
+      try {
+        const profileResponse = await getCompanyProfile();
+      } catch (profileError) {
+        // Proceed even if backend connection has issues
+      }
+      
+      setAuthChecked(true);
+      
+      // Initialize job selection
+      await initializeJobSelection();
+      
+    } catch (error) {
+      setFetchError("Authentication error. Please log in again.");
+      navigate('/employer-sign-in');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const initializeJobSelection = async () => {
+    // If no job posts data is passed, redirect back to job posts page
+    if (!jobPostsData || jobPostsData.length === 0) {
+      navigate('/employerjobposts');
+      return;
+    }
+
+    // Set the selected job if provided, otherwise default to first
+    let jobIdToSelect = selectedJobNumber;
+    
+    // Priority order for job ID selection:
+    if (selectedJobId && selectedJobNumber === null) {
+      jobIdToSelect = selectedJobId;
+      setSelectedJobNumber(selectedJobId);
+    } else if (selectedJobNumber) {
+      jobIdToSelect = selectedJobNumber;
+    } else if (jobPostsData.length > 0) {
+      jobIdToSelect = jobPostsData[0].id;
+      setSelectedJobNumber(jobPostsData[0].id);
+    }
+
+    if (!jobIdToSelect) {
+      setFetchError("No valid job ID found");
+      return;
+    }
+  };
 
   const loadApplicantsData = async () => {
     try {
@@ -42,77 +154,126 @@ const EmployerApplicants = () => {
       setFetchError("");
       clearError();
 
-      // If no job posts data is passed, redirect back to job posts page
-      if (!jobPostsData || jobPostsData.length === 0) {
-        navigate('/employerjobposts');
+      if (!selectedJobNumber) {
         return;
       }
 
-      // Set the selected job if provided, otherwise default to first
-      let jobIdToFetch = selectedJobNumber;
-      
-      // Priority order for job ID selection:
-      // 1. selectedJobId from navigation (when coming from specific job)
-      // 2. Current selectedJobNumber state
-      // 3. First job in jobPostsData array
-      if (selectedJobId && selectedJobNumber === null) {
-        jobIdToFetch = selectedJobId;
-        setSelectedJobNumber(selectedJobId);
-        console.log(`🔍 EmployerApplicants: Using selectedJobId from navigation: ${selectedJobId}`);
-      } else if (selectedJobNumber) {
-        jobIdToFetch = selectedJobNumber;
-        console.log(`🔍 EmployerApplicants: Using current selectedJobNumber: ${selectedJobNumber}`);
-      } else if (jobPostsData.length > 0) {
-        jobIdToFetch = jobPostsData[0].id;
-        setSelectedJobNumber(jobPostsData[0].id);
-        console.log(`🔍 EmployerApplicants: Using first job from jobPostsData: ${jobPostsData[0].id}`);
+      // **NEW: Use your backend sorting API with merge sort algorithm**
+      // Map frontend sort options to backend sort fields
+      const sortMapping = {
+        'best': { field: 'match_score', descending: true },
+        'recent': { field: 'match_score', descending: true }, // You can change this to date field when available
+        'alphabetical': { field: 'applicant_id', descending: false }
+      };
+
+      const sortConfig = sortMapping[sortBy] || { field: 'match_score', descending: true };
+
+      // **STEP 1: Fetch sorted job matches using your merge sort API**
+      let sortedJobMatches = [];
+      try {
+        sortedJobMatches = await fetchSortedApplicantsFromAPI(
+          selectedJobNumber, 
+          sortConfig.field, 
+          sortConfig.descending
+        );
+        console.log('✅ Sorted job matches from API:', sortedJobMatches);
+      } catch (apiError) {
+        console.warn('⚠️ API sorting failed, falling back to manual sorting:', apiError);
+        // Fallback to your existing method if API fails
       }
 
-      if (!jobIdToFetch) {
-        setFetchError("No valid job ID found");
-        return;
+      // **STEP 2: Fetch detailed applicant data (your existing logic)**
+      const response = await getJobApplicants(selectedJobNumber);
+
+      // **STEP 3: Transform and merge the data**
+      let transformedApplicants;
+
+      if (sortedJobMatches.length > 0) {
+        // **Use API-sorted order with merge sort algorithm results**
+        transformedApplicants = sortedJobMatches.map((jobMatch, index) => {
+          // Find matching applicant data
+          const applicantData = response.applicants?.find(
+            app => app.applicant_id === jobMatch.applicant_id
+          );
+
+          if (!applicantData) {
+            console.warn(`No applicant data found for ID: ${jobMatch.applicant_id}`);
+            return null;
+          }
+
+          // Get tag names from tag IDs
+          const tagNames = getTagNamesByIds(applicantData.applicant_tags || []);
+          
+          return {
+            id: applicantData.applicant_id || `${selectedJobNumber}-${index}`,
+            applicant_id: applicantData.applicant_id,
+            jobNumber: selectedJobNumber,
+            jobTitle: response.job_title || 'Job Post',
+            matched: jobMatch.match_score || applicantData.match_score || 0, // Use API match score
+            isNew: new Date() - new Date(applicantData.application_created_at) < 24 * 60 * 60 * 1000,
+            candidateName: applicantData.name || 'Unknown Applicant',
+            role: 'Applicant',
+            email: applicantData.applicant_email || 'N/A',
+            phoneNumber: applicantData.phone_number || 'N/A',
+            location: applicantData.location || 'N/A',
+            applicationCreatedAt: applicantData.application_created_at,
+            status: applicantData.status || 'applied',
+            skills: tagNames.slice(0, 3),
+            moreSkillsCount: Math.max(0, tagNames.length - 3),
+            appliedDaysAgo: calculateDaysAgo(applicantData.application_created_at),
+            applicantTags: applicantData.applicant_tags || [],
+            tagNames: tagNames,
+            matchScore: jobMatch.match_score || applicantData.match_score || 0,
+            // **Add sorting metadata for debugging**
+            sortedByAPI: true,
+            apiSortField: sortConfig.field,
+            apiSortOrder: sortConfig.descending ? 'desc' : 'asc'
+          };
+        }).filter(Boolean); // Remove null entries
+
+        console.log(`✅ Applied merge sort algorithm results: ${transformedApplicants.length} applicants sorted by ${sortConfig.field}`);
+      } else {
+        // **Fallback: Transform without API sorting (your existing logic)**
+        transformedApplicants = (response.applicants || []).map((applicant, index) => {
+          const tagNames = getTagNamesByIds(applicant.applicant_tags || []);
+          
+          return {
+            id: applicant.applicant_id || `${selectedJobNumber}-${index}`,
+            applicant_id: applicant.applicant_id,
+            jobNumber: selectedJobNumber,
+            jobTitle: response.job_title || 'Job Post',
+            matched: applicant.match_score || 0,
+            isNew: new Date() - new Date(applicant.application_created_at) < 24 * 60 * 60 * 1000,
+            candidateName: applicant.name || 'Unknown Applicant',
+            role: 'Applicant',
+            email: applicant.applicant_email || 'N/A',
+            phoneNumber: applicant.phone_number || 'N/A',
+            location: applicant.location || 'N/A',
+            applicationCreatedAt: applicant.application_created_at,
+            status: applicant.status || 'applied',
+            skills: tagNames.slice(0, 3),
+            moreSkillsCount: Math.max(0, tagNames.length - 3),
+            appliedDaysAgo: calculateDaysAgo(applicant.application_created_at),
+            applicantTags: applicant.applicant_tags || [],
+            tagNames: tagNames,
+            matchScore: applicant.match_score || 0,
+            sortedByAPI: false
+          };
+        });
+
+        console.log('⚠️ Using fallback sorting (no API results)');
       }
-
-      console.log(`🔍 EmployerApplicants: Final job ID to fetch: ${jobIdToFetch}`);
-
-      // Fetch applicants from backend
-      const response = await getJobApplicants(jobIdToFetch);
-      
-      console.log('📋 Applicants response:', response);
-
-      // Transform backend applicants data to frontend format
-      const transformedApplicants = (response.applicants || []).map((applicant, index) => {
-        // Get tag names from tag IDs
-        const tagNames = getTagNamesByIds(applicant.applicant_tags || []);
-        
-        return {
-          id: applicant.applicant_id || `${jobIdToFetch}-${index}`,
-          jobNumber: jobIdToFetch,
-          jobTitle: response.job_title || 'Job Post',
-          matched: applicant.match_score || 0, // Use actual match score from backend
-          isNew: new Date() - new Date(applicant.application_created_at) < 24 * 60 * 60 * 1000, // New if applied within last 24 hours
-          candidateName: applicant.name || 'Unknown Applicant',
-          role: 'Applicant', // Default role since backend doesn't provide this yet
-          email: applicant.applicant_email || 'N/A', // Use applicant_email from backend
-          phoneNumber: applicant.phone_number || 'N/A',
-          location: applicant.location || 'N/A',
-          applicationCreatedAt: applicant.application_created_at,
-          status: applicant.status || 'applied',
-          skills: tagNames.slice(0, 3), // Show first 3 tags as skills
-          moreSkillsCount: Math.max(0, tagNames.length - 3), // Count of remaining tags
-          appliedDaysAgo: calculateDaysAgo(applicant.application_created_at),
-          // Add new fields from backend
-          applicantTags: applicant.applicant_tags || [], // Array of tag IDs
-          tagNames: tagNames, // Array of tag names for display
-          matchScore: applicant.match_score || 0 // Actual match score
-        };
-      });
 
       setApplicants(transformedApplicants);
       
     } catch (error) {
-      console.error("❌ Error loading applicants:", error);
-      setFetchError(error.message || "Failed to load applicants. Please try again.");
+      // Check if it's an auth error
+      if (error.message.includes('Authentication') || error.message.includes('401')) {
+        setFetchError("Session expired. Please log in again.");
+        navigate('/employer-sign-in');
+      } else {
+        setFetchError(error.message || "Failed to load applicants. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -137,16 +298,8 @@ const EmployerApplicants = () => {
   // Filter applicants by selected job number
   const filteredApplicants = applicants.filter(app => app.jobNumber === selectedJobNumber);
 
-  // Sort applicants based on sortBy
-  const sortedApplicants = [...filteredApplicants].sort((a, b) => {
-    if (sortBy === 'best') {
-      // Sort by actual match score (descending)
-      return (b.matchScore || 0) - (a.matchScore || 0);
-    } else if (sortBy === 'recent') {
-      return a.appliedDaysAgo - b.appliedDaysAgo;
-    }
-    return 0;
-  });
+  // Already sorted by merge sort algorithm from API
+  const sortedApplicants = filteredApplicants; 
 
   const handleDropdownToggle = (applicantId) => {
     setOpenDropdownId(openDropdownId === applicantId ? null : applicantId);
@@ -158,9 +311,14 @@ const EmployerApplicants = () => {
   };
 
   const handleJobChange = (newJobId) => {
-    console.log(`🔍 EmployerApplicants: Changing job to ID: ${newJobId}`);
     setSelectedJobNumber(newJobId);
     setApplicants([]); // Clear current applicants while loading new ones
+  };
+
+  // ⭐ RETRY FUNCTION THAT INCLUDES AUTH CHECK
+  const handleRetry = () => {
+    setAuthChecked(false);
+    checkAuthenticationAndLoadData();
   };
 
   // Loading state
@@ -172,7 +330,9 @@ const EmployerApplicants = () => {
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
               <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-[#FF8032] mx-auto"></div>
-              <div className="text-lg font-semibold text-gray-600 mt-4">Loading applicants...</div>
+              <div className="text-lg font-semibold text-gray-600 mt-4">
+                {!authChecked ? 'Verifying authentication...' : 'Loading applicants...'}
+              </div>
             </div>
           </div>
         </div>
@@ -190,8 +350,20 @@ const EmployerApplicants = () => {
             <div className="text-center text-red-500">
               <div className="text-lg font-semibold mb-4">Error Loading Applicants</div>
               <div className="mb-4">{fetchError || error}</div>
+              
+              {/* ⭐ DEBUG INFO */}
+              {process.env.NODE_ENV === 'development' && (
+                <div className="bg-gray-100 p-4 rounded mb-4 text-xs text-left max-w-md mx-auto">
+                  <div><strong>Debug Info:</strong></div>
+                  <div>Auth Checked: {authChecked ? '✅ Yes' : '❌ No'}</div>
+                  <div>Is Authenticated: {isAuthenticated() ? '✅ Yes' : '❌ No'}</div>
+                  <div>Is Employer: {isEmployer() ? '✅ Yes' : '❌ No'}</div>
+                  <div>User: {user ? '✅ Present' : '❌ Missing'}</div>
+                </div>
+              )}
+              
               <button 
-                onClick={() => loadApplicantsData()}
+                onClick={handleRetry}
                 className="bg-[#FF8032] text-white px-6 py-2 rounded-lg hover:bg-[#E66F24] transition"
               >
                 Retry
@@ -226,22 +398,21 @@ const EmployerApplicants = () => {
             sortedApplicants.map(applicant => (
               <EmpCard
                 key={applicant.id}
-                matched={applicant.matchScore} // Use actual match score
+                matched={applicant.matchScore}
                 isNew={applicant.isNew}
                 candidateName={applicant.candidateName}
                 role={applicant.role}
                 email={applicant.email}
                 phoneNumber={applicant.phoneNumber}
                 location={applicant.location}
-                skills={applicant.skills} // Dynamic skills from tags
-                moreSkillsCount={applicant.moreSkillsCount} // Count from tags
+                skills={applicant.skills}
+                moreSkillsCount={applicant.moreSkillsCount}
                 appliedDaysAgo={applicant.appliedDaysAgo}
                 actionLabel="Action"
                 onAction={val => {}}
                 dropdownOpen={openDropdownId === applicant.id}
                 onDropdownToggle={() => handleDropdownToggle(applicant.id)}
                 onViewFull={() => handleViewFullApplicant(applicant)}
-                // Pass additional data for potential future use
                 applicantTags={applicant.applicantTags}
                 tagNames={applicant.tagNames}
               />
@@ -261,6 +432,19 @@ const EmployerApplicants = () => {
           open={showApplicationDetails}
           onClose={() => setShowApplicationDetails(false)}
           applicant={selectedApplicant}
+          jobId={selectedJobNumber}
+          jobData={selectedApplicant?.job}
+          applicantTags={selectedApplicant.applicantTags} // <-- add this line
+          tagNames={selectedApplicant.tagNames} // <-- optionally, if you want tag names
+          onStatusUpdate={(applicantId, newStatus) => {
+            setApplicants(prevApplicants => 
+              prevApplicants.map(app => 
+                app.id === applicantId 
+                  ? { ...app, status: newStatus }
+                  : app
+              )
+            );
+          }}
         />
       )}
     </div>

@@ -10,12 +10,22 @@ function EmpCard({
   appliedDaysAgo = 'n',
   onViewFull = () => {},
 }) {
-  const [status, setStatus] = useState(isNew ? 'new' : '');  return (
+  const [status, setStatus] = useState(isNew ? 'new' : '');
+
+  // Apply color based on match percentage
+  let matchScoreColor = "text-[#27AE60]";
+  if (matched < 50) {
+    matchScoreColor = "text-[#E74C3C]";
+  } else if (matched < 75) {
+    matchScoreColor = "text-[#F5B041]";
+  }
+
+  return (
     <div className="bg-white shadow-all-around rounded-[20px] p-6 max-w-[324px] h-[340px] hover:scale-102 transition-transform duration-300 flex flex-col justify-between relative z-10">
       <div className="flex justify-between items-start mb-2">
         <div>
-          <div className="text-[32px] font-bold text-[#27AE60] leading-none">{matched}%</div>
-          <div className="text-[#27AE60] text-base font-bold -mt-2">Matched</div>
+          <div className={`text-[32px] font-bold leading-none ${matchScoreColor}`}>{matched}%</div>
+          <div className={`text-base font-bold -mt-2 ${matchScoreColor}`}>Matched</div>
         </div>
         {status === 'new' && (
           <div className="flex items-center gap-1 text-[#464646] text-base font-semibold">

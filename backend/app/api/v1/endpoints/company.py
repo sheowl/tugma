@@ -25,9 +25,9 @@ async def create_company(company: CompanyCreate, db: AsyncSession = Depends(get_
 # SPECIFIC ROUTES FIRST - Put these BEFORE parameterized routes
 
 # Protected route - requires JWT authentication
-@router.put("/onboarding")  # ✅ This must come BEFORE /{company_id}
+@router.put("/onboarding")  # This must come BEFORE /{company_id}
 async def complete_onboarding(
-    onboarding_data: CompanyOnboardingUpdate,  # ✅ Changed to specific schema
+    onboarding_data: CompanyOnboardingUpdate,  
     company_info = Depends(get_current_company),
     db: AsyncSession = Depends(get_db)
 ):
@@ -56,7 +56,7 @@ async def complete_onboarding(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.get("/onboarding-status")  # ✅ This must come BEFORE /{company_id}
+@router.get("/onboarding-status") 
 async def get_onboarding_status(
     company_info = Depends(get_current_company)
 ):
@@ -79,14 +79,14 @@ async def get_onboarding_status(
         }
     }
 
-@router.get("/me/profile", response_model=CompanyOut)  # ✅ This must come BEFORE /{company_id}
+@router.get("/me/profile", response_model=CompanyOut)  
 async def get_my_company_profile(
     company_info = Depends(get_current_company)
 ):
     """Get authenticated company's own profile"""
     return company_info["db_user"]
 
-@router.put("/me/profile", response_model=CompanyOut)  # ✅ This must come BEFORE /{company_id}
+@router.put("/me/profile", response_model=CompanyOut)  
 async def update_my_company_profile(
     updates: CompanyUpdate,
     company_info = Depends(get_current_company),
@@ -108,7 +108,7 @@ async def update_my_company_profile(
 # PARAMETERIZED ROUTES LAST - Put these AFTER specific routes
 
 # Public route - no authentication needed
-@router.get("/{company_id}", response_model=CompanyOut)  # ✅ Now this comes after specific routes
+@router.get("/{company_id}", response_model=CompanyOut) 
 async def get_company(company_id: int, db: AsyncSession = Depends(get_db)):
     """Get company profile (public for job seekers to view)"""
     company = await crud.get_company_by_id(db, company_id)
@@ -117,7 +117,7 @@ async def get_company(company_id: int, db: AsyncSession = Depends(get_db)):
     return company
 
 # Protected route - requires authentication + ownership
-@router.put("/{company_id}", response_model=CompanyOut)  # ✅ Now this comes after specific routes
+@router.put("/{company_id}", response_model=CompanyOut)  
 async def update_company(
     company_id: int,
     updates: CompanyUpdate,
@@ -137,7 +137,7 @@ async def update_company(
         raise HTTPException(status_code=404, detail="Company not found")
     return updated
 
-@router.delete("/{company_id}")  # ✅ Now this comes after specific routes
+@router.delete("/{company_id}")  
 async def delete_company(
     company_id: int, 
     company_info = Depends(get_current_company),
@@ -156,7 +156,7 @@ async def delete_company(
         raise HTTPException(status_code=404, detail="Company not found")
     return {"detail": "Company deleted successfully"}
 
-@router.get("/dashboard/stats")  # Add this new endpoint
+@router.get("/dashboard/stats") 
 async def get_company_dashboard_stats(
     company_info = Depends(get_current_company),
     db: AsyncSession = Depends(get_db)

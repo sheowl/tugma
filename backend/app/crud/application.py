@@ -5,6 +5,7 @@ from typing import List, Optional
 from datetime import datetime
 
 from app.models.application import JobApplication, JobMatching
+from app.models.jobs import Job  # Add this import
 from app.schemas.application import JobApplicationCreate, JobApplicationUpdate, JobMatchingCreate, JobMatchingUpdate
 from app.models.jobs import Job
 from app.models.company import Company
@@ -230,4 +231,52 @@ async def get_top_matches_for_job(db: AsyncSession, job_id: int, limit: int = 10
         .limit(limit)
     )
     return list(result.scalars().all())
+
+# Add this function to verify job ownership
+async def verify_job_ownership(db: AsyncSession, job_id: int, company_id: int) -> bool:
+    """Verify that a job belongs to a specific company"""
+    result = await db.execute(
+        select(Job).where(
+            Job.job_id == job_id,
+            Job.company_id == company_id
+        )
+    )
+    job = result.scalar_one_or_none()
+    return job is not None
+
+# Add this function to verify application interview status
+async def verify_application_interview_status(db: AsyncSession, applicant_id: int, job_id: int) -> bool:
+    """Verify that application status is 'interview'"""
+    result = await db.execute(
+        select(JobApplication).where(
+            JobApplication.applicant_id == applicant_id,
+            JobApplication.job_id == job_id,
+            JobApplication.status == "interview"
+        )
+    )
+    application = result.scalar_one_or_none()
+    return application is not None
+
+# Add this function to update application status by company
+async def update_application_status_by_company(
+    db: AsyncSession,
+    applicant_id: int,
+    job_id: int,
+    status: str,
+    company_id: int
+) -> bool:
+    """Update application status with company verification"""
+    # First verify job ownership
+    if not await verify_job_ownership(db, job_id, company_id):
+        return False
+    
+    # Get and update the application
+    application = await get_application(db, applicant_id, job_id)
+    if not application:
+        return False
+    
+    application.status = status
+    await db.commit()
+    await db.refresh(application)
+    return True
 

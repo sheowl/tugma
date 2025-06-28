@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import CompanyService from '../services/CompanyService';
+import AuthService from '../services/AuthService'; // ⭐ ADD THIS
 import { useAuth } from './AuthContext';
 
 const CompanyContext = createContext();
@@ -12,9 +13,41 @@ export const CompanyProvider = ({ children }) => {
   const [dashboardStats, setDashboardStats] = useState(null);
   const [recentApplicants, setRecentApplicants] = useState([]);
   const [companyJobs, setCompanyJobs] = useState([]);
-  const [jobApplicants, setJobApplicants] = useState([]); // Add this state
+  const [jobApplicants, setJobApplicants] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  
+  // ⭐ ADD AUTH TOKEN STATE
+  const [authToken, setAuthToken] = useState(null);
+  const [user, setUser] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // ⭐ INITIALIZE AUTH STATE ON MOUNT
+  useEffect(() => {
+    initializeAuth();
+  }, []);
+
+  const initializeAuth = () => {
+    const token = AuthService.getToken();
+    const userData = AuthService.getCurrentUser();
+    const userType = AuthService.getUserType();
+    
+    console.log('🔍 CompanyContext Auth Initialization:', {
+      token: token ? 'Present' : 'Missing',
+      userData: userData ? 'Present' : 'Missing',
+      userType: userType
+    });
+    
+    if (token && userType === 'employer') {
+      setAuthToken(token);
+      setUser(userData);
+      setIsAuthenticated(true);
+    } else {
+      setAuthToken(null);
+      setUser(null);
+      setIsAuthenticated(false);
+    }
+  };
 
   // Profile operations
   const getCompanyProfile = async () => {
@@ -157,18 +190,26 @@ export const CompanyProvider = ({ children }) => {
   };
 
   const createJob = async (jobData) => {
-    if (!isEmployer()) {
-      throw new Error('Only employers can create jobs');
+    console.log('🔄 CompanyContext: Creating job...', jobData);
+    
+    // Add guard to prevent duplicate calls
+    if (loading) {
+      console.log('❌ Already creating job, ignoring duplicate call');
+      return;
     }
     
     setLoading(true);
     setError(null);
+    
     try {
-      const newJob = await CompanyService.createJob(jobData);
+      const result = await CompanyService.createJob(jobData);
+      console.log('✅ CompanyContext: Job created successfully');
+      
       // Refresh jobs list
       await getCompanyJobs();
-      return newJob;
+      return result;
     } catch (err) {
+      console.error('❌ CompanyContext: Error creating job:', err);
       setError(err.message);
       throw err;
     } finally {
@@ -184,11 +225,17 @@ export const CompanyProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
+      console.log('🔄 CompanyContext: Updating job with ID:', jobId);
+      console.log('📝 CompanyContext: Job data:', jobData);
+      
       const updatedJob = await CompanyService.updateJob(jobId, jobData);
-      // Refresh jobs list
+      console.log('✅ CompanyContext: Job updated successfully:', updatedJob);
+      
+      // Refresh jobs list after update
       await getCompanyJobs();
       return updatedJob;
     } catch (err) {
+      console.error('❌ CompanyContext: Error updating job:', err);
       setError(err.message);
       throw err;
     } finally {
@@ -274,9 +321,17 @@ export const CompanyProvider = ({ children }) => {
     dashboardStats,
     recentApplicants,
     companyJobs,
-    jobApplicants, // Add this to the context value
+    jobApplicants,
     loading,
     error,
+    
+    // ⭐ ADD AUTH-RELATED VALUES
+    authToken,
+    user,
+    isAuthenticated,
+    
+    // ⭐ ADD AUTH METHODS
+    initializeAuth,
     
     // Profile operations
     getCompanyProfile,
