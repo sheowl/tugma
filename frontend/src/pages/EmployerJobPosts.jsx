@@ -69,6 +69,7 @@ const EmployerJobPosts = () => {
   const [jobToEdit, setJobToEdit] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [searchQuery, setSearchQuery] = useState(""); // <-- Add this line
 
   // Use AuthContext for authentication
   const { 
@@ -445,8 +446,26 @@ const EmployerJobPosts = () => {
     }
   };
 
+  // Add search handler function
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+  };
+
+  // Update getFilteredAndSortedJobs to include search
   const getFilteredAndSortedJobs = () => {
     let filteredJobs = jobPosts;
+
+    // Apply search filter first
+    if (searchQuery.trim()) {
+      const searchTerm = searchQuery.toLowerCase().trim();
+      filteredJobs = filteredJobs.filter(job => {
+        return (
+          job.id?.toString().includes(searchTerm) ||
+          job.jobTitle?.toLowerCase().includes(searchTerm) ||
+          job.companyName?.toLowerCase().includes(searchTerm)
+        );
+      });
+    }
 
     // Apply filters - Updated to match new backend values
     if (selectedModality) {
@@ -678,7 +697,7 @@ const EmployerJobPosts = () => {
           <div className="flex-1">
             <SearchBar
               mode="employer"
-              onSearch={(query) => console.log("Employer Search:", query)}
+              onSearch={handleSearch}
             />
           </div>
         </div>

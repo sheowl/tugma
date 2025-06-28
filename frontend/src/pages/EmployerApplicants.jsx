@@ -9,6 +9,31 @@ import EmpCard from "../components/EmpCard";
 import ApplicationFullDetails from "../components/ApplicationFullDetails";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 
+const fetchSortedApplicantsFromAPI = async (jobId, sortBy = 'match_score', descending = true) => {
+  try {
+    const response = await fetch(
+      `http://localhost:8000/api/v1/job-matches/job/${jobId}/sorted?sort_by=${sortBy}&descending=${descending}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          // Add auth headers if needed
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching sorted applicants:', error);
+    throw error;
+  }
+};
+
 const EmployerApplicants = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -57,7 +82,7 @@ const EmployerApplicants = () => {
     if (authChecked && isAuthenticated() && isEmployer()) {
       loadApplicantsData();
     }
-  }, [selectedJobNumber, authChecked]);
+  }, [selectedJobNumber, authChecked, sortBy]); // Added sortBy dependency
 
   const checkAuthenticationAndLoadData = async () => {
     try {
@@ -133,36 +158,111 @@ const EmployerApplicants = () => {
         return;
       }
 
-      // Fetch applicants from backend
+      // **NEW: Use your backend sorting API with merge sort algorithm**
+      // Map frontend sort options to backend sort fields
+      const sortMapping = {
+        'best': { field: 'match_score', descending: true },
+        'recent': { field: 'match_score', descending: true }, // You can change this to date field when available
+        'alphabetical': { field: 'applicant_id', descending: false }
+      };
+
+      const sortConfig = sortMapping[sortBy] || { field: 'match_score', descending: true };
+
+      // **STEP 1: Fetch sorted job matches using your merge sort API**
+      let sortedJobMatches = [];
+      try {
+        sortedJobMatches = await fetchSortedApplicantsFromAPI(
+          selectedJobNumber, 
+          sortConfig.field, 
+          sortConfig.descending
+        );
+        console.log('✅ Sorted job matches from API:', sortedJobMatches);
+      } catch (apiError) {
+        console.warn('⚠️ API sorting failed, falling back to manual sorting:', apiError);
+        // Fallback to your existing method if API fails
+      }
+
+      // **STEP 2: Fetch detailed applicant data (your existing logic)**
       const response = await getJobApplicants(selectedJobNumber);
 
-      // Transform backend applicants data to frontend format
-      const transformedApplicants = (response.applicants || []).map((applicant, index) => {
-        // Get tag names from tag IDs
-        const tagNames = getTagNamesByIds(applicant.applicant_tags || []);
-        
-        return {
-          id: applicant.applicant_id || `${selectedJobNumber}-${index}`,
-          applicant_id: applicant.applicant_id, // ⭐ ADD THIS for ApplicationFullDetails
-          jobNumber: selectedJobNumber,
-          jobTitle: response.job_title || 'Job Post',
-          matched: applicant.match_score || 0,
-          isNew: new Date() - new Date(applicant.application_created_at) < 24 * 60 * 60 * 1000,
-          candidateName: applicant.name || 'Unknown Applicant',
-          role: 'Applicant',
-          email: applicant.applicant_email || 'N/A',
-          phoneNumber: applicant.phone_number || 'N/A',
-          location: applicant.location || 'N/A',
-          applicationCreatedAt: applicant.application_created_at,
-          status: applicant.status || 'applied',
-          skills: tagNames.slice(0, 3),
-          moreSkillsCount: Math.max(0, tagNames.length - 3),
-          appliedDaysAgo: calculateDaysAgo(applicant.application_created_at),
-          applicantTags: applicant.applicant_tags || [],
-          tagNames: tagNames,
-          matchScore: applicant.match_score || 0
-        };
-      });
+      // **STEP 3: Transform and merge the data**
+      let transformedApplicants;
+
+      if (sortedJobMatches.length > 0) {
+        // **Use API-sorted order with merge sort algorithm results**
+        transformedApplicants = sortedJobMatches.map((jobMatch, index) => {
+          // Find matching applicant data
+          const applicantData = response.applicants?.find(
+            app => app.applicant_id === jobMatch.applicant_id
+          );
+
+          if (!applicantData) {
+            console.warn(`No applicant data found for ID: ${jobMatch.applicant_id}`);
+            return null;
+          }
+
+          // Get tag names from tag IDs
+          const tagNames = getTagNamesByIds(applicantData.applicant_tags || []);
+          
+          return {
+            id: applicantData.applicant_id || `${selectedJobNumber}-${index}`,
+            applicant_id: applicantData.applicant_id,
+            jobNumber: selectedJobNumber,
+            jobTitle: response.job_title || 'Job Post',
+            matched: jobMatch.match_score || applicantData.match_score || 0, // Use API match score
+            isNew: new Date() - new Date(applicantData.application_created_at) < 24 * 60 * 60 * 1000,
+            candidateName: applicantData.name || 'Unknown Applicant',
+            role: 'Applicant',
+            email: applicantData.applicant_email || 'N/A',
+            phoneNumber: applicantData.phone_number || 'N/A',
+            location: applicantData.location || 'N/A',
+            applicationCreatedAt: applicantData.application_created_at,
+            status: applicantData.status || 'applied',
+            skills: tagNames.slice(0, 3),
+            moreSkillsCount: Math.max(0, tagNames.length - 3),
+            appliedDaysAgo: calculateDaysAgo(applicantData.application_created_at),
+            applicantTags: applicantData.applicant_tags || [],
+            tagNames: tagNames,
+            matchScore: jobMatch.match_score || applicantData.match_score || 0,
+            // **Add sorting metadata for debugging**
+            sortedByAPI: true,
+            apiSortField: sortConfig.field,
+            apiSortOrder: sortConfig.descending ? 'desc' : 'asc'
+          };
+        }).filter(Boolean); // Remove null entries
+
+        console.log(`✅ Applied merge sort algorithm results: ${transformedApplicants.length} applicants sorted by ${sortConfig.field}`);
+      } else {
+        // **Fallback: Transform without API sorting (your existing logic)**
+        transformedApplicants = (response.applicants || []).map((applicant, index) => {
+          const tagNames = getTagNamesByIds(applicant.applicant_tags || []);
+          
+          return {
+            id: applicant.applicant_id || `${selectedJobNumber}-${index}`,
+            applicant_id: applicant.applicant_id,
+            jobNumber: selectedJobNumber,
+            jobTitle: response.job_title || 'Job Post',
+            matched: applicant.match_score || 0,
+            isNew: new Date() - new Date(applicant.application_created_at) < 24 * 60 * 60 * 1000,
+            candidateName: applicant.name || 'Unknown Applicant',
+            role: 'Applicant',
+            email: applicant.applicant_email || 'N/A',
+            phoneNumber: applicant.phone_number || 'N/A',
+            location: applicant.location || 'N/A',
+            applicationCreatedAt: applicant.application_created_at,
+            status: applicant.status || 'applied',
+            skills: tagNames.slice(0, 3),
+            moreSkillsCount: Math.max(0, tagNames.length - 3),
+            appliedDaysAgo: calculateDaysAgo(applicant.application_created_at),
+            applicantTags: applicant.applicant_tags || [],
+            tagNames: tagNames,
+            matchScore: applicant.match_score || 0,
+            sortedByAPI: false
+          };
+        });
+
+        console.log('⚠️ Using fallback sorting (no API results)');
+      }
 
       setApplicants(transformedApplicants);
       
@@ -198,15 +298,8 @@ const EmployerApplicants = () => {
   // Filter applicants by selected job number
   const filteredApplicants = applicants.filter(app => app.jobNumber === selectedJobNumber);
 
-  // Sort applicants based on sortBy
-  const sortedApplicants = [...filteredApplicants].sort((a, b) => {
-    if (sortBy === 'best') {
-      return (b.matchScore || 0) - (a.matchScore || 0);
-    } else if (sortBy === 'recent') {
-      return a.appliedDaysAgo - b.appliedDaysAgo;
-    }
-    return 0;
-  });
+  // Already sorted by merge sort algorithm from API
+  const sortedApplicants = filteredApplicants; 
 
   const handleDropdownToggle = (applicantId) => {
     setOpenDropdownId(openDropdownId === applicantId ? null : applicantId);

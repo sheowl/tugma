@@ -213,11 +213,10 @@ const EmployerHomePage = () => {
                 <span className="text-[#FF8032] italic text-[13px] leading-tight">
                   {formatCompanyType(companyInfo.company_size)}
                 </span>
-                {companyInfo.location && (
-                  <span className="text-[#FF8032] text-[11px] leading-tight opacity-75">
-                    📍 {companyInfo.location}
-                  </span>
-                )}
+                <span className="text-[#FF8032] text-[12px] leading-tight flex items-center gap-1">
+                  <i className="bi bi-geo-alt-fill text-[#FF8032] text-[14px]"></i>
+                  {companyInfo.location}
+                </span>
               </div>
             </div>
           </div>
