@@ -2,11 +2,52 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import TugmaLogo from "../assets/TugmaLogo.svg";
+import { useAuth } from "../context/AuthContext";
 
 const Employer_SignIn = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  
+  const { companyLogin } = useAuth();
   const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
+
+    // Basic validation
+    if (!email || !password) {
+      setError("Please fill in all fields");
+      setIsLoading(false);
+      return;
+    }
+
+    if (!email.includes("@")) {
+      setError("Please enter a valid email address");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const result = await companyLogin(email, password);
+      
+      if (result.success) {
+        // Always go to onboarding page - let it handle the logic
+        navigate("/employeronboarding");
+      } else {
+        setError(result.error || "Login failed. Please try again.");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      setError("Network error. Please check your connection.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#FEFEFF] font-montserrat pt-24 pb-12 px-2 sm:pt-32 sm:pb-20 sm:px-6 md:pt-[120px] md:pb-[80px] md:px-[120px]">
@@ -17,21 +58,30 @@ const Employer_SignIn = () => {
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#E66F24] mb-10 md:mb-12 text-center">
           Log in to Tugma
         </h1>
+        
+        {/* Error Message */}
+        {error && (
+          <div className="w-full max-w-xs sm:max-w-xs md:max-w-md mb-4">
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+              {error}
+            </div>
+          </div>
+        )}
+
         <form
           className="space-y-3 sm:space-y-4 w-full flex flex-col items-center justify-center"
-          onSubmit={(e) => {
-            e.preventDefault();
-            navigate("/EmployerHomePage");
-          }}
+          onSubmit={handleSubmit}
         >
           <div className="w-full max-w-xs sm:max-w-xs md:max-w-md">
             <input
-              id="username"
-              type="text"
+              id="email"
+              type="email"
               className="w-full px-1 sm:px-2 md:px-3 py-1 sm:py-1.5 md:py-2 rounded-lg md:rounded-xl bg-[#F9F9F9] border border-[#6B7280] hover:border-2 text-black focus:outline-none focus:ring-2 md:focus:ring-4 focus:ring-orange-200 text-xs sm:text-sm md:text-base placeholder:font-montserrat placeholder:text-xs sm:placeholder:text-sm md:placeholder:text-base"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Company Email"
+              required
+              disabled={isLoading}
             />
           </div>
           <div className="relative w-full max-w-xs sm:max-w-xs md:max-w-md">
@@ -41,6 +91,10 @@ const Employer_SignIn = () => {
               className="w-full px-1 sm:px-2 md:px-3 py-1 sm:py-1.5 md:py-2 rounded-lg md:rounded-xl bg-[#F9F9F9] border border-[#6B7280] hover:border-2 text-black focus:outline-none focus:ring-2 md:focus:ring-4 focus:ring-orange-200 text-xs sm:text-sm md:text-base placeholder:font-montserrat placeholder:text-xs sm:placeholder:text-sm md:placeholder:text-base"
               placeholder="Password"
               style={{ paddingRight: "3.5rem" }}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              disabled={isLoading}
             />
             <button
               type="button"
@@ -48,6 +102,7 @@ const Employer_SignIn = () => {
               className="absolute top-2 right-3 sm:top-[12%] sm:right-4 transform -translate-y-1/2 focus:outline-none"
               onClick={() => setShowPassword((prev) => !prev)}
               aria-label={showPassword ? "Hide password" : "Show password"}
+              disabled={isLoading}
             >
               {showPassword ? (
                 <EyeIcon className="h-6 w-6 text-[#6B7280]" />
@@ -68,6 +123,7 @@ const Employer_SignIn = () => {
             <button
               type="button"
               className="flex items-center justify-center gap-2 border border-[#6B7280] hover:border-2 rounded-full bg-[#FEFEFF] hover:bg-gray-50 transition w-full max-w-md h-[44px] mx-auto"
+              disabled={isLoading}
             >
               <img
                 src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg"
@@ -82,13 +138,25 @@ const Employer_SignIn = () => {
           <div className="h-2" />
           <button
             type="submit"
-            className="max-w-md bg-[#FF8032] text-white rounded-2xl hover:bg-[#E66F24] transition mt-4 h-[44px] w-[225px] font-semibold text-sm"
+            className={`max-w-md text-white rounded-2xl transition mt-4 h-[44px] w-[225px] font-semibold text-sm ${
+              isLoading 
+                ? "bg-gray-400 cursor-not-allowed" 
+                : "bg-[#FF8032] hover:bg-[#E66F24]"
+            }`}
+            disabled={isLoading}
           >
-            Sign In
+            {isLoading ? (
+              <div className="flex items-center justify-center">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                Signing In...
+              </div>
+            ) : (
+              "Sign In"
+            )}
           </button>
         </form>
         <p className="text-center text-sm text-[#6B7280] font-semibold mt-2">
-          Doesn’t have an Account?
+          Doesn't have an Account?
           <a href="/employer-email-registration" className="text-[#FF8032] hover:underline ml-2">
             Register
           </a>

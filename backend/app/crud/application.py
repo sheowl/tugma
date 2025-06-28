@@ -1,0 +1,233 @@
+﻿# crud/application.py
+from sqlalchemy import select, delete
+from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List, Optional
+from datetime import datetime
+
+from app.models.application import JobApplication, JobMatching
+from app.models.jobs import Job  # Add this import
+from app.schemas.application import JobApplicationCreate, JobApplicationUpdate, JobMatchingCreate, JobMatchingUpdate
+
+# Submit a new job application
+async def create_job_application(db: AsyncSession, app_in: JobApplicationCreate) -> JobApplication:
+    # Convert the data and handle created_at manually
+    app_data = app_in.model_dump(exclude={'created_at'})  # Exclude created_at from the input
+    
+    application = JobApplication(
+        applicant_id=app_data.get('applicant_id'),
+        job_id=app_data.get('job_id'),
+        status=app_data.get('status'),
+        remarks=app_data.get('remarks'),
+        created_at=datetime.utcnow()  # Use timezone-naive datetime
+    )
+    
+    db.add(application)
+    await db.commit()
+    await db.refresh(application)
+    return application
+
+# Get applications for a specific applicant
+async def get_applications_by_applicant(db: AsyncSession, applicant_id: int) -> List[JobApplication]:
+    result = await db.execute(
+        select(JobApplication).where(JobApplication.applicant_id == applicant_id)
+    )
+    return list(result.scalars().all())
+
+# Get a specific application by applicant and job
+async def get_application(db: AsyncSession, applicant_id: int, job_id: int) -> Optional[JobApplication]:
+    result = await db.execute(
+        select(JobApplication).where(
+            JobApplication.applicant_id == applicant_id,
+            JobApplication.job_id == job_id
+        )
+    )
+    return result.scalar_one_or_none()
+
+# Update application status
+async def update_application_status(
+    db: AsyncSession,
+    applicant_id: int,
+    job_id: int,
+    update_data: JobApplicationUpdate
+) -> Optional[JobApplication]:
+    application = await get_application(db, applicant_id, job_id)
+    if not application:
+        return None
+
+    # Exclude created_at from updates since it shouldn't be modified
+    for field, value in update_data.model_dump(exclude_unset=True, exclude={'created_at'}).items():
+        if field == 'created_at':
+            continue  # Skip created_at field
+        setattr(application, field, value)
+
+    await db.commit()
+    await db.refresh(application)
+    return application
+
+# ====================== JOB MATCHING CRUD OPERATIONS ======================
+
+# Create a new job match
+async def create_job_match(db: AsyncSession, match_in: JobMatchingCreate) -> JobMatching:
+    """Create a new job match entry"""
+    match = JobMatching(**match_in.model_dump())
+    db.add(match)
+    await db.commit()
+    await db.refresh(match)
+    return match
+
+# Get all job matches
+async def get_all_job_matches(db: AsyncSession) -> List[JobMatching]:
+    """Get all job matches"""
+    result = await db.execute(select(JobMatching))
+    return list(result.scalars().all())
+
+# Get job matches for a specific applicant
+async def get_job_matches_by_applicant(db: AsyncSession, applicant_id: int) -> List[JobMatching]:
+    """Get all job matches for a specific applicant"""
+    result = await db.execute(
+        select(JobMatching).where(JobMatching.applicant_id == applicant_id)
+    )
+    return list(result.scalars().all())
+
+# Get job matches for a specific job
+async def get_job_matches_by_job(db: AsyncSession, job_id: int) -> List[JobMatching]:
+    """Get all job matches for a specific job"""
+    result = await db.execute(
+        select(JobMatching).where(JobMatching.job_id == job_id)
+    )
+    return list(result.scalars().all())
+
+# Get a specific job match
+async def get_job_match(db: AsyncSession, applicant_id: int, job_id: int) -> Optional[JobMatching]:
+    """Get a specific job match by applicant_id and job_id"""
+    result = await db.execute(
+        select(JobMatching).where(
+            JobMatching.applicant_id == applicant_id,
+            JobMatching.job_id == job_id
+        )
+    )
+    return result.scalar_one_or_none()
+
+# Update a job match
+async def update_job_match(
+    db: AsyncSession,
+    applicant_id: int,
+    job_id: int,
+    update_data: JobMatchingUpdate
+) -> Optional[JobMatching]:
+    """Update a job match entry"""
+    match = await get_job_match(db, applicant_id, job_id)
+    if not match:
+        return None
+
+    for field, value in update_data.model_dump(exclude_unset=True).items():
+        setattr(match, field, value)
+
+    await db.commit()
+    await db.refresh(match)
+    return match
+
+# Delete a job match
+async def delete_job_match(db: AsyncSession, applicant_id: int, job_id: int) -> bool:
+    """Delete a job match entry"""
+    match = await get_job_match(db, applicant_id, job_id)
+    if not match:
+        return False
+    
+    await db.delete(match)
+    await db.commit()
+    return True
+
+# Create or update a job match score (upsert)
+async def upsert_job_match(
+    db: AsyncSession, applicant_id: int, job_id: int, match_score: float
+) -> JobMatching:
+    """Create or update a job match entry"""
+    result = await db.execute(
+        select(JobMatching).where(
+            JobMatching.applicant_id == applicant_id,
+            JobMatching.job_id == job_id
+        )
+    )
+    match = result.scalar_one_or_none()
+
+    if match:
+        match.match_score = match_score
+    else:
+        match = JobMatching(applicant_id=applicant_id, job_id=job_id, match_score=match_score)
+        db.add(match)
+
+    await db.commit()
+    await db.refresh(match)
+    return match
+
+# Get top matches for an applicant (sorted by match_score)
+async def get_top_matches_for_applicant(db: AsyncSession, applicant_id: int, limit: int = 10) -> List[JobMatching]:
+    """Get top job matches for an applicant sorted by match score"""
+    result = await db.execute(
+        select(JobMatching)
+        .where(JobMatching.applicant_id == applicant_id)
+        .order_by(JobMatching.match_score.desc())
+        .limit(limit)
+    )
+    return list(result.scalars().all())
+
+# Get top matches for a job (sorted by match_score)
+async def get_top_matches_for_job(db: AsyncSession, job_id: int, limit: int = 10) -> List[JobMatching]:
+    """Get top applicant matches for a job sorted by match score"""
+    result = await db.execute(
+        select(JobMatching)
+        .where(JobMatching.job_id == job_id)
+        .order_by(JobMatching.match_score.desc())
+        .limit(limit)
+    )
+    return list(result.scalars().all())
+
+# Add this function to verify job ownership
+async def verify_job_ownership(db: AsyncSession, job_id: int, company_id: int) -> bool:
+    """Verify that a job belongs to a specific company"""
+    result = await db.execute(
+        select(Job).where(
+            Job.job_id == job_id,
+            Job.company_id == company_id
+        )
+    )
+    job = result.scalar_one_or_none()
+    return job is not None
+
+# Add this function to verify application interview status
+async def verify_application_interview_status(db: AsyncSession, applicant_id: int, job_id: int) -> bool:
+    """Verify that application status is 'interview'"""
+    result = await db.execute(
+        select(JobApplication).where(
+            JobApplication.applicant_id == applicant_id,
+            JobApplication.job_id == job_id,
+            JobApplication.status == "interview"
+        )
+    )
+    application = result.scalar_one_or_none()
+    return application is not None
+
+# Add this function to update application status by company
+async def update_application_status_by_company(
+    db: AsyncSession,
+    applicant_id: int,
+    job_id: int,
+    status: str,
+    company_id: int
+) -> bool:
+    """Update application status with company verification"""
+    # First verify job ownership
+    if not await verify_job_ownership(db, job_id, company_id):
+        return False
+    
+    # Get and update the application
+    application = await get_application(db, applicant_id, job_id)
+    if not application:
+        return False
+    
+    application.status = status
+    await db.commit()
+    await db.refresh(application)
+    return True
+

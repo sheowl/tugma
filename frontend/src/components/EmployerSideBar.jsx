@@ -1,34 +1,53 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, NavLink, useLocation } from 'react-router-dom';
 import TugmaLogoApplicant from '../assets/TugmaLogoEmployer.svg';
+import { useAuth } from "../context/AuthContext";
 
 const navItems = [
-    { icon: 'bi-house', label: 'Home Page', path: '/EmployerHomePage' },
-    { icon: 'bi-clipboard2', label: 'Job Posts', path: '/EmployerJobPosts' },
-    { icon: 'bi-person-rolodex', label: 'Applicants', path: '/EmployerApplicants' },
-    { icon: 'bi-building-gear', label: 'Company' },
+    { icon: 'bi-house', label: 'Home Page', path: '/EmployerHomePage', key: 'homepage' },
+    { icon: 'bi-clipboard2', label: 'Job Posts', path: '/EmployerJobPosts', key: 'jobposts' },
+    { icon: 'bi-building-gear', label: 'Company', path: '/CompanyPage', key: 'company' },
 ];
 
-const EmployerSideBar = () => {
-    const [activeIndex, setActiveIndex] = useState(0);
-    const navigate = useNavigate ? useNavigate() : null;
+const EmployerSideBar = ({ activePage }) => {
+    const navigate = useNavigate();
+    const location = useLocation();
+    const { logout } = useAuth();
+
+    // Simple function to determine which menu should be active
+    const getActiveIndex = () => {
+        if (activePage) {
+            // Find by key
+            const foundByKey = navItems.findIndex(item => item.key === activePage);
+            if (foundByKey !== -1) return foundByKey;
+        }
+        const currentPath = location.pathname.toLowerCase();
+        // If on employerapplicants page, highlight Job Posts
+        if (currentPath === '/employerapplicants') {
+            return 1; // Job Posts index
+        }
+        
+        // If on edit-company-profile page, highlight Company (same as CompanyPage)
+        if (currentPath === '/edit-company-profile') {
+            return 2; // Company index
+        }
+        
+        // Find match by comparing lowercase paths
+        const foundIndex = navItems.findIndex(item => item.path.toLowerCase() === currentPath);
+        return foundIndex !== -1 ? foundIndex : 0;
+    };
+
     const handleNavClick = (idx, path) => {
-        setActiveIndex(idx);
         if (path && navigate) {
             navigate(path);
         }
     };
 
-    // Set activeIndex based on current path
-    React.useEffect(() => {
-        if (navigate && window && window.location && window.location.pathname) {
-            const currentPath = window.location.pathname;
-            const foundIdx = navItems.findIndex(item => item.path === currentPath);
-            if (foundIdx !== -1 && foundIdx !== activeIndex) {
-                setActiveIndex(foundIdx);
-            }
-        }
-    }, [navigate]);
+    const handleLogout = (e) => {
+        e.preventDefault();
+        logout();
+        navigate("/employer-sign-in");
+    };
 
     return (
         <div className="w-[336px] bg-[#FF8032] min-h-screen flex flex-col justify-between items-center pt-14 pb-6">
@@ -43,12 +62,12 @@ const EmployerSideBar = () => {
 
                 {/* Navigation */}
                 <nav className="w-full px-6">
-                    <ul className="flex flex-col gap-[30px] font-bold items-center">
+                    <ul className="flex flex-col gap-[30px] font-bold items-center">                        
                         {navItems.map((item, idx) => (
                             <li
                                 key={item.label}
                                 className={`flex items-center gap-3 px-6 py-3 w-[190px] h-[50px] rounded-[10px] text-base cursor-pointer transition-colors duration-150 ${
-                                    activeIndex === idx
+                                    getActiveIndex() === idx
                                         ? 'bg-white text-[#FF8032]'
                                         : 'text-white hover:bg-[#E66F24]'
                                 }`}
@@ -63,7 +82,11 @@ const EmployerSideBar = () => {
             </div>
 
             {/* Bottom Section */}
-            <a href="/employer-sign-in" className="flex items-center gap-3 text-white text-base pl-[72px] pb-[44px] self-start hover:text-[#E66F24]">
+            <a
+                href="/employer-sign-in"
+                onClick={handleLogout}
+                className="flex items-center gap-3 px-6 py-3 w-[190px] h-[50px] text-white text-base cursor-pointer hover:bg-[#E66F24] rounded-[10px]"
+            >
                 <i className="bi bi-box-arrow-right text-xl"></i>
                 <span>Logout</span>
             </a>

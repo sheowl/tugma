@@ -8,40 +8,10 @@ function EmpCard({
   skills = [],
   moreSkillsCount = 0,
   appliedDaysAgo = 'n',
-  onAction = () => {},
-  actionLabel = "Action",
-  actionOptions = [
-    { label: "View Full", value: "view_full" },
-    { label: "Waitlist", value: "waitlist" },
-    { label: "Reject", value: "reject" },
-  ],
+  onViewFull = () => {},
 }) {
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [status, setStatus] = useState(isNew ? 'new' : '');
-
-  const handleActionClick = () => {
-    setDropdownOpen((prev) => !prev);
-  };
-
-  const handleOptionClick = (option) => {
-    setDropdownOpen(false);
-    if (option && option.value === 'waitlist') {
-      setStatus('waitlisted');
-    } else if (option && option.value === 'reject') {
-      setStatus('reject');
-    } else if (option && option.value === 'view_full') {
-      // No alert or popup
-    }
-    if (option && option.onClick) {
-      // Do not call option.onClick if it triggers an alert or popup
-    } else if (option && onAction) {
-      // Do not call onAction if it triggers an alert or popup
-    }
-  };
-
-  return (
-    <div className="bg-white shadow-all-around rounded-[20px] p-6 max-w-[304px] h-[330px] flex flex-col justify-between relative">
-      {/* Top: Match + New */}
+  const [status, setStatus] = useState(isNew ? 'new' : '');  return (
+    <div className="bg-white shadow-all-around rounded-[20px] p-6 max-w-[324px] h-[340px] hover:scale-102 transition-transform duration-300 flex flex-col justify-between relative z-10">
       <div className="flex justify-between items-start mb-2">
         <div>
           <div className="text-[32px] font-bold text-[#27AE60] leading-none">{matched}%</div>
@@ -88,32 +58,17 @@ function EmpCard({
       </div>
 
       {/* Applied & Action */}
-      <div className="flex items-center justify-between mt-auto">
+      <div className="flex items-center justify-between mt-auto gap-4">
         <div className="text-[12px] text-[#676767] font-semibold">
           Applied: <span className="italic">{appliedDaysAgo}</span> days ago
         </div>
-        <div className="relative">
-          <button
-            className="h-8 px-6 py-2 border-2 border-[#FF8032] text-[#FF8032] rounded-[10px] text-[14px] font-bold bg-white flex items-center gap-2 hover:bg-[#FF8032]/10 transition-colors"
-            onClick={handleActionClick}
-            type="button"
-          >
-            {actionLabel} <i className="bi bi-caret-down-fill text-xs" />
-          </button>
-          {dropdownOpen && (
-            <div className="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded shadow z-40">
-              {actionOptions.map((option) => (
-                <div
-                  key={option.value}
-                  className="px-4 py-2 text-[#FF8032] hover:bg-[#FF8032]/10 hover:text-[#FF8032] cursor-pointer text-sm font-semibold"
-                  onClick={() => handleOptionClick(option)}
-                >
-                  {option.label}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <button
+          className="h-8 px-4 py-0 border-2 border-[#FF8032] text-[#FF8032] rounded-[10px] text-[14px] font-bold bg-white hover:bg-[#FF8032] hover:text-white transition-colors"
+          onClick={onViewFull}
+          type="button"
+        >
+          View Full
+        </button>
       </div>
     </div>
   );

@@ -5,6 +5,34 @@ import EmpHeader from "../components/EmpHeader";
 const Employer_Email_Registration = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleVerifyEmail = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      const res = await fetch(
+        "http://localhost:8000/api/v1/auth/company/send-otp",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        }
+      );
+      const data = await res.json();
+      if (res.ok) {
+        localStorage.setItem("pending_company_email", email);
+        navigate("/empverification");
+      } else {
+        setError(data.detail || "Failed to send verification code.");
+      }
+    } catch (err) {
+      setError("Network error. Please try again.");
+    }
+    setLoading(false);
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#FEFEFF] font-montserrat pt-32 pb-20 px-4 sm:pt-44 sm:pb-32 sm:px-12 md:pt-[180px] md:pb-[120px] md:px-[240px]">
       <EmpHeader />
@@ -31,10 +59,10 @@ const Employer_Email_Registration = () => {
               required
             />
           </div>
-          <div className="h-1 sm:h-2" /> 
+          <div className="h-1 sm:h-2" />
           <div className="flex items-center w-full text-[#6B7280] text-semibold max-w-xl gap-2 sm:gap-6 text-base sm:text-lg md:text-xl">
             <hr className="flex-grow border-[#6B7280]" />
-              <span className="italic">or</span>
+            <span className="italic">or</span>
             <hr className="flex-grow border-[#6B7280]" />
           </div>
           <div className="h-4 sm:h-6" />
@@ -56,16 +84,20 @@ const Employer_Email_Registration = () => {
 
           <button
             type="button"
-            onClick={() => navigate("/empverification")}
+            onClick={handleVerifyEmail}
             className="max-w-md bg-[#FF8032] text-white rounded-2xl hover:bg-[#E66F24] transition mt-4 h-[44px] w-[225px] font-semibold text-sm"
           >
-            Verify Email
+            {loading ? "Sending..." : "Verify Email"}
           </button>
+          {error && <div className="text-red-500 text-sm mb-2">{error}</div>}
         </form>
 
         <p className="text-center text-sm text-[#6B7280] font-semibold mt-2">
           Already have an account?{" "}
-          <a href="/employer-sign-in" className="text-[#FF8032] hover:underline">
+          <a
+            href="/employer-sign-in"
+            className="text-[#FF8032] hover:underline"
+          >
             Sign in
           </a>
         </p>

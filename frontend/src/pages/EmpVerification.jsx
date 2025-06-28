@@ -4,7 +4,32 @@ import EmpHeader from "../components/EmpHeader";
 
 const EmpVerification = () => {
   const [code, setCode] = useState(["", "", "", ""]);
+  const [error, setError] = useState("");
+  const [resending, setResending] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
   const navigate = useNavigate(); 
+
+  const handleConfirm = async () => {
+    setError("");
+    const email = localStorage.getItem("pending_company_email");
+    const otp = code.join("");
+    try {
+      const res = await fetch("http://localhost:8000/api/v1/auth/company/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, otp }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        navigate("/empcomreg");
+      } else {
+        setError(data.detail || "Invalid code. Please try again.");
+      }
+    } catch (err) {
+      setError("Network error. Please try again.");
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#FEFEFF] font-montserrat pt-32 pb-20 px-4 sm:pt-44 sm:pb-32 sm:px-12 md:pt-[180px] md:pb-[120px] md:px-[240px]">
       <EmpHeader />
@@ -43,6 +68,12 @@ const EmpVerification = () => {
             ))}
           </div>
 
+          {error && (
+            <p className="text-red-500 text-xs sm:text-sm text-center">
+              {error}
+            </p>
+          )}
+
           <p className="text-center text-xs sm:text-xs md:text-sm text-[#6B7280] font-semibold mt-[-10px]">
             Didn't Receive a code?{" "}
             <a
@@ -56,7 +87,7 @@ const EmpVerification = () => {
           <div className="h-24" />
           <button
             type="button"
-            onClick={() => navigate("/empcomreg")}
+            onClick={handleConfirm}
             className="max-w-md bg-[#FF8032] text-white rounded-2xl hover:bg-[#E66F24] transition mt-4 h-[44px] w-[225px] font-semibold text-sm"
           >
             Confirm Email

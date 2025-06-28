@@ -18,6 +18,7 @@ function Card({
   salaryRangeLow,
   salaryRangeHigh,
   salaryFrequency = "Monthly",
+  companyDescription,
   onViewDetails,
 }) {
 
@@ -32,6 +33,7 @@ function Card({
   salaryRangeLow,
   salaryRangeHigh,
   salaryFrequency,
+  companyDescription
 };
 
   let matchScoreColor = "text-[#27AE60]"; 
@@ -48,8 +50,8 @@ function Card({
       <div className="flex justify-between items-center">
         <SaveButton size={45} />
         <div className={`text-end text-xl font-bold leading-tight ${matchScoreColor}`}>
-          <div>{matchScore}%</div>
-          <div className="text-xs font-bold -mt-[10%]">Matched</div>
+          <div className="text-xl">{matchScore}%</div>
+          <div className="text-sm font-bold -mt-[10%]">Matched</div>
         </div>
       </div>
 
