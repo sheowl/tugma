@@ -18,45 +18,127 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
-    const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        setUser(session.user);
-        setUserType(session.user.user_metadata?.user_type || null);
-      }
-      setLoading(false);
-    };
+    let mounted = true; // ⭐ Add mounted flag back
 
-    getInitialSession();
-
-    // Listen for auth changes
-    let mounted = true;
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        // Only process if component is still mounted and session actually changed
-        if (!mounted) return;
+    const checkExistingSession = async () => {
+      try {
+        console.log("🔍 Checking for existing Supabase session...");
+        const { data: { session }, error } = await supabase.auth.getSession();
         
-        // Ignore token refresh events if user data hasn't changed
-        if (event === 'TOKEN_REFRESHED' && user?.id === session?.user?.id) {
+        if (!mounted) return; // ⭐ Early return if unmounted
+        
+        if (error) {
+          console.error("❌ Session check error:", error);
+          if (mounted) setLoading(false);
           return;
         }
-        
+
         if (session?.user) {
-          // Only update if user actually changed
-          if (!user || user.id !== session.user.id) {
-            setUser(session.user);
-            setUserType(session.user.user_metadata?.user_type || null);
+          console.log("✅ Found existing session:", session.user);
+          if (mounted) setUser(session.user);
+          
+          // ⭐ CRITICAL: Determine user type from metadata first
+          let detectedUserType = session.user.user_metadata?.user_type;
+          
+          if (detectedUserType) {
+            if (mounted) setUserType(detectedUserType);
+            console.log(`✅ User type from metadata: ${detectedUserType}`);
+          } else {
+            // ⭐ FALLBACK: Try to detect from backend
+            try {
+              const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/v1/auth/me`, {
+                headers: {
+                  'Authorization': `Bearer ${session.access_token}`,
+                  'Content-Type': 'application/json'
+                }
+              });
+              
+              if (!mounted) return; // ⭐ Check mounted after async operation
+              
+              if (response.ok) {
+                const userData = await response.json();
+                const isEmployer = userData.database_user?.company_id || userData.user_type === 'employer';
+                detectedUserType = isEmployer ? 'employer' : 'applicant';
+                if (mounted) setUserType(detectedUserType);
+                console.log(`✅ User type from backend: ${detectedUserType}`);
+              } else {
+                console.warn("⚠️ Backend check failed, using email pattern fallback");
+                detectedUserType = session.user.email?.includes('@company') || session.user.email?.includes('corp') ? 'employer' : 'applicant';
+                if (mounted) setUserType(detectedUserType);
+              }
+            } catch (backendError) {
+              if (!mounted) return;
+              console.warn("⚠️ Backend check failed, using metadata fallback");
+              detectedUserType = session.user.email?.includes('@company') || session.user.email?.includes('corp') ? 'employer' : 'applicant';
+              if (mounted) setUserType(detectedUserType);
+            }
+          }
+          
+          // ⭐ IMPORTANT: Force update user metadata if it's missing
+          if (!session.user.user_metadata?.user_type && detectedUserType && mounted) {
+            try {
+              await supabase.auth.updateUser({
+                data: { user_type: detectedUserType }
+              });
+              console.log(`✅ Updated user metadata with user_type: ${detectedUserType}`);
+            } catch (updateError) {
+              console.warn("⚠️ Could not update user metadata:", updateError);
+            }
           }
         } else {
-          setUser(null);
-          setUserType(null);
+          console.log("ℹ️ No existing session found");
         }
-        setLoading(false);
+      } catch (error) {
+        console.error("❌ Error checking session:", error);
+      } finally {
+        if (mounted) setLoading(false); // ⭐ Only set loading if still mounted
+      }
+    };
+
+    checkExistingSession();
+
+    // ⭐ CRITICAL: Listen for auth changes (including page refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (!mounted) return; // ⭐ Check mounted at start of callback
+        
+        console.log(`🔄 Auth state changed: ${event}`, session?.user);
+        
+        if (session?.user) {
+          setUser(session.user);
+          
+          // ⭐ Preserve user type or detect it
+          let userType = session.user.user_metadata?.user_type;
+          
+          if (!userType) {
+            const isEmployerEmail = session.user.email?.includes('@company') || 
+                                   session.user.email?.includes('corp');
+            userType = isEmployerEmail ? 'employer' : 'applicant';
+            
+            // Update metadata for future use
+            try {
+              await supabase.auth.updateUser({
+                data: { user_type: userType }
+              });
+            } catch (error) {
+              console.warn("Could not update user metadata:", error);
+            }
+          }
+          
+          if (mounted) setUserType(userType);
+          console.log(`🔄 Set user type: ${userType}`);
+        } else {
+          if (mounted) {
+            setUser(null);
+            setUserType(null);
+          }
+          console.log("🔄 User logged out");
+        }
+        if (mounted) setLoading(false);
       }
     );
 
+    // ⭐ Cleanup function - set mounted to false
     return () => {
       mounted = false;
       subscription.unsubscribe();
@@ -65,11 +147,17 @@ export const AuthProvider = ({ children }) => {
 
   // Company authentication methods using Supabase
   const companyLogin = async (company_email, password) => {
+    console.log("🔐 AuthContext: Company login attempt");
     const result = await AuthService.companyLogin(company_email, password);
+    
     if (result.success) {
+      console.log("✅ AuthContext: Setting user and userType");
       setUser(result.data.user);
       setUserType('employer');
+    } else {
+      console.error("❌ AuthContext: Login failed:", result.error);
     }
+    
     return result;
   };
 

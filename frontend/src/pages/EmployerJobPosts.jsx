@@ -75,7 +75,8 @@ const EmployerJobPosts = () => {
   const { 
     isEmployer, 
     isAuthenticated, 
-    user 
+    user,
+    loading // ⭐ ADD loading
   } = useAuth();
 
   // Use CompanyContext for company operations
@@ -104,23 +105,37 @@ const EmployerJobPosts = () => {
     getCategoryNameById
   } = useTags();
 
+  // Update the useEffect to wait for auth loading
   useEffect(() => {
-    checkAuthAndLoadData();
-  }, []);
+    if (!loading) { // ⭐ Only run when AuthContext is done loading
+      checkAuthAndLoadData();
+    }
+  }, [loading]); // ⭐ Add loading as dependency
 
   const checkAuthAndLoadData = async () => {
     try {
+      console.log("🔍 EmployerJobPosts Auth check - Loading:", loading, "Authenticated:", isAuthenticated(), "Employer:", isEmployer());
+      
+      // ⭐ Wait for auth context to finish loading
+      if (loading) {
+        console.log("⏳ Auth context still loading, waiting...");
+        return;
+      }
+
       // Check if user is authenticated and is an employer
       if (!isAuthenticated()) {
+        console.log("❌ Not authenticated, redirecting to sign-in");
         navigate('/employer-sign-in');
         return;
       }
 
       if (!isEmployer()) {
+        console.log("❌ Not an employer, redirecting to sign-in");
         navigate('/employer-sign-in');
         return;
       }
 
+      console.log("✅ Auth check passed, loading jobs data");
       // Load jobs and company data
       await loadJobsAndCompanyData();
       
@@ -515,7 +530,7 @@ const EmployerJobPosts = () => {
   };
 
   // Loading state (combine all loading states)
-  if (isLoading || companyLoading || tagLoading) {
+  if (loading || isLoading || companyLoading || tagLoading) {
     return (
       <div className="min-h-screen bg-[#FF8032] flex items-start overflow-hidden">
         <EmployerSideBar />
@@ -523,7 +538,9 @@ const EmployerJobPosts = () => {
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF8032] mx-auto mb-4"></div>
-              <p className="text-[#6B7280] text-lg">Loading job posts...</p>
+              <p className="text-[#6B7280] text-lg">
+                {loading ? 'Verifying authentication...' : 'Loading job posts...'}
+              </p>
             </div>
           </div>
         </div>

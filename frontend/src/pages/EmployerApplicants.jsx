@@ -38,18 +38,19 @@ const EmployerApplicants = () => {
   const location = useLocation();
   const navigate = useNavigate();
   
-  // ⭐ USE AuthContext for authentication checks
+  // ⭐ ADD loading to the destructuring
   const { 
     isEmployer, 
     isAuthenticated, 
-    user 
+    user,
+    loading // ⭐ ADD THIS
   } = useAuth();
   
   // Use CompanyContext for backend operations
   const { 
     getJobApplicants, 
     getCompanyProfile, 
-    loading, 
+    loading: companyLoading, 
     error, 
     clearError 
   } = useCompany();
@@ -72,10 +73,12 @@ const EmployerApplicants = () => {
   const selectedJob = location.state?.selectedJob;
   const selectedJobId = location.state?.selectedJobId;
 
-  // ⭐ STEP 1: Check authentication first
+  // ⭐ ONLY CHANGE: Update the first useEffect
   useEffect(() => {
-    checkAuthenticationAndLoadData();
-  }, []);
+    if (!loading) { // ⭐ Only run when AuthContext is done loading
+      checkAuthenticationAndLoadData();
+    }
+  }, [loading]); // ⭐ Change dependency from [] to [loading]
 
   // ⭐ STEP 2: Load applicants when job changes (after auth is confirmed)
   useEffect(() => {
@@ -368,6 +371,25 @@ const EmployerApplicants = () => {
               >
                 Retry
               </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ⭐ ADD: Show loading state while AuthContext loads
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#FF8032] flex items-start overflow-hidden">
+        <EmployerSideBar />
+        <div className="flex-1 h-screen bg-[#FEFEFF] rounded-tl-[40px] overflow-y-auto p-6 shadow-md w-full max-w-full">
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF8032] mx-auto mb-4"></div>
+              <p className="text-[#6B7280] text-lg">
+                {loading ? 'Verifying authentication...' : 'Loading Applicants...'}
+              </p>
             </div>
           </div>
         </div>

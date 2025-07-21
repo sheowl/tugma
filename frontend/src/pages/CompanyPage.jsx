@@ -3,15 +3,23 @@ import { useNavigate } from 'react-router-dom';
 import EmployerSideBar from '../components/EmployerSideBar';
 import ApplicantDashLogo from '../assets/ApplicantDashLogo.svg';
 import { useCompany } from '../context/CompanyContext';
+import { useAuth } from '../context/AuthContext';
 
 const CompanyPage = () => {
   const navigate = useNavigate();
+  
+  // ⭐ ADD AUTH CONTEXT
+  const { 
+    isEmployer, 
+    isAuthenticated,
+    loading: authLoading 
+  } = useAuth();
   
   // Use the custom hook instead of useContext
   const { 
     companyProfile, 
     getCompanyProfile, 
-    loading, 
+    loading: companyLoading, 
     error 
   } = useCompany();
 
@@ -31,12 +39,47 @@ const CompanyPage = () => {
     socialLinks[platform.key] && socialLinks[platform.key].trim() !== ''
   );
 
-  // Fetch company data on component mount
+  // ⭐ ADD AUTH CHECK AND DATA LOADING
   useEffect(() => {
-    if (!companyProfile) {
-      getCompanyProfile();
+    if (!authLoading) { // ⭐ Only run when AuthContext is done loading
+      checkAuthAndLoadData();
     }
-  }, []); // Empty dependency array
+  }, [authLoading]); // ⭐ Add authLoading dependency
+
+  const checkAuthAndLoadData = async () => {
+    try {
+      console.log("🔍 CompanyPage Auth check - Loading:", authLoading, "Authenticated:", isAuthenticated(), "Employer:", isEmployer());
+      
+      // ⭐ Wait for auth context to finish loading
+      if (authLoading) {
+        console.log("⏳ Auth context still loading, waiting...");
+        return;
+      }
+
+      // Check if user is authenticated and is an employer
+      if (!isAuthenticated()) {
+        console.log("❌ Not authenticated, redirecting to sign-in");
+        navigate('/employer-sign-in');
+        return;
+      }
+
+      if (!isEmployer()) {
+        console.log("❌ Not an employer, redirecting to sign-in");
+        navigate('/employer-sign-in');
+        return;
+      }
+
+      console.log("✅ Auth check passed, loading company profile");
+      // Load company profile if not already loaded
+      if (!companyProfile) {
+        await getCompanyProfile();
+      }
+      
+    } catch (error) {
+      console.error("Error checking auth or loading data:", error);
+      navigate('/employer-sign-in');
+    }
+  };
 
   // Use companyProfile instead of companyData
   const companyData = companyProfile;
@@ -45,8 +88,8 @@ const CompanyPage = () => {
     navigate('/edit-company-profile');
   };
 
-  // Loading state
-  if (loading) {
+  // ⭐ UPDATED: Show loading state while AuthContext OR company data is loading
+  if (authLoading || companyLoading) {
     return (
       <div className="min-h-screen bg-[#FF8032] flex items-start overflow-hidden">
         <EmployerSideBar />
@@ -54,7 +97,9 @@ const CompanyPage = () => {
           <div className="flex justify-center items-center h-full">
             <div className="text-center">
               <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-[#FF8032] mx-auto"></div>
-              <p className="mt-4 text-gray-600">Loading company profile...</p>
+              <p className="mt-4 text-gray-600">
+                {authLoading ? 'Verifying authentication...' : 'Loading company profile...'}
+              </p>
             </div>
           </div>
         </div>

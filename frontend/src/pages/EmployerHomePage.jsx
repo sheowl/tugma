@@ -41,7 +41,8 @@ const EmployerHomePage = () => {
     isEmployer, 
     isAuthenticated,
     user,
-    userType
+    userType,
+    loading // ⭐ ADD loading to destructuring
   } = useAuth();
 
   // Get methods from CompanyContext (company operations)
@@ -54,23 +55,37 @@ const EmployerHomePage = () => {
     clearError
   } = useCompany();
 
+  // ⭐ CRITICAL: Wait for auth loading to complete
   useEffect(() => {
-    checkAuthAndLoadData();
-  }, []);
+    if (!loading) { // ⭐ Only run when AuthContext is done loading
+      checkAuthAndLoadData();
+    }
+  }, [loading]); // ⭐ Add loading as dependency
 
   const checkAuthAndLoadData = async () => {
     try {
+      console.log("🔍 Auth check - Loading:", loading, "Authenticated:", isAuthenticated(), "Employer:", isEmployer());
+      
+      // ⭐ Wait for auth context to finish loading
+      if (loading) {
+        console.log("⏳ Auth context still loading, waiting...");
+        return;
+      }
+
       // Check if user is authenticated and is an employer
       if (!isAuthenticated()) {
+        console.log("❌ Not authenticated, redirecting to sign-in");
         navigate('/employer-sign-in');
         return;
       }
 
       if (!isEmployer()) {
+        console.log("❌ Not an employer, redirecting to sign-in");
         navigate('/employer-sign-in');
         return;
       }
 
+      console.log("✅ Auth check passed, loading dashboard data");
       // Load dashboard data
       await loadDashboardData();
       
