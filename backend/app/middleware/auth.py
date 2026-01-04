@@ -5,38 +5,51 @@ from supabase import create_client, Client
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.database import get_db
-from jose import jwt, JWTError
 
 # Initialize Supabase client
 supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_ANON_KEY)
 security = HTTPBearer()
 
 def verify_supabase_token(token: str) -> Optional[Dict[str, Any]]:
-    """Verify Supabase JWT token directly using the project's JWT secret."""
+    """Verify Supabase JWT token using Supabase client (handles ES256)"""
     try:
-        payload = jwt.decode(
-            token,
-            settings.SUPABASE_JWT_SECRET,
-            algorithms=["HS256"],
-            audience="authenticated"
-        )
-        print(f"Token payload: {payload}")  # Debugging line to log the payload
-        return payload
-    except JWTError as e:
-        print("JWTError: ", e)
-        print("Token received for verification:", token)  # Debugging line to log the received token
+        print(f"🔍 Verifying token with Supabase client...")
+        
+        # Use Supabase's built-in verification (handles ES256 automatically)
+        user = supabase.auth.get_user(token)
+        
+        if not user or not user.user:
+            print("❌ Invalid token or no user found")
+            return None
+        
+        print(f"✅ Token verified for user: {user.user.email}")
+        
+        # Return in expected format
+        return {
+            'sub': user.user.id,
+            'email': user.user.email,
+            'user_metadata': user.user.user_metadata or {},
+            'app_metadata': user.user.app_metadata or {},
+            'role': user.user.role or 'authenticated',
+        }
+        
+    except Exception as e:
+        print(f"❌ Token verification failed: {e}")
         return None
 
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> Dict[str, Any]:
     """Get current authenticated user"""
+    print(f"🔐 Getting current user from token")
     user_data = verify_supabase_token(credentials.credentials)
-    print(f"User data from token: {user_data}")  # Debugging line to log user data
+    
     if not user_data:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    
+    print(f"✅ User authenticated: {user_data.get('email')}")
     return user_data
 
 async def get_current_company(
