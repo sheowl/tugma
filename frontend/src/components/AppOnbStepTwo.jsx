@@ -247,6 +247,7 @@ function AppOnbStepTwo({ step, segment, onBack }) {
         {step === 2 && segment === 10 && (
           <div className="flex flex-col items-center space-y-10">
             <Header />
+            <div className="flex gap-6 overflow-x-auto scrollbar-hide">
             <div
               onClick={() => setShowCertPopup(true)}
               className="mt-[74px] mb-[140px] flex-shrink-0 w-[416px] h-[200px] p-8 px-10 rounded-2xl border border-dashed border-gray-400 space-y-5
@@ -267,6 +268,7 @@ function AppOnbStepTwo({ step, segment, onBack }) {
                 />
               ))}
             </div>
+          </div>
           </div>
         )}
       </main>
